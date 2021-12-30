@@ -1,0 +1,8 @@
+- [Home](/)
+- [Integrations](integrations.md "Integrations list")
+- [APIs](apis.md "APIs list")
+- Use cases
+  - [Simple payment](/use-cases/simple-payment.md "Simple payment")
+  - [Refund/storno](/use-cases/refund.md "Refund/storno")
+  - [Withdrawal](/use-cases/withdrawal.md "Withdrawal")
+  - [Recurrent payment](/use-cases/recurrent-payment.md "Recurrent payment")
