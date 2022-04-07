@@ -24,7 +24,7 @@ Simple example how to make simple payment
     "valid_for": 6000
    }
    ```
-3. Create checkout with details from your order. It's POST HTTP Call wit JSON body. Call have to contain also AUthorization header with Bearer token from previous step
+3. Create checkout with details from your order. It's POST HTTP call with JSON body. Call have to contain also Authorization header with Bearer token from previous step
    ```bash
    curl --location --request POST 'https://app.payout.one/api/v1/checkouts' \
    --header 'Content-Type: application/json' \
@@ -34,7 +34,7 @@ Simple example how to make simple payment
    --data-raw '{
        "amount": "300",
        "currency": "EUR",
-       "iban": "sk5511000000002611391222",
+       "iban": "SK5511000000002611391222",
        "customer": {
            "first_name": "John",
            "last_name": "Doe",
@@ -74,7 +74,7 @@ Simple example how to make simple payment
    }'
    ```
    > [!NOTE]
-   > Amount is in cents in cents(EUR), so 3 EUR is 300. It's same for other currencies, for example 300 CZK is 30000.
+   > Amount is in cents (EUR), so 3 EUR is 300. It's same for other currencies, for example 300 CZK is 30000.
 
    Signature is generated from string with this pattern:
    ```
@@ -160,8 +160,8 @@ Simple example how to make simple payment
 
 5. Redirect customer to redirect url from url from `checkout_url` attribute from response.
 6. Customer is redirected to redirect url after process of payment is successful or failed. Redirect url is defined in step with creating checkout as `redirect_url` attribute.
-7. Information about state of checkout, customer payment is not delivered with redirection but asynchronous with Webhook POST callback. This callback is sent to notify url. It's required to verify signature to verify call is from Payout System. Signature has to be generated manually and compared with signature from `signature` attribute from webhooks. They have to be exact same.
-   Webhook with suck checkout:
+7. Information about state of checkout / customer payment is not delivered with redirection but asynchronously with Webhook POST callback. This callback is sent to notify url. It's required to verify signature to verify that call is coming from Payout System. Signature has to be generated manually and compared with signature from `signature` attribute from webhooks. They have to be exactly the same.
+   Webhook with successful checkout:
    ```json
    {
        "data":
@@ -213,4 +213,4 @@ Simple example how to make simple payment
    ```
    > [!NOTE]
    > Some algorithms implementations generate output in UPPERCASE form so please change all characters into lowercase form.
-8. Merchant's order can be marked as paid after webhook is received and verified.
+8. Merchant's order can be marked as paid after webhook type "checkout.succeeded" is received and verified.
