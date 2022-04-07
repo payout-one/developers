@@ -33,7 +33,7 @@
    --data-raw '{
        "checkout_id": 141209,
 	     "iban": "SK5511000000002611391222",
-	     "statement_descriptor": "Description on customer\'s statement",
+	     "statement_descriptor": "Description on customer statement",
 	     "nonce": "1474e979-9f64-012a-6d8a-f00957d4a4a0",
 	     "signature": "ef30790284ffb097e7e4b0d1162db605f97f52c59f0cfc877870bde4e61f7d77" 
    }'
