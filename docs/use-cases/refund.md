@@ -39,7 +39,9 @@
 	     "signature": "ef30790284ffb097e7e4b0d1162db605f97f52c59f0cfc877870bde4e61f7d77" 
    }'
    ```
-   Amount parameter is optional.
+   > [!NOTE]
+   > Amount is in cents (EUR), so 3 EUR is 300. It's same for other currencies, for example 300 CZK is 30000.
+   > This parameter is optional.
    
    Signature is generated from string with this pattern:
    ```
