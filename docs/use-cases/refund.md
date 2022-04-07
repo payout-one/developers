@@ -40,8 +40,7 @@
    }'
    ```
    Amount parameter is optional.
-   ```
-   ```
+   
    Signature is generated from string with this pattern:
    ```
    amount|currency|external_id|iban|nonce|client_secret
