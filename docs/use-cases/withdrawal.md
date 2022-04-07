@@ -31,7 +31,7 @@
    --header 'Accept: application/json' \
    --header 'Idempotency-Key: 74775d02-745f-4198-cf3c-be9f1971dabe' \
    --data-raw '{
-       "amount": 100,
+       "amount": 300,
        "currency": "EUR",
        "external_id": "{{merchant_id}}",
        "iban": "{{iban}}",
@@ -45,6 +45,9 @@
        "statement_descriptor": "Simple statement description"
    }'
    ```
+   > [!NOTE]
+   > Amount is in cents (EUR), so 3 EUR is 300. It's same for other currencies, for example 300 CZK is 30000.
+   
    Signature is generated from string with this pattern:
    ```
    amount|currency|external_id|iban|nonce|client_secret
