@@ -31,8 +31,8 @@
    --header 'Accept: application/json' \
    --header 'Idempotency-Key: 74775d02-745f-4198-cf3c-be9f1971dabe' \
    --data-raw '{
-       "checkout_id": 141209,
-       	     "amount": 100,	
+   	     "amount": 100,
+             "checkout_id": 141209,	
 	     "iban": "SK5511000000002611391222",
 	     "statement_descriptor": "Description on customer statement",
 	     "nonce": "1474e979-9f64-012a-6d8a-f00957d4a4a0",
