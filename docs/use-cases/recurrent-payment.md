@@ -89,3 +89,11 @@
    ```
    > [!NOTE]
    > Some algorithms implementations generate output in UPPERCASE form so please change all characters into lowercase form.   
+
+4. After successful payment there are sent 2 type of webhooks:
+    * **checkout.succeeded** - contains card_mask so you can save it 
+    * **payu_token** - contains token for recurrent payments
+
+5. With received recurrent token from webhook you can now make recurrent payment with saved card. It's basically identical as previous request for checkout creation. You have to change checkout parameter _mode_ to value **recurrent** and add additional required parameter _recurrent_token_ with value from payu_token webhook.
+
+6. After successful recurrent payment there is sent **checkout.succeeded** webhook.
