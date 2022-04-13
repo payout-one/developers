@@ -21,7 +21,9 @@ Authorization flow is going as follow:
   * for production [https://documenter.getpostman.com/view/10478778/UVz1MXSQ#0ed344e6-2b8d-447a-8185-c7d784904365](https://documenter.getpostman.com/view/10478778/UVz1MXSQ#0ed344e6-2b8d-447a-8185-c7d784904365)
 5. Integrator now can work with chosen endpoint passing `access_token` in `Authorization` header.
 
-This flow also can be seen represented on diagram 1.
+This flow also can be seen at next diagram:
+
+![Authorization code flow sequence diagram](./_media/authorization_code_flow.png)
 
 
 
@@ -35,4 +37,6 @@ This token is issued by passing `refresh_token` as `grant` and retrieved refresh
 
 ## Banklink accounts
 
-From user point of view, process is different for issuing access token for [Banklink](./banklink.md). In this case it is also required to have banklink account. In case he does not have it, he is requested to create one as intermediate step betwen login/registration and granting access to his account to integrator.
+From user point of view, process is different for issuing access token for [Banklink](./banklink.md). In this case it is also required to have banklink account. In case he does not have it, he is requested to create one as intermediate step betwen login/registration and granting access to his account to integrator. Sequence diagram which includes account creation can be seen next:
+
+![Banklink authorization code flow sequence diagram](./_media/banklink_authorization_code_flow.png)
