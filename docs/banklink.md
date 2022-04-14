@@ -6,6 +6,8 @@ Documentation for concrete endpoints:
 - [production](https://wap.payout.one/api-docs)
 - [sandbox](https://wap-sa.payout.one/api-docs)
 
-On next sequence diagram, we can see flow of calls, OAuth2 authorization code flow is omited since it is described in it's own [section](./oauth2.md):
+On next sequence diagram, we can see flow of calls, OAuth2 authorization code flow is omited since it is described in it's own [section](./oauth2.md), this diagram is for account details requests, but same flow will work for all other calls, besides call to list connected accounts, which does not request data from bank, onli shoving data from Banklink database, so there is no SCA between client and Bank:
 
 ![Retrieve account details using Banklink API](./_media/banklink_account_details.png)
+
+Required scopes for OAuth2 are described in endpoint documentation.
