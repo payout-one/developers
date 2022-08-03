@@ -17,7 +17,7 @@ Important note: Apple’s documentation for Apple Pay on the Web describes their
 2. Download provided domain association file and host it at /.well-known/apple-developer-merchantid-domain-association on your site. For example, if you’re registering https://example.com, make that file available at https://example.com/.well-known/apple-developer-merchantid-domain-association.
 3. After registering your domains, you can make payments on your site using your publishable API keys.
 
-#### 1. Set up JS
+#### 1. Set up HTML+JS
 
 Include JS library and prepare container in which payment button will be rendered.
 
