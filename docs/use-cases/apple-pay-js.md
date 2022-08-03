@@ -32,7 +32,7 @@ Prepare data and initialize payment library.
       merchant: "Merchant name"
     }
 
-  var payoutApplePay = new PayoutApplePay(env, api_key);
+  var payout = new Payout(env, api_key);
 ```
 
 #### 2. Create Apple Pay button
@@ -40,10 +40,10 @@ Before rendering Apple Pay button it's required to check if Apple Pay is availab
 If it's payment button can be rendered.
 
 ```javascript
-  payoutApplePay.canMakePayments().then(function (result) {
+  payout.applePay.canMakePayments().then(function (result) {
     // payment button can be rendered
     if (result) {
-      payoutApplePay.createApplePayButton('#payment-request-button', data);
+      payout.applePay.createButton('#payment-request-button', data);
     }
   }).catch(function (e) {
     // handle rejected Promise
@@ -62,7 +62,7 @@ Returned checkout contains `token` attribute used for completing the ongoing pay
 After checkout creation listen to the `completePayment` event and confirm payment with checkout token from previous step.
 
 ```javascript
-  payoutApplePay.on('completePayment', data => payoutApplePay.confirmApplePayPayment(token).then(function (confirmResult) {
+  payout.applePay.on('completePayment', data => payout.confirmPayment(token).then(function (confirmResult) {
     if (confirmResult.error) {
       // completion error
     } else {
