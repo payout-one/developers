@@ -66,6 +66,17 @@ Before rendering Apple Pay button it's required to check if Apple Pay is availab
   });
 ```
 
+Sample button CSS style:
+
+```css
+#payment-request-button button.apple-pay {
+  -webkit-appearance: -apple-pay-button;
+  -apple-pay-button-type: buy;
+  -apple-pay-button-style: black;
+  cursor: pointer;
+}
+```
+
 #### 4. Complete payment
 Next listen to the `completePayment` event and confirm payment with checkout token from the second step.
 
