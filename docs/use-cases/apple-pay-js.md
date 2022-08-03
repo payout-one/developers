@@ -34,6 +34,13 @@ Prepare data and initialize Payout library with environment you want to use (TES
   const env = 'TEST'; // environment selection
   const api_key = 'API_KEY' // publishable API key
 
+  var payout = new Payout(env, api_key);
+```
+
+#### 2. Create Apple Pay button
+Before rendering Apple Pay button it's required to check if Apple Pay is available and if it's payment button can be rendered, like in the example below with some sample data:
+
+```javascript
   const data = {
       amount: "4",
       currency: "EUR",
@@ -41,14 +48,6 @@ Prepare data and initialize Payout library with environment you want to use (TES
       merchant: "Merchant name"
     }
 
-  var payout = new Payout(env, api_key);
-```
-
-#### 2. Create Apple Pay button
-Before rendering Apple Pay button it's required to check if Apple Pay is available.
-If it's payment button can be rendered.
-
-```javascript
   payout.applePay.canMakePayments().then(function (result) {
     // payment button can be rendered
     if (result) {
