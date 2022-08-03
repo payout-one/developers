@@ -32,7 +32,7 @@ Prepare data and initialize Payout library with environment you want to use (TES
 
 ```javascript
   const env = 'TEST'; // environment selection
-  const api_key = 'API_KEY' // publishable API key
+  const api_key = 'xYdDRpvMQNkjOXKVdA3bnW8gB5ZPEeaV' // public API key
 
   var payout = new Payout(env, api_key);
 ```
