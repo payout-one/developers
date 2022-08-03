@@ -69,12 +69,12 @@ Before rendering Apple Pay button it's required to check if Apple Pay is availab
 Sample button CSS style:
 
 ```css
-#payment-request-button button.apple-pay {
-  -webkit-appearance: -apple-pay-button;
-  -apple-pay-button-type: buy;
-  -apple-pay-button-style: black;
-  cursor: pointer;
-}
+  #payment-request-button button.apple-pay {
+    -webkit-appearance: -apple-pay-button;
+    -apple-pay-button-type: buy;
+    -apple-pay-button-style: black;
+    cursor: pointer;
+  }
 ```
 
 #### 4. Complete payment
