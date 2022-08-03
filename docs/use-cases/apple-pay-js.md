@@ -8,6 +8,15 @@ Before you start, you need to:
   * Serve your application over HTTPS. This is a requirement both in development and in production. One way to get up and running is to use a service like ngrok.
   * Send us domains from which Apple Pay will be served for verification purposes, both for development and production.
 
+**Verify your domain with Apple Pay**
+To use Apple Pay, you need to register with Apple all of your web domains that will show an Apple Pay button. This includes both top-level domains (for example, payout.one) and subdomains (for example, shop.payout.one). You need to do this for domains you use in both production and testing. When testing locally, use a tool like ngrok to get an HTTPS domain.
+
+Important note: Apple’s documentation for Apple Pay on the Web describes their process of “merchant validation”, which Payout handles for you behind the scenes. You don’t need to create an Apple Merchant ID, CSR, and so on, as described in their documentation, and should instead just follow these steps:
+
+1. Tell Payout to register your domain with Apple and provide you with domain association file.
+2. Download provided domain association file and host it at /.well-known/apple-developer-merchantid-domain-association on your site. For example, if you’re registering https://example.com, make that file available at https://example.com/.well-known/apple-developer-merchantid-domain-association.
+3. After registering your domains, you can make payments on your site using your publishable API keys.
+
 #### 1. Set up JS
 
 Include JS library and prepare container in which payment button will be rendered.
@@ -19,11 +28,11 @@ Include JS library and prepare container in which payment button will be rendere
   </div>
 ```
 
-Prepare data and initialize payment library.
+Prepare data and initialize Payout library with environment you want to use (TEST, PROD) and your's publishable API key which you can find in yours account at [app.payout.one](app.payout.one) in API Keys section.
 
 ```javascript
   const env = 'TEST'; // environment selection
-  const api_key = '' // publishable API key
+  const api_key = 'API_KEY' // publishable API key
 
   const data = {
       amount: "4",
