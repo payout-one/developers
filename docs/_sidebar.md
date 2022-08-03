@@ -8,3 +8,4 @@
   - [Refund](/use-cases/refund.md "Refund")
   - [Withdrawal](/use-cases/withdrawal.md "Withdrawal")
   - [Recurrent payment](/use-cases/recurrent-payment.md "Recurrent payment")
+  - [Apple Pay JS](/use-cases/apple-pay-js.md "Apple Pay JS")
