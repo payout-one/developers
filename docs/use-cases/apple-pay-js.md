@@ -66,7 +66,7 @@ Before rendering Apple Pay button it's required to check if Apple Pay is availab
   });
 ```
 
-Sample button CSS style:
+Sample CSS style for Apple Pay button:
 
 ```css
   #payment-request-button button.apple-pay {
