@@ -81,13 +81,18 @@ Sample CSS style for Apple Pay button:
 Next listen to the `completePayment` event and confirm payment with checkout token from the second step.
 
 ```javascript
-  payout.applePay.on('completePayment', data => payout.confirmPayment(token).then(function (confirmResult) {
-    if (confirmResult.error) {
-      // completion error
-    } else {
-      // completion success
-    }
-  }));
+  payout.applePay.on('completePayment', function () {
+    payout.applePay.confirmPayment(token)
+      .then(function (confirmResult) {
+        if (confirmResult.status == 'paid') {
+          // completion success
+          console.log('payment success');
+        } else {
+          // completion error
+          console.log('payment failed');
+        }
+      });
+  });
 ```
 
 #### Test your integration
