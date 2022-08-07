@@ -96,7 +96,7 @@ Next listen to the `completePayment` event and confirm payment with checkout tok
 ```
 
 #### Test your integration
-To test your integration you must use HTTPS and a supported browser.
+To test your integration you must use HTTPS and supported browser.
 
 In addition, each payment method and browser has specific requirements:
 
