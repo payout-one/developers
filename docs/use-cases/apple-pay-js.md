@@ -85,10 +85,10 @@ Next listen to the `completePayment` event and confirm payment with checkout tok
     payout.applePay.confirmPayment(token)
       .then(function (confirmResult) {
         if (confirmResult.status == 'paid') {
-          // completion success
+          // payment success handling
           console.log('payment success');
         } else {
-          // completion error
+          // payment failed handling
           console.log('payment failed');
         }
       });
