@@ -38,11 +38,11 @@ Prepare data and initialize Payout library with environment you want to use (TES
 ```
 
 #### 2. Create Checkout
-Next step is to create checkout from your server in order to obtain token used for payment completion.
+Next step is to create checkout from your server in order to obtain payment_token used for payment completion.
 
 Please refer to [Simple Payment](https://developers.payout.tech/#/use-cases/simple-payment) page for details, or specific implementation of our API via library (e.g. payout-php) or supported eshop platforms like WooComerce etc., listed on [Integrations](https://developers.payout.tech/#/integrations) page.
 
-Returned checkout contains `token` attribute used for completing the ongoing payment flow.
+Returned checkout contains `payment_token` attribute used for completing the ongoing payment flow.
 
 #### 3. Create Apple Pay button
 Before rendering Apple Pay button it's required to check if Apple Pay is available and if it's payment button can be rendered, like in the example below with some sample data:
@@ -78,11 +78,12 @@ Sample CSS style for Apple Pay button:
 ```
 
 #### 4. Complete payment
-Next listen to the `completePayment` event and confirm payment with checkout token from the second step.
+Next listen to the `completePayment` event and confirm payment with checkout payment_
+from the second step.
 
 ```javascript
   payout.applePay.on('completePayment', function () {
-    payout.applePay.confirmPayment(token)
+    payout.applePay.confirmPayment(payment_token)
       .then(function (confirmResult) {
         if (confirmResult.status == 'paid') {
           // payment success handling
