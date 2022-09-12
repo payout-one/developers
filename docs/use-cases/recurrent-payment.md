@@ -152,7 +152,7 @@
 | Number | Month | Year | CVV | Behavior |
 | --- | --- | --- | --- | --- |
 | `4444333322221111` |	`12` |	`29` |	`123` |	Positive authorization |
-| `5434021016824014` |	`12` |	`29` |	`123 |	Positive authorization |
-| `5598614816563766` |	`12` |	`29` |	`123 |	Positive authorization |
-| `5000105018126595` |	`12` |	`29` |	`123 |	Negative authorization |
-| `4000398284360` |	`12` |	`29` |	`123 |	Negative authorization |
+| `5434021016824014` |	`12` |	`29` |	`123` |	Positive authorization |
+| `5598614816563766` |	`12` |	`29` |	`123` |	Positive authorization |
+| `5000105018126595` |	`12` |	`29` |	`123` |	Negative authorization |
+| `4000398284360` |	`12` |	`29` |	`123` |	Negative authorization |
