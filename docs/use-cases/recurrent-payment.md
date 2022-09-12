@@ -147,7 +147,7 @@
 
 6. After successful recurrent payment there is sent **checkout.succeeded** webhook.
 
-**Testing cards**
+**Test cards**
 
 | Number | Month | Year | CVV | Behavior |
 | --- | --- | --- | --- | --- |
