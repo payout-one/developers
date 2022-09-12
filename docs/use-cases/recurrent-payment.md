@@ -91,7 +91,7 @@
    > Some algorithms implementations generate output in UPPERCASE form so please change all characters into lowercase form.   
 
 4. After successful payment there are sent 2 type of webhooks:
-    * **checkout.succeeded** - contains card_mask so you can save it
+    * **checkout.succeeded**
     ```json
      {
       "data": {
@@ -126,7 +126,7 @@
       "external_id": "9207dd00-d8f1-475a-a317-1067b487fdd6"
     }
     ``` 
-    * **payu_token.created** - contains token for recurrent payments
+    * **payu_token.created** - contains card_mask and token for recurrent payments
     ```json
      {
       "data": {
@@ -146,3 +146,12 @@
 5. With received recurrent token from webhook you can now make recurrent payment with saved card. It's basically identical as previous request for checkout creation. You have to change checkout parameter _mode_ to value **recurrent** and add additional required parameter recurrent_token with value from payu_token.created webhook.
 
 6. After successful recurrent payment there is sent **checkout.succeeded** webhook.
+
+Testing cards
+| Number | Month | Year | CVV | Behavior |
+| --- | --- |
+| 4444333322221111 |	12 |	29 |	123 |	Positive authorization |
+| 5434021016824014 |	12 |	29 |	123 |	Positive authorization |
+| 5598614816563766 |	12 |	29 |	123 |	Positive authorization |
+| 5000105018126595 |	12 |	29 |	123 |	Negative authorization |
+| 4000398284360 |	12 |	29 |	123 |	Negative authorization |
