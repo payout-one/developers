@@ -214,3 +214,13 @@ Simple example how to make simple payment
    > [!NOTE]
    > Some algorithms implementations generate output in UPPERCASE form so please change all characters into lowercase form.
 8. Merchant's order can be marked as paid after webhook type "checkout.succeeded" is received and verified.
+
+**Test cards**
+
+| Number | Month | Year | CVV | Behavior |
+| --- | --- | --- | --- | --- |
+| `4444333322221111` |	`12` |	`29` |	`123` |	Positive authorization |
+| `5434021016824014` |	`12` |	`29` |	`123` |	Positive authorization |
+| `5598614816563766` |	`12` |	`29` |	`123` |	Positive authorization |
+| `5000105018126595` |	`12` |	`29` |	`123` |	Negative authorization |
+| `4000398284360` |	`12` |	`29` |	`123` |	Negative authorization |
