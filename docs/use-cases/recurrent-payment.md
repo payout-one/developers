@@ -91,9 +91,58 @@
    > Some algorithms implementations generate output in UPPERCASE form so please change all characters into lowercase form.   
 
 4. After successful payment there are sent 2 type of webhooks:
-    * **checkout.succeeded** - contains card_mask so you can save it 
-    * **payu_token** - contains token for recurrent payments
+    * **checkout.succeeded** - contains card_mask so you can save it
+    ```json
+     {
+      "data": {
+        "id": 32222,
+        "amount": 300,
+        "object": "checkout",
+        "status": "succeeded",
+        "payment": {
+          "fee": 35,
+          "net": 1535,
+          "object": "payment",
+          "status": "successful",
+          "created_at": 1662716838,
+          "failure_reason": "",
+          "payment_method": "PayU"
+        },
+        "currency": "EUR",
+        "customer": {
+          "email": "john.doe@payout.one",
+          "last_name": "John",
+          "first_name": "Doe",
+          "card_number_masked": ""
+        },
+        "metadata": null,
+        "external_id": "9207dd00-d8f1-475a-a317-1067b487fdd6",
+        "redirect_url": "https://example.com"
+      },
+      "type": "checkout.succeeded",
+      "nonce": "UzhER2lFOFZCNkNQVmNuNQ",
+      "object": "webhook",
+      "signature": "b95494dd09183b7cbca40f356d7s4f567sdf765sdf79e1f4a95e936",
+      "external_id": "9207dd00-d8f1-475a-a317-1067b487fdd6"
+    }
+    ``` 
+    * **payu_token.created** - contains token for recurrent payments
+    ```json
+     {
+      "data": {
+        "object": "payu_token",
+        "card_mask": "444405******1111",
+        "checkout_id": 32222,
+        "token_value": "QTEyOEdDTQ.IuWl453sdfsdfsdf8DJRuXdJetbTXA8-vRQWxJYm6zkXB5O0Vxuok019V8.ool6VIXh-u-9dy_C._n2ioCHjys3teQ8WmEM5W08ESwwXTjT0mpLdiLZdLwhJjhbtTW33HdKbNAZFfdgdfg4erggre345a-e9KamwQzXW0_lK8vw.YTYfmlJ65UkVSMa9uXhgLw"
+      },
+      "type": "payu_token.created",
+      "nonce": "UTdsUHJBMnhIaklnS254Ng",
+      "object": "webhook",
+      "signature": "44444cba7039ab5d6ca048b46016f225db66cd29711fbf9023e0e6c27cfc10f1",
+      "external_id": "9207dd00-d8f1-475a-a317-1067b487fdd6"
+    }
+    ```
 
-5. With received recurrent token from webhook you can now make recurrent payment with saved card. It's basically identical as previous request for checkout creation. You have to change checkout parameter _mode_ to value **recurrent** and add additional required parameter _recurrent_token_ with value from payu_token webhook.
+5. With received recurrent token from webhook you can now make recurrent payment with saved card. It's basically identical as previous request for checkout creation. You have to change checkout parameter _mode_ to value **recurrent** and add additional required parameter recurrent_token with value from payu_token.created webhook.
 
 6. After successful recurrent payment there is sent **checkout.succeeded** webhook.
