@@ -112,3 +112,7 @@ In addition, each payment method and browser has specific requirements:
   * Make sure you’ve verified your domain with Apple Pay.
 
 For additional details and testing cards please refer to official Apple documentation [here](https://developer.apple.com/apple-pay/sandbox-testing/).
+
+We recommend using these test cards: 
+  * 5204 2477 5000 1471
+  * 4761 1200 1000 0492
