@@ -22,7 +22,7 @@ Important note: Apple’s documentation for Apple Pay on the Web describes their
 Include JS library and prepare container in which payment button will be rendered.
 
 ```html
-  <script src="https://js.payout.one.com/v1/"></script>
+  <script type="module" src="https://js.payout.one.com/v1/"></script>
   <div id="payment-request-button">
     <!-- Apple Pay button will be inserted here. -->
   </div>
@@ -48,6 +48,8 @@ Returned checkout contains `payment_token` attribute used for completing the ong
 Before rendering Apple Pay button it's required to check if Apple Pay is available and if it's payment button can be rendered, like in the example below with some sample data:
 
 ```javascript
+  import Payout from "https://js.payout.one.com/v1/";
+  
   const data = {
       amount: "4",
       currency: "EUR",
