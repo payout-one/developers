@@ -35,6 +35,10 @@ This token is issued by passing `refresh_token` as `grant` and retrieved refresh
   * for sandbox [https://documenter.getpostman.com/view/10478778/UVz1PD5E#d917c8b6-6070-4ffd-b816-4347cf471bbd](https://documenter.getpostman.com/view/10478778/UVz1PD5E#d917c8b6-6070-4ffd-b816-4347cf471bbd)
   * for production [https://documenter.getpostman.com/view/10478778/UVz1MXSQ#0ed344e6-2b8d-447a-8185-c7d784904365](https://documenter.getpostman.com/view/10478778/UVz1MXSQ#0ed344e6-2b8d-447a-8185-c7d784904365)
 
+## Client credentials grant
+
+In some cases, integrator can use this grant to access resources without consent from user in IS Payout. In cases where user need to authenticate resources from different service provider, for instance Bank, authentication on service provider might still be required. In case of this grant, integrator can directly request token with his `client_id` and `client_secret`. No authorization code is required. 
+
 ## Banklink accounts
 
 From user point of view, process is different for issuing access token for [Banklink](./banklink.md). In this case it is also required to have banklink account. In case he does not have it, he is requested to create one as intermediate step betwen login/registration and granting access to his account to integrator. Sequence diagram which includes account creation can be seen next:
