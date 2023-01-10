@@ -46,7 +46,6 @@
       - tatra_pay
       - sporo_pay
       - post_pay
-      - card_pay
       - unicredit
    * If identificator sent in query parameter is invalid, or is not supported the customer will be redirected to regular checkout form.
 
