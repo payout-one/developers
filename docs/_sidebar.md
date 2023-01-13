@@ -1,7 +1,7 @@
 - [Home](/)
 - [Integrations](integrations.md "Integrations list")
 - [APIs](apis.md "APIs list")
-- [OAuth2](oauth2.md)
+- [PayoutID (OAuth2)](payout-id.md)
 - [Banklink](banklink.md)
 - Use cases
   - [Simple payment](/use-cases/simple-payment.md "Simple payment")
