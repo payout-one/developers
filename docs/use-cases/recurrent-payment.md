@@ -149,10 +149,12 @@
 
 **Test cards**
 
-| Number | Month | Year | CVV | Behavior |
-| --- | --- | --- | --- | --- |
-| `4444333322221111` |	`12` |	`29` |	`123` |	Positive authorization |
-| `5434021016824014` |	`12` |	`29` |	`123` |	Positive authorization |
-| `5598614816563766` |	`12` |	`29` |	`123` |	Positive authorization |
-| `5000105018126595` |	`12` |	`29` |	`123` |	Negative authorization |
-| `4000398284360` |	`12` |	`29` |	`123` |	Negative authorization |
+| Number | Month | Year | CVV | 3DS result | Behavior |
+| --- | --- | --- | --- | --- | --- |
+| 4245757666349685 | 12 |	29 | 123 | challenge required	|	Positive authorization
+| 5150030090350186 | 12	| 29 | 123 | 3DS Method required and then successful frictionless	|	Positive authorization
+| 4012001037141120 | 12	| 29 | 123 | 3DS Method and challenge required	|	Positive authorization
+| 5100052384536834 | 12	| 29 | 123 | challenge params if sdk object sent in OrderCreateRequest	|	Positive authorization
+| 5100052384536818 | 02	| 32 | 123 | challenge required / if no 3DS is used, returns soft decline (SSD)	|	Positive authorization
+| 5100052384536826 | 12	| 29 | 123 | frictionless positive authentication	|	Positive authorization
+| 5521455186577727 | 12	| 29 | 123 | frictionless negative authentication	|	no authorization (authentication fails)
