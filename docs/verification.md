@@ -31,13 +31,10 @@ Whole flow is represented on following diagram:
 
 Verification can end up in one of these statuses:
 
-- `verified_access` - user managed to provide credentials for account, but bank servicing
-                      that account is not providing ownership information
-- `verified_ownership` - user managed to login and account servicer provided ownership information
-                         which also matched name of the user
+- `verified_access` - user managed to provide credentials for account, but bank servicing that account is not providing ownership information
+- `verified_ownership` - user managed to login and account servicer provided ownership information which also matched name of the user
 - `unverified_access` - user failed to provide credentials to access account
-- `unverified_ownership` - user provided credentials to access account but ownership details
-                           were different from provided user details
+- `unverified_ownership` - user provided credentials to access account but ownership details were different from provided user details
 - `error` - error during communication between us and account servicer
 
 
