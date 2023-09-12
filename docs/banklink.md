@@ -19,3 +19,5 @@ On next sequence diagram, we can see flow of calls, OAuth2 authorization code fl
 ![Retrieve account details using Banklink API](./_media/banklink_account_details.png)
 
 Required scopes for OAuth2 are described in endpoint documentation.
+
+This API also contains [user verification endpoints](./verification.md)

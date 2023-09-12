@@ -3,6 +3,7 @@
 - [APIs](apis.md "APIs list")
 - [PayoutID (OAuth2)](payout-id.md)
 - [Banklink](banklink.md)
+- [Verification](verification.md)
 - Use cases
   - [Simple payment](/use-cases/simple-payment.md "Simple payment")
   - [Refund](/use-cases/refund.md "Refund")
