@@ -1,6 +1,6 @@
 # Verification
 
-This service is protected using our [OAuth2 authorization server][^oauth]
+This service is protected using our [OAuth2 authorization server](./payout-id.md)
 and requires scope `VERIFY`, this scope should be retrieved using
 `client credentials` flow.
 
@@ -10,8 +10,8 @@ owner details, in that case we only verify that user have access
 to bank account. Calls for this use case are described
 in Banklink API verification collection:
 
-- [production][^pr]
-- [sandbox][^sd]
+- [production](https://documenter.getpostman.com/view/10478778/Uyr4KfHU#2609a1b2-1df4-41c8-bf12-aec1f9553a15)
+- [sandbox](https://documenter.getpostman.com/view/10478778/Uyr4KLLY#f5e0ad5a-7175-48e2-a8a4-a95cd62137fe)
 
 To verify user identity it is necessary first to create
 verification resource with user name.
@@ -36,8 +36,3 @@ Verification can end up in one of these statuses:
 - `unverified_access` - user failed to provide credentials to access account
 - `unverified_ownership` - user provided credentials to access account but ownership details were different from provided user details
 - `error` - error during communication between us and account servicer
-
-
-[pr]: https://documenter.getpostman.com/view/10478778/Uyr4KfHU#2609a1b2-1df4-41c8-bf12-aec1f9553a15
-[sd]: https://documenter.getpostman.com/view/10478778/Uyr4KLLY#f5e0ad5a-7175-48e2-a8a4-a95cd62137fe
-[oauth]: ./payout-id.md
