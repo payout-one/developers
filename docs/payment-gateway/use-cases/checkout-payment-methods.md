@@ -18,21 +18,21 @@
     https://test.payout.one/checkouts/U0ZNeU5UWS5nMmdEZEFBQUFBSmtBQU5oY0dsaElXUUFBbWxrWWdBQ0tJZHVCZ0JtS1hrTGZnRmlBQUZSZ0EuR2xYdDlsZjY4NDNIY2xaUXFXTFBGdHFETWZDNmw3SXViOG1wM0VXYi1nOA/?selected_group=bank
     ```
 
-    ![Checkout bank list](../_media/checkout_bank_list.png)
+    ![Checkout bank list](../../_media/checkout_bank_list.png)
 
     2. Show card payment:
     ```
     https://test.payout.one/checkouts/U0ZNeU5UWS5nMmdEZEFBQUFBSmtBQU5oY0dsaElXUUFBbWxrWWdBQ0tJZHVCZ0JtS1hrTGZnRmlBQUZSZ0EuR2xYdDlsZjY4NDNIY2xaUXFXTFBGdHFETWZDNmw3SXViOG1wM0VXYi1nOA/?selected_group=card
     ```
 
-    ![Checkout card payment](../_media/checkout_card.png)
+    ![Checkout card payment](../../_media/checkout_card.png)
 
     3. Show a specific bank:
     ```
     https://test.payout.one/checkouts/U0ZNeU5UWS5nMmdEZEFBQUFBSmtBQU5oY0dsaElXUUFBbWxrWWdBQ0tJZHVCZ0JtS1hrTGZnRmlBQUZSZ0EuR2xYdDlsZjY4NDNIY2xaUXFXTFBGdHFETWZDNmw3SXViOG1wM0VXYi1nOA/?selected_group=bank&selected_bank_group=TATRSKBX
     ```
 
-    ![Checkout bank detail](../_media/checkout_bank.png)
+    ![Checkout bank detail](../../_media/checkout_bank.png)
 
 ## Redirect to specific payment method
 
