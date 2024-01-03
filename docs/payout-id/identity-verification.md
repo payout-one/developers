@@ -1,4 +1,4 @@
-# Identity verification and bank account owner retrieval
+# Identity verification
 
    > [!NOTE]
    > This API is still heavily developed and can change in next release
@@ -20,7 +20,7 @@ Documentation for verification invitation endpoint can be found [here](https://d
 
 ## Retrieving access token
 
-You need to retrieve this token using [client credentials claim](./oauth2.md), there you need to request scope `verify`, if you want to do user document verification, or you can also add `account_info` scope, if you want to retrieve client bank account details.
+You need to retrieve this token using `client credentials grant`, with required scope `verify` and optional scope `account_info` in case you want to retrieve client bank account details. [Here](https://documenter.getpostman.com/view/10478778/2s9YsFDYzn#f885ffae-52a8-47b8-86e1-decceb9fec2c) you will find documentation for access token endpoint.
 
 ## Webhook
 
@@ -193,7 +193,7 @@ Webhook when also account details are returned:
 }
 ```
 
-Webhook in case user choose that does not have account in any of supported banks:
+Webhook in case user chooses that he does not have account in any of supported banks:
 
 ``` json
 {

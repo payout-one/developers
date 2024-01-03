@@ -5,4 +5,4 @@ Our [OAuth2](https://oauth.net/2/), [OIDC](https://openid.net/) and verification
 - [OAuth2](/payout-id/oauth.md)
 - authorization and authentication to be used with [Banklink API](/payout-id/banklink.md)
 - authorization and authentication for [PSD2 API](psd2.md)
-- [identity verification and bank account owner retrieval](payout-id/identity-verification-and-bank-account-verification.md)
+- [identity verification](payout-id/identity-verification.md)

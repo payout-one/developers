@@ -4,7 +4,7 @@
 - [PayoutID (OIDC and Identity verification)](payout-id.md "PayoutID")
   - [OAuth2](/payout-id/oauth.md "OAuth2")
   - [Banklink](/payout-id/banklink.md "Banklink")
-  - [Identity verification and bank account owner retrieval](/payout-id/identity-verification-and-bank-account-verification.md "Identity verification and bank account owner retrieval")
+  - [Identity verification](/payout-id/identity-verification.md "Identity verification")
 - [Banklink (OpenBanking Aggregator)](banklink.md "Banklink")
 - [OpenBanking PSD2 API](psd2.md "PSD2")
 - [IBAN Verification](verification.md "Verifications")
