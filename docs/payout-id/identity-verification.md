@@ -3,7 +3,7 @@
    > [!NOTE]
    > This API is still heavily developed and can change in next release
 
-PayoutID also provides identity verification and AML. It uses custom endpoint which will return redirect to start user verifications. After user provides all required data, he is redirected back to client. Since we get results from some checks asynchronously, result is delivered as webhook. This api requires to retrieve access token with `verify` scope and, if also bank account details are required, `account_info` scope.
+PayoutID also provides identity verification and AML. It uses custom endpoint which will return redirect to start user verifications. After user provides all required data, he is redirected back to client. Since we get results from some checks asynchronously, result is delivered as webhook. This api requires to retrieve access token with `verify` scope. In case you want to ask for account details, `account_info` scope is required. For AML `aml` scope is required.
 
 Process is as follows:
 
@@ -20,7 +20,7 @@ Documentation for verification invitation endpoint can be found [here](https://d
 
 ## Retrieving access token
 
-You need to retrieve this token using `client credentials grant`, with required scope `verify` and optional scope `account_info` in case you want to retrieve client bank account details. [Here](https://documenter.getpostman.com/view/10478778/2s9YsFDYzn#f885ffae-52a8-47b8-86e1-decceb9fec2c) you will find documentation for access token endpoint.
+You need to retrieve this token using `client credentials grant`, with required scope `verify` and optional scopes `account_info`, in case you want to retrieve client bank account details, and `aml` in case you want to retrieve list where verified user is present. [Here](https://documenter.getpostman.com/view/10478778/2s9YsFDYzn#f885ffae-52a8-47b8-86e1-decceb9fec2c) you will find documentation for access token endpoint.
 
 ## Webhook
 
@@ -62,6 +62,17 @@ Webhook will contain following attributes:
 | data/manual_face | string | no | "FACE_MATCH" | Result of manual examination of photos |
 | data/mismatch_tags | array of strings | no | [] | List of mismatched attributes from document |
 | data/manual_document | string | no | "DOC_VALIDATED" | - |
+| data/aml_requested | boolean | no | false | If also AML checks are required |
+| data/aml_request_failed | boolean | no | false | - |
+| data/aml_error_message | string | no | - | - |
+| data/aml_status_service_suspected | boolean | no | - | - |
+| data/aml_status_service_used | boolean | no | - | - |
+| data/aml_status_service_found | boolean | no | - | - |
+| data/aml_status_check_successfull | boolean | no | - | - |
+| data/aml_status_overall | string | no | "SUSPECTED" | Overall result of check |
+| data/aml_error_message | string | no | - | - |
+| data/aml_uid | string | no | - | - |
+| data/aml_items | array of [AML Item](#aml-item) | no | [] | - |
 | signature | string | yes | - | Signature to verify origin of the returned data |
 | nonce | string | yes | - | Used to sign data |
 
@@ -88,6 +99,25 @@ Webhook will contain following attributes:
 - PROOF_OF_AGE_CARD
 - DIPLOMATIC_ID
 
+#### AML Item
+
+| path | type | required | example | description |
+| ---- | ---- | --- | --- | --- |
+| name | string | yes | - | - |
+| surname | string | yes | - | - |
+| reason | string | yes | - | - |
+| nationality | string | yes | - | - |
+| dob | string |yes | - | - |
+| suspicion | string | yes | "PEPS" | One of PEPS, SANCTION, INTERPOL or OTHER |
+| list_number | string | yes | - | - |
+| list_name | string | yes | - | - |
+| score | integer | yes | - | - |
+| last_update | date | yes | - | - |
+| is_person | boolean | yes | - | - |
+| is_active | boolean | yes | - | - |
+| linked_document | string | yes | - | - |
+| other_information | string | yes | - | - |
+| checked_at | string | yes | - | - |
 
 ### Examples
 
@@ -233,6 +263,108 @@ Webhook in case user chooses that he does not have account in any of supported b
 }
 ```
 
+Webhook with aml data:
+
+```json
+{
+  "data": {
+    "provided_email": "john.doe@example.com",
+    "id": "db02c4e0-af7a-4cb7-8a4e-b6b96273cd24",
+    "document_type": "PASSPORT",
+    "identity_verification_failed": false,
+    "client_ip": "177.77.77.196",
+    "bank_account_requested": false,
+    "finish_time": "2023-12-07T13:16:44Z",
+    "suspicion_reasons": [],
+    "document_valid_until": "2024-03-09",
+    "auto_document": "DOC_VALIDATED",
+    "aml_status_overall": "SUSPECTED",
+    "overall": "APPROVED",
+    "fraud_tags": [],
+    "aml_status_service_suspected": true,
+    "aml_error_message": null,
+    "provided_is_sanctioned": false,
+    "aml_status_service_found": true,
+    "aml_requested": true,
+    "start_time": "2023-12-07T13:16:44Z",
+    "auto_face": "FACE_MATCH",
+    "aditional_steps": null,
+    "provided_surname": "Doe",
+    "bank_account_unsupported_integration": false,
+    "document_number": "DE4878783",
+    "platform": "PC",
+    "aml_request_failed": null,
+    "manual_face": "FACE_MATCH",
+    "client_ip_country": "LT",
+    "aml_uid": "FAFQLS95W7Z0JI9HL13VZBMX6",
+    "client_location": "Kaunas, Lithuania",
+    "bank_account_iban": null,
+    "provided_name": "John",
+    "mismatch_tags": [],
+    "aml_items": [
+      {
+        "checked_at": "2023-10-11T15:28:21Z",
+        "dob": "31 AUG 1954",
+        "is_active": true,
+        "is_person": true,
+        "last_update": "2022-03-16",
+        "linked_document": "https://sanctionssearch.ofac.treas.gov/Details.aspx?id=9760",
+        "list_name": "OFAC",
+        "list_number": "UNKNOWN",
+        "name": "JOHN SIMPSON",
+        "nationality": "BELARUS",
+        "other_information": null,
+        "reason": "BELARUS PROGRAM",
+        "score": 100,
+        "surname": "DOE",
+        "suspicion": "SANCTION"
+      },
+      {
+        "checked_at": "2023-10-11T15:28:21Z",
+        "dob": "30 AUG 1954",
+        "is_active": true,
+        "is_person": true,
+        "last_update": "2022-03-16",
+        "linked_document": "https://sanctionssearch.ofac.treas.gov/Details.aspx?id=9760",
+        "list_name": "OFAC",
+        "list_number": "UNKNOWN",
+        "name": "JOHN SIMPSON",
+        "nationality": "BELARUS",
+        "other_information": null,
+        "reason": "BELARUS PROGRAM",
+        "score": 100,
+        "surname": "DOE",
+        "suspicion": "SANCTION"
+      },
+      {
+        "checked_at": "2023-10-11T15:28:21Z",
+        "dob": "1954",
+        "is_active": true,
+        "is_person": true,
+        "last_update": "2022-07-08",
+        "linked_document": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=uriserv%3AOJ.L_.2021.068.01.0029.01.ENG&toc=OJ%3AL%3A2021%3A068%3ATOC",
+        "list_name": "EU",
+        "list_number": "UNKNOWN",
+        "name": "JOHN SIMPSON",
+        "nationality": "BELARUS",
+        "other_information": "UNKNOWN",
+        "reason": "EU.5971.83 ",
+        "score": 100,
+        "surname": "DOE",
+        "suspicion": "SANCTION"
+      }
+    ],
+    "aml_status_service_used": true,
+    "provided_is_pep": false,
+    "bank_account_owner_name": null,
+    "aml_status_check_successfull": true,
+    "manual_document": "DOC_VALIDATED"
+  },
+  "nonce": "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5",
+  "signature": "0737c19043d13ce9590956998f3a3f1b6940d66e3f0c6d5c331da96f4a8b47e3"
+}
+```
+
 ### Signature
 
 To verify signature, you need to concat all returned values from data, nonce and you client secret. These data should be separated using pipe `|`. Resulting string is then neceseary to hash using `SHA256` algorithm. Then it should be base16 encoded and all character should be downcased. For instance if I have imaginary webhook containing only 2 parameters first_name and last_name so webhook should look like this:
@@ -304,6 +436,18 @@ In case of `"identity_verification_failed": true`, identity documents are omitte
 - bank_account_owner_name
 - bank_account_iban
 - identity_verification_failed
+
+In case of AML, those attributes are also included in signature:
+
+- aml_requested,
+- aml_request_failed,
+- aml_status_service_suspected,
+- aml_status_service_used,
+- aml_status_service_found,
+- aml_status_check_successfull,
+- aml_status_overall,
+- aml_error_message,
+- aml_uid
 
 ## Testing
 
