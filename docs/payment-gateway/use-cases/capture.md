@@ -133,9 +133,9 @@ This feature needs to be enabled for your specific account, therefore if you pla
 
 5. Now it's possible to do full capture meaning charging customer's card for whole amount which was pre-authorized or you can do partial capture.
 
-6. Example request for full capture (note ID of the checkout in the request path and sending empty body):
+6. Full capture example (note ID of the checkout in the request path and sending empty body):
 ```bash
-   curl --location --request POST 'https://app.payout.one/api/v1/checkouts/32222' \
+   curl --location --request POST 'https://app.payout.one/api/v1/checkouts/32222/capture' \
    --header 'Content-Type: application/json' \
    --header 'Authorization: Bearer SFMyNTY.g2gDYSFuBgCaSXELfgFiAAFRgA.WnBcvEfet2jJr4OPF984RGTKu-8HcHPQKJitk_kJKiU' \
    --header 'Accept: application/json' \
@@ -143,9 +143,9 @@ This feature needs to be enabled for your specific account, therefore if you pla
    --data-raw '{}'
    ```
 
-6. Example request for partial capture (note ID of the checkout in the request path and amount param in the body):
+6. Partial capture example (note ID of the checkout in the request path and amount param in the body):
 ```bash
-   curl --location --request POST 'https://app.payout.one/api/v1/checkouts/32222' \
+   curl --location --request POST 'https://app.payout.one/api/v1/checkouts/32222/capture' \
    --header 'Content-Type: application/json' \
    --header 'Authorization: Bearer SFMyNTY.g2gDYSFuBgCaSXELfgFiAAFRgA.WnBcvEfet2jJr4OPF984RGTKu-8HcHPQKJitk_kJKiU' \
    --header 'Accept: application/json' \
