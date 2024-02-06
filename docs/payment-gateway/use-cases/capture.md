@@ -95,7 +95,7 @@ This feature needs to be enabled for your specific account, therefore if you pla
    > Some algorithms implementations generate output in UPPERCASE form so please change all characters into lowercase form.
 
 4. After successful payment, webhook of type **checkout.captured** is sent to your server indicating successful authorization of amount on card :
-    * **checkout.succeeded**
+    * **checkout.captured**
     ```json
      {
       "data": {
