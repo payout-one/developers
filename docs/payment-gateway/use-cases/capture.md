@@ -94,8 +94,8 @@ This feature needs to be enabled for your specific account, therefore if you pla
    > [!NOTE]
    > Some algorithms implementations generate output in UPPERCASE form so please change all characters into lowercase form.
 
-4. After successful payment, webhook of type **checkout.captured** is sent to your server indicating successful authorization of amount on card :
-    * **checkout.captured**
+4. After successful payment, webhook of type **checkout.pre_authorized** is sent to your server indicating successful authorization of amount on card :
+    * **checkout.pre_authorized**
     ```json
      {
       "data": {
@@ -155,7 +155,7 @@ This feature needs to be enabled for your specific account, therefore if you pla
    }'
    ```
 
-8. After successful capture of funds there is sent **checkout.succeeded** webhook.
+8. After successful capture of funds there is sent **checkout.captured** webhook.
 
 **Test cards**
 
