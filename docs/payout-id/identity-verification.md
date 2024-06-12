@@ -367,26 +367,26 @@ Webhook with aml data:
 
 ### Signature
 
-To verify signature, you need to concat all returned values from data, nonce and you client secret. These data should be separated using pipe `|`. In case of arrays in the response, they are concatenated without any separator, so `["test", "value"]` became `"testvalue"`. Boolean values are represented in resulting string as `true` and `false` strings. Empty array (`[]`) or `null` are represented as empty strings. Resulting string is then neceseary to hash using `SHA256` algorithm. Then it should be base16 encoded and all character should be downcased. For instance if I have imaginary webhook containing only 2 parameters first_name and last_name so webhook should look like this:
+To verify signature, you need to concat all returned values from data, nonce and you client secret. These data should be separated using pipe `|`. In case of arrays in the response, they are concatenated without any separator, so `["test", "value"]` became `"testvalue"`. Boolean values are represented in resulting string as `true` and `false` strings. Empty array (`[]`) or `null` are represented as empty strings. Resulting string is then neceseary to hash using `SHA256` algorithm. Then it should be base16 encoded and all character should be downcased. For instance if I have imaginary webhook containing parameters first_name, last_name, children, married, age and hobies then webhook should look like this:
 
 ```json
 {
   "data": {"first_name": "John", "last_name": "Doe", "children": [], "married": true, "age": null, "hobies": ["guitar", "skying"]},
   "nonce": "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5",
-  "signature": "f9103f11df84a18e56bba35fca3f4bcd5c51d49d516b3b10eb109232f91e7289"
+  "signature": "25c304386d0195803370da336d46919933fc64397b8e59c669aed90b5ec58ba8"
 }
 ```
 
-And given my client secret is `c57f41ac-3bfb-4bb5-b18f-00cca093d97b`. Then I would construct input string as `$first_name|$last_name|$children|@married|@age|@hobies|$nonce|$client_secret`:
+And given my client secret is `c57f41ac-3bfb-4bb5-b18f-00cca093d97b`. Then I would construct input string as `$first_name|$last_name|$children|$married|$age|$hobies|$nonce|$client_secret`:
 
 ```
-John|Doe||true|guitarskying|YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5|c57f41ac-3bfb-4bb5-b18f-00cca093d97b
+John|Doe||true||guitarskying|YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5|c57f41ac-3bfb-4bb5-b18f-00cca093d97b
 ```
 
 This string is then `SHA256`, `BASE16` and down cased. Result should be:
 
 ```
-f9103f11df84a18e56bba35fca3f4bcd5c51d49d516b3b10eb109232f91e7289
+25c304386d0195803370da336d46919933fc64397b8e59c669aed90b5ec58ba8
 ```
 
 If signature is valid, it should be same as signature parameter.
