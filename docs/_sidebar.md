@@ -3,6 +3,7 @@
 - [Services](services.md "Services")
 - [PayoutID (OIDC and Identity verification)](payout-id.md "PayoutID")
   - [OAuth2](/payout-id/oauth.md "OAuth2")
+  - [OAuth2 New](/payout-id/oauth-new.md "OAuth2 New")
   - [Banklink](/payout-id/banklink.md "Banklink")
   - [Identity verification](/payout-id/identity-verification.md "Identity verification")
 - [Banklink (OpenBanking Aggregator)](banklink.md "Banklink")
