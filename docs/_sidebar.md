@@ -18,4 +18,4 @@
     - [Recurrent payment](/payment-gateway/use-cases/recurrent-payment.md "Recurrent payment")
     - [Apple Pay JS](/payment-gateway/use-cases/apple-pay-js.md "Apple Pay JS")
     - [Checkout payment methods](/payment-gateway/use-cases/checkout-payment-methods.md "Checkout payment methods")
-    - [Capture](/payment-gateway/use-cases/capture.md "Capture")
+    - [Capture & Cancel](/payment-gateway/use-cases/capture.md "Capture & Cancel")

@@ -1,4 +1,6 @@
-# Capture payment
+# Capture & Cancel payment
+
+## Capture
 
 In the case of card payments, it is possible to authorize a certain order amount and capture full or only a portion of the funds deposited. This can be useful when some of the purchased items are unavailable or when the charge for renting a vehicle exceeds the actual amount to be paid.
 
@@ -168,3 +170,18 @@ This feature needs to be enabled for your specific account, therefore if you pla
 | 5100052384536818 | 02	| 32 | 123 | challenge required / if no 3DS is used, returns soft decline (SSD)	|	Positive authorization
 | 5100052384536826 | 12	| 29 | 123 | frictionless positive authentication	|	Positive authorization
 | 5521455186577727 | 12	| 29 | 123 | frictionless negative authentication	|	no authorization (authentication fails)
+
+
+## Cancel
+> It's possible to cancel checkout if a product or service is not delivered.
+>
+> Only checkouts for which **checkout.captured** webhook was not triggered can be cancelled.
+
+To cancel pre-authorized checkout and proceed with a refund to the Payer's account, call the endpoint `/api/v1/checkouts/{checkoutId}` using the DELETE method.
+```bash
+   curl --location --request DELETE 'https://app.payout.one/api/v1/checkouts/32222' \
+   --header 'Content-Type: application/json' \
+   --header 'Authorization: Bearer SFMyNTY.g2gDYSFuBgCaSXELfgFiAAFRgA.WnBcvEfet2jJr4OPF984RGTKu-8HcHPQKJitk_kJKiU' \
+   --header 'Accept: application/json' \
+   --header 'Idempotency-Key: 74775d02-745f-4198-cf3c-be9f1971dabe'
+   ```
