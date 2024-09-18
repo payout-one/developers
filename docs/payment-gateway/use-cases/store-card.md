@@ -22,7 +22,7 @@
     "valid_for": 6000
    }
    ```
-3. Create a checkout with details from your order as in the Simple Payment example, but with special parameters _mode_ with value **store_card** and **recurring** with value **false**. It's a POST HTTP call with a JSON body. The call must also contain an Authorization header with the Bearer token from the previous step
+3. Create a checkout with details from your order as in the Simple Payment example, but with special parameters _mode_ with value **store_card** and _recurring_ with value **false**. It's a POST HTTP call with a JSON body. The call must also contain an Authorization header with the Bearer token from the previous step
    ```bash
    curl --location --request POST 'https://app.payout.one/api/v1/checkouts' \
    --header 'Content-Type: application/json' \
@@ -144,7 +144,58 @@
     }
     ```
 
-5. With the received card token from the webhook, you can now make a payment with the saved card. It's basically identical to the previous request for checkout creation. You just have to add the checkout parameter _card_token_ with the value of the received token from the webhook payu_token.created.
+5. With the received card token from the webhook, you can now make a payment with the saved card. It's basically identical to the previous request for checkout creation. You just have to add the checkout parameter **card_token** with the value of the received token from the webhook payu_token.created.
+```bash
+   curl --location --request POST 'https://app.payout.one/api/v1/checkouts' \
+   --header 'Content-Type: application/json' \
+   --header 'Authorization: Bearer SFMyNTY.g2gDYSFuBgCaSXELfgFiAAFRgA.WnBcvEfet2jJr4OPF984RGTKu-8HcHPQKJitk_kJKiU' \
+   --header 'Accept: application/json' \
+   --header 'Idempotency-Key: 74775d02-745f-4198-cf3c-be9f1971dabe' \
+   --data-raw '{
+       "amount": "300",
+       "currency": "EUR",
+       "iban": "SK5511000000002611391222",
+       "mode": "store_card",
+       "card_token": "QTEyOEdDTQ.IuWl453sdfsdfsdf8DJRuXdJetbTXA8-vRQWxJYm6zkXB5O0Vxuok019V8.ool6VIXh-u-9dy_C._n2ioCHjys3teQ8WmEM5W08ESwwXTjT0mpLdiLZdLwhJjhbtTW33HdKbNAZFfdgdfg4erggre345a-e9KamwQzXW0_lK8vw.YTYfmlJ65UkVSMa9uXhgLw",
+       "recurring": false,
+       "customer": {
+           "first_name": "John",
+           "last_name": "Doe",
+           "email": "john.doe@payout.one",
+           "phone": "123-4567890"
+       },
+       "billing_address": {
+           "name": "John Doe",
+           "address_line_1": "Billing Address Line 1",
+           "address_line_2": "Billing Address Line 2",
+           "city": "Billington",
+           "postal_code": "BL92883",
+           "country_code": "GB"
+       },
+       "shipping_address": {
+           "name": "John Doe",
+           "address_line_1": "Shipping Address Line 1",
+           "address_line_2": "Shipping Address Line 2",
+           "city": "Shippington",
+           "postal_code": "W153KF",
+           "country_code": "GB"
+       },
+       "products": [
+           {
+               "name": "Product 1",
+               "unit_price": 100,
+               "quantity": 3
+           }
+       ],
+       "external_id": "74775d02-745f-4198-cf3c-be9f1971dabe",
+       "nonce": "1474e979-9f64-012a-6d8a-f00957d4a4a0",
+       "metadata": {
+           "note": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been."
+       },
+       "redirect_url": "https://some-eshop.local/merchant_redirect_url",
+       "signature": "ef30790284ffb097e7e4b0d1162db605f97f52c59f0cfc877870bde4e61f7d77"
+   }'
+   ```
 
 6. Based on the amount of the payments with stored cards, it's possible that payment will be processed without 3D Secure, but it's not guaranteed and there is a higher probability that 3D Secure will be required. Therefore, it's necessary to redirect the customer to our checkout page where the payment can be confirmed.
 
