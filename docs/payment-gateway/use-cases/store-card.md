@@ -1,4 +1,4 @@
-# Recurrent payment
+# Store Card
 
 1. Generate API key and secret
    * You can do this in the backoffice ([Sandbox](https://sandbox.payout.one/developers/keys/new) or [Production](https://app.payout.one/developers/keys/new)) after you have already created an account.
@@ -22,7 +22,7 @@
     "valid_for": 6000
    }
    ```
-3. Create a checkout with details from your order as in the Simple Payment example, but with a special parameter _mode_ and value **store_card**. It's a POST HTTP call with a JSON body. The call must also contain an Authorization header with the Bearer token from the previous step
+3. Create a checkout with details from your order as in the Simple Payment example, but with special parameters _mode_ with value **store_card** and **recurring** with value **false**. It's a POST HTTP call with a JSON body. The call must also contain an Authorization header with the Bearer token from the previous step
    ```bash
    curl --location --request POST 'https://app.payout.one/api/v1/checkouts' \
    --header 'Content-Type: application/json' \
@@ -34,6 +34,7 @@
        "currency": "EUR",
        "iban": "SK5511000000002611391222",
        "mode": "store_card",
+       "recurring": false,
        "customer": {
            "first_name": "John",
            "last_name": "Doe",
@@ -126,7 +127,7 @@
       "external_id": "9207dd00-d8f1-475a-a317-1067b487fdd6"
     }
     ```
-    * **payu_token.created** - contains card_mask and token for recurrent payments
+    * **payu_token.created** - contains card_mask and token for stored card.
     ```json
      {
       "data": {
@@ -143,9 +144,11 @@
     }
     ```
 
-5. With the received recurrent token from the webhook, you can now make a recurrent payment with the saved card. It's basically identical to the previous request for checkout creation. You have to change the checkout parameter _mode_ to the value **recurrent** and add an additional required parameter recurrent_token with the value from the payu_token.created webhook.
+5. With the received card token from the webhook, you can now make a payment with the saved card. It's basically identical to the previous request for checkout creation. You just have to add the checkout parameter _card_token_ with the value of the received token from the webhook payu_token.created.
 
-6. After a successful recurrent payment, a **checkout.succeeded** webhook is sent.
+6. Based on the amount of the payments with stored cards, it's possible that payment will be processed without 3D Secure, but it's not guaranteed and there is a higher probability that 3D Secure will be required. Therefore, it's necessary to redirect the customer to our checkout page where the payment can be confirmed.
+
+7. After a successful payment, a **checkout.succeeded** webhook is sent.
 
 **Test cards**
 
