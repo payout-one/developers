@@ -144,7 +144,7 @@
     }
     ```
 
-5. With the received card token from the webhook, you can now make a payment with the saved card. It's basically identical to the previous request for checkout creation. You just have to add the checkout parameter **card_token** with the value of the received token from the webhook payu_token.created.
+5. With the received card token from the webhook, you can now make a payment with the saved card. It's basically identical to the previous request for checkout creation. You just have to change checkout _mode_ to **card_on_file** and add the checkout parameter **card_token** with the value of the received token from the webhook payu_token.created.
 ```bash
    curl --location --request POST 'https://app.payout.one/api/v1/checkouts' \
    --header 'Content-Type: application/json' \
@@ -155,7 +155,7 @@
        "amount": "300",
        "currency": "EUR",
        "iban": "SK5511000000002611391222",
-       "mode": "store_card",
+       "mode": "card_on_file",
        "card_token": "QTEyOEdDTQ.IuWl453sdfsdfsdf8DJRuXdJetbTXA8-vRQWxJYm6zkXB5O0Vxuok019V8.ool6VIXh-u-9dy_C._n2ioCHjys3teQ8WmEM5W08ESwwXTjT0mpLdiLZdLwhJjhbtTW33HdKbNAZFfdgdfg4erggre345a-e9KamwQzXW0_lK8vw.YTYfmlJ65UkVSMa9uXhgLw",
        "recurring": false,
        "customer": {
