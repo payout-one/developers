@@ -22,16 +22,25 @@ Documentation for verification invitation endpoint can be found [here](https://d
 
 You need to retrieve this token using `client credentials grant`, with required scope `verify` and optional scopes `account_info`, in case you want to retrieve client bank account details, and `aml` in case you want to retrieve list where verified user is present. [Here](https://documenter.getpostman.com/view/10478778/2s9YsFDYzn#f885ffae-52a8-47b8-86e1-decceb9fec2c) you will find documentation for access token endpoint.
 
-## Webhook
+## Webhooks
 
-After all required data is collected, it is send to client using webhook, webhook is also signed and client should verify signature to prevent fraudelant calls. Webhook is delivered using `POST` method. To url client provides as `notify_url` in request to create identity verification invitation.
+After data is collected, it is sent to the client using webhooks. There are two types of webhooks:
+1. Identity verification webhook (sent to `notify_url`)
+2. AML check webhook (sent to `aml_notify_url`)
 
-### Attributes
+Both webhooks are signed and clients should verify signatures to prevent fraudulent calls. Webhooks are delivered using `POST` method.
+
+### Identity Verification Webhook
+
+This webhook contains the result of identity verification and bank account details (if requested). It is sent to the URL provided as `notify_url` in the invitation request.
+
+#### Attributes
 
 Webhook will contain following attributes:
 
 | path | type | required | example | description |
 | ---- | ---- | --- | --- | --- |
+| type | string | yes | IDENTITY_CHECK | Webhook Type |
 | data | object | yes | - | contains all data |
 | data/id | string | yes | "edf29e60-45a5-463b-b120-033e835df3ce" | identificator of invitation, should be same as in invitation create response |
 | data/provided_email | string | yes | "john.doe@example.com" | email provided by user |
@@ -108,6 +117,35 @@ Webhook will contain following attributes:
 - PROOF_OF_AGE_CARD
 - DIPLOMATIC_ID
 
+
+
+### AML Check Webhook
+
+This webhook contains AML check results. It is sent to the URL provided as `aml_notify_url` in the invitation request. Multiple AML check webhooks might be delivered for a single invitation as the monitoring continues.
+
+#### Attributes
+
+Webhook will contain following attributes:
+
+| path | type | required | example | description |
+| ---- | ---- | --- | --- | --- |
+| type | string | yes | AML_CHECK | Webhook Type |
+| data | object | yes | - | contains all data |
+| data/id | string | yes | "edf29e60-45a5-463b-b120-033e835df3ce" | identificator of invitation, should be same as in invitation create response |
+| data/aml_request_failed | boolean | no | false | - |
+| data/aml_error_message | string | no | - | - |
+| data/aml_status_service_suspected | boolean | no | - | - |
+| data/aml_status_service_used | boolean | no | - | - |
+| data/aml_status_service_found | boolean | no | - | - |
+| data/aml_status_check_successfull | boolean | no | - | - |
+| data/aml_status_overall | string | no | "SUSPECTED" | Overall result of check |
+| data/aml_error_message | string | no | - | - |
+| data/aml_uid | string | no | - | - |
+| data/aml_items | array of [AML Item](#aml-item) | no | [] | - |
+| signature | string | yes | - | Signature to verify origin of the returned data |
+| nonce | string | yes | - | Used to sign data |
+
+
 #### AML Item
 
 | path | type | required | example | description |
@@ -130,7 +168,7 @@ Webhook will contain following attributes:
 
 ### Examples
 
-Successfull and only identity verification:
+Successful Identity Verification Webhook:
 
 ``` json
 {
@@ -299,52 +337,20 @@ Webhook in case user chooses that he does not have account in any of supported b
 }
 ```
 
-Webhook with aml data:
+AML Check Webhook:
 
 ```json
 {
   "data": {
-    "provided_email": "email@example.com",
     "id": "b93e7497-1726-4216-8516-df678d86ca03",
-    "document_type": "PASSPORT",
-    "identity_verification_failed": false,
-    "client_ip": "177.77.77.196",
-    "bank_account_requested": false,
-    "finish_time": "2023-12-07T13:16:44Z",
-    "suspicion_reasons": [],
-    "document_valid_until": "2024-03-09",
-    "auto_document": "DOC_VALIDATED",
-    "aml_status_overall": "SUSPECTED",
-    "overall": "APPROVED",
-    "fraud_tags": [],
-    "aml_status_service_suspected": true,
-    "aml_error_message": null,
-    "provided_is_sanctioned": false,
-    "aml_status_service_found": true,
-    "document_birth_place": "LONDON",
-    "document_first_name": "JOHN",
-    "aml_requested": true,
-    "document_nationality": "NL",
-    "start_time": "2023-12-07T13:16:44Z",
-    "document_last_name": "DOE",
-    "auto_face": "FACE_MATCH",
-    "document_issuing_country": "NL",
-    "aditional_steps": null,
-    "provided_surname": "Doe",
-    "bank_account_unsupported_integration": false,
-    "document_number": "DE4878783",
-    "platform": "PC",
-    "document_back_url": "http://localhost:9000/payout-id/identity_verifications/a5596788-9a7d-4f67-ac87-5be20cca5e69/document_back.png?response-content-disposition=attachment&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=kc8AJeOICZodU2ZahIXP%2F20241101%2Flocal%2Fs3%2Faws4_request&X-Amz-Date=20241101T120228Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=dd050b90f7d40a81f4dafb783a78b6f30c86273e4b8cdac757918a80d6bf7869",
-    "aml_request_failed": null,
-    "manual_face": "FACE_MATCH",
-    "client_ip_country": "LT",
-    "aml_uid": "FAFQLS95W7Z0JI9HL13VZBMX6",
-    "client_location": "Kaunas, Lithuania",
-    "bank_account_iban": null,
-    "document_sex": "MALE",
-    "provided_name": "John",
-    "mismatch_tags": [],
-    "aml_items": [
+    "status_service_suspected": true,
+    "status_service_used": true,
+    "status_service_found": true,
+    "status_check_successful": true,
+    "status_overall": "SUSPECTED",
+    "error_message": null,
+    "uid": "FAFQLS95W7Z0JI9HL13VZBMX6",
+    "items": [
       {
         "checked_at": "2023-10-11T15:28:21Z",
         "dob": "31 AUG 1954",
@@ -396,17 +402,10 @@ Webhook with aml data:
         "surname": "DOE",
         "suspicion": "SANCTION"
       }
-    ],
-    "document_front_url": "http://localhost:9000/payout-id/identity_verifications/a5596788-9a7d-4f67-ac87-5be20cca5e69/document_front.png?response-content-disposition=attachment&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=kc8AJeOICZodU2ZahIXP%2F20241101%2Flocal%2Fs3%2Faws4_request&X-Amz-Date=20241101T120228Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=3df0341d5f820c8e55ed58291603e85e857b499e07b793fcc10e411d5e11e10d",
-    "aml_status_service_used": true,
-    "photo_face_url": "http://localhost:9000/payout-id/identity_verifications/a5596788-9a7d-4f67-ac87-5be20cca5e69/photo_face.png?response-content-disposition=attachment&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=kc8AJeOICZodU2ZahIXP%2F20241101%2Flocal%2Fs3%2Faws4_request&X-Amz-Date=20241101T120228Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=f0a53ed1ed0c0ce8e632dfc6dd9376beab9e37cd8171a9057859c502afe2b966",
-    "provided_is_pep": false,
-    "bank_account_owner_name": null,
-    "aml_status_check_successfull": true,
-    "manual_document": "DOC_VALIDATED"
+    ]
   },
   "nonce": "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5",
-  "signature": "f367ca2bb82cb4047a0c43d5cf84b280ac4011b639234bf8331eb9b7222237b4"
+  "signature": "2e2e8ebdad9aacda677d28288edf6cb2e531f77dc15b357ecdc4663bbcf78c2e"
 }
 ```
 
@@ -436,7 +435,7 @@ This string is then `SHA256`, `BASE16` and down cased. Result should be:
 
 If signature is valid, it should be same as signature parameter.
 
-Parameters for signature should be in this order:
+For Identity Verification webhook, parameters should be in this order::
 
 - platform
 - start_time
@@ -488,17 +487,16 @@ In case of `"identity_verification_failed": true`, identity documents are omitte
 - bank_account_iban
 - identity_verification_failed
 
-In case of AML, those attributes are also included in signature, they are added at the end of signed string:
+For AML Check webhook, parameters for signature should be in this order:
 
-- aml_requested,
-- aml_request_failed,
-- aml_status_service_suspected,
-- aml_status_service_used,
-- aml_status_service_found,
-- aml_status_check_successfull,
-- aml_status_overall,
-- aml_error_message,
-- aml_uid
+- id
+- status_service_suspected
+- status_service_used
+- status_service_found
+- status_check_successful
+- status_overall
+- error_message
+- uid
 
 ## Testing
 
