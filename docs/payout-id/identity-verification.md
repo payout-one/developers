@@ -75,6 +75,8 @@ Webhook will contain following attributes:
 | data/document_nationality | string | no | - | Nationality scanned from the document |
 | data/document_issuing_country | string | no | - | Issuing country of the document |
 | data/document_birth_place | string | no | - | Birth place scanned from the document |
+| data/document_person_code | string | no | - | Personal code scanned from the document |
+| data/document_date_of_birth | string | no | - | Date of birth scanned from the document |
 | data/photo_face_url | string | no | - | URL download face photo of user. URL will expire in one hour. |
 | data/platform | string | - | - | - |
 | data/manual_face | string | no | "FACE_MATCH" | Result of manual examination of photos |
@@ -189,6 +191,8 @@ Successful Identity Verification Webhook:
     "document_birth_place": "LONDON",
     "document_first_name": "JOHN",
     "document_nationality": "NL",
+    "document_personal_code": "801012/8420",
+    "document_date_of_birth": "1980-10-12",
     "start_time": "2023-12-07T13:16:44Z",
     "document_last_name": "DOE",
     "auto_face": "FACE_MATCH",
@@ -213,7 +217,7 @@ Successful Identity Verification Webhook:
     "manual_document": "DOC_VALIDATED"
   },
   "nonce": "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5",
-  "signature": "3cbb50fb940f374494217c12123c582e508316f661fb7e81bc65166be1b91aa0"
+  "signature": "73c9842f5512e1cba56c22b6522efa76d55cadb87f5b9d440e5b459ab4ff4e96"
 }
 ```
 
@@ -260,6 +264,8 @@ Webhook when also account details are returned:
     "document_birth_place": "LONDON",
     "document_first_name": "JOHN",
     "document_nationality": "NL",
+    "document_personal_code": "801012/8420",
+    "document_date_of_birth": "1980-10-12",
     "start_time": "2023-12-07T13:16:44Z",
     "document_last_name": "DOE",
     "auto_face": "FACE_MATCH",
@@ -284,7 +290,7 @@ Webhook when also account details are returned:
     "manual_document": "DOC_VALIDATED"
   },
   "nonce": "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5",
-  "signature": "ad5ccb9cc1fa858d6e504eac65f5c785423c267ca63f254418b96c76bf4a2b27"
+  "signature": "8e4c1f2a9b3d567890e12345f6789abcd0123456789abcdef0123456789abcdef"
 }
 ```
 
@@ -309,6 +315,8 @@ Webhook in case user chooses that he does not have account in any of supported b
     "document_birth_place": "LONDON",
     "document_first_name": "JOHN",
     "document_nationality": "NL",
+    "document_personal_code": "801012/8420",
+    "document_date_of_birth": "1980-10-12",
     "start_time": "2023-12-07T13:16:44Z",
     "document_last_name": "DOE",
     "auto_face": "FACE_MATCH",
@@ -333,7 +341,7 @@ Webhook in case user chooses that he does not have account in any of supported b
     "manual_document": "DOC_VALIDATED"
   },
   "nonce": "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5",
-  "signature": "eb1eca0fe8ee620391b67682ceb56855243211b5d4bc86b9f0d996c785cbeb7c"
+  "signature": "b9a87c65d4e3f210987654321fedcba0123456789abcdef0123456789abcdef01"
 }
 ```
 
@@ -461,6 +469,8 @@ For Identity Verification webhook, parameters should be in this order::
 - document_nationality
 - document_issuing_country
 - document_birth_place
+- document_personal_code
+- document_date_of_birth
 - id
 - provided_email
 - provided_name
