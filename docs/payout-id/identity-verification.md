@@ -75,7 +75,7 @@ Webhook will contain following attributes:
 | data/document_nationality | string | no | - | Nationality scanned from the document |
 | data/document_issuing_country | string | no | - | Issuing country of the document |
 | data/document_birth_place | string | no | - | Birth place scanned from the document |
-| data/document_person_code | string | no | - | Personal code scanned from the document |
+| data/document_personal_code | string | no | - | Personal code scanned from the document |
 | data/document_date_of_birth | string | no | - | Date of birth scanned from the document |
 | data/photo_face_url | string | no | - | URL download face photo of user. URL will expire in one hour. |
 | data/platform | string | - | - | - |
