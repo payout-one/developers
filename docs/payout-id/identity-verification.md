@@ -452,7 +452,7 @@ For Identity Verification webhook, parameters should be in this order::
 - client_ip_country
 - client_location
 - overall
-- suspicious_reasons
+- suspicion_reasons
 - mismatch_tags
 - fraud_tags
 - auto_document
@@ -463,6 +463,8 @@ For Identity Verification webhook, parameters should be in this order::
 - document_valid_until
 - document_type
 - document_number
+- document_front_url
+- document_back_url
 - document_first_name
 - document_last_name
 - document_sex
@@ -471,6 +473,7 @@ For Identity Verification webhook, parameters should be in this order::
 - document_birth_place
 - document_personal_code
 - document_date_of_birth
+- photo_face_url
 - id
 - provided_email
 - provided_name
