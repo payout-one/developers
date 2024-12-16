@@ -7,7 +7,7 @@
 2. Make authorization call to get Bearer token
 
    ```bash
-   curl --location --request POST 'https://test.payout.one/api/v1/authorize' \
+   curl --location --request POST 'https://sandbox.payout.one/api/v1/authorize' \
    --header 'Content-Type: application/json' \
    --header 'Accept: application/json' \
    --data-raw '{
@@ -25,7 +25,7 @@
    
 3. Create request with details from checkout. It's POST HTTP call with JSON body. Call have to contain also Authorization header with Bearer token from previous step
    ```bash
-   curl --location --request POST 'https://app.payout.one/api/v1/refunds' \
+   curl --location --request POST 'https://sandbox.payout.one/api/v1/refunds' \
    --header 'Content-Type: application/json' \
    --header 'Authorization: Bearer SFMyNTY.g2gDYSFuBgCaSXELfgFiAAFRgA.WnBcvEfet2jJr4OPF984RGTKu-8HcHPQKJitk_kJKiU' \
    --header 'Accept: application/json' \
