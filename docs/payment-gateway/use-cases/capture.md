@@ -13,7 +13,7 @@ This feature needs to be enabled for your specific account, therefore if you pla
 2. Make authorization call to get Bearer token
 
    ```bash
-   curl --location --request POST 'https://test.payout.one/api/v1/authorize' \
+   curl --location --request POST 'https://sandbox.payout.one/api/v1/authorize' \
    --header 'Content-Type: application/json' \
    --header 'Accept: application/json' \
    --data-raw '{
@@ -30,7 +30,7 @@ This feature needs to be enabled for your specific account, therefore if you pla
    ```
 3. Create checkout with amount you want to authorize on card similarly as in Simple Payment example but with special parameter _mode_ for checkout and value **pre_authorization**. It's POST HTTP call with JSON body. Call have to contain also Authorization header with Bearer token from previous step
    ```bash
-   curl --location --request POST 'https://app.payout.one/api/v1/checkouts' \
+   curl --location --request POST 'https://sandbox.payout.one/api/v1/checkouts' \
    --header 'Content-Type: application/json' \
    --header 'Authorization: Bearer SFMyNTY.g2gDYSFuBgCaSXELfgFiAAFRgA.WnBcvEfet2jJr4OPF984RGTKu-8HcHPQKJitk_kJKiU' \
    --header 'Accept: application/json' \
@@ -137,7 +137,7 @@ This feature needs to be enabled for your specific account, therefore if you pla
 
 6. Full capture example (note ID of the checkout in the request path and sending empty body):
 ```bash
-   curl --location --request POST 'https://app.payout.one/api/v1/checkouts/32222/capture' \
+   curl --location --request POST 'https://sandbox.payout.one/api/v1/checkouts/32222/capture' \
    --header 'Content-Type: application/json' \
    --header 'Authorization: Bearer SFMyNTY.g2gDYSFuBgCaSXELfgFiAAFRgA.WnBcvEfet2jJr4OPF984RGTKu-8HcHPQKJitk_kJKiU' \
    --header 'Accept: application/json' \
@@ -147,7 +147,7 @@ This feature needs to be enabled for your specific account, therefore if you pla
 
 6. Partial capture example (note ID of the checkout in the request path and amount param in the body):
 ```bash
-   curl --location --request POST 'https://app.payout.one/api/v1/checkouts/32222/capture' \
+   curl --location --request POST 'https://sandbox.payout.one/api/v1/checkouts/32222/capture' \
    --header 'Content-Type: application/json' \
    --header 'Authorization: Bearer SFMyNTY.g2gDYSFuBgCaSXELfgFiAAFRgA.WnBcvEfet2jJr4OPF984RGTKu-8HcHPQKJitk_kJKiU' \
    --header 'Accept: application/json' \
@@ -179,7 +179,7 @@ This feature needs to be enabled for your specific account, therefore if you pla
 
 To cancel pre-authorized checkout and proceed with a refund to the Payer's account, call the endpoint `/api/v1/checkouts/{checkoutId}` using the DELETE method.
 ```bash
-   curl --location --request DELETE 'https://app.payout.one/api/v1/checkouts/32222' \
+   curl --location --request DELETE 'https://sandbox.payout.one/api/v1/checkouts/32222' \
    --header 'Content-Type: application/json' \
    --header 'Authorization: Bearer SFMyNTY.g2gDYSFuBgCaSXELfgFiAAFRgA.WnBcvEfet2jJr4OPF984RGTKu-8HcHPQKJitk_kJKiU' \
    --header 'Accept: application/json' \

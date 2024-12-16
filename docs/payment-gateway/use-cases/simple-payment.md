@@ -9,7 +9,7 @@ Simple example how to make simple payment
 2. Make authorization call to get Bearer token
 
    ```bash
-   curl --location --request POST 'https://test.payout.one/api/v1/authorize' \
+   curl --location --request POST 'https://sandbox.payout.one/api/v1/authorize' \
    --header 'Content-Type: application/json' \
    --header 'Accept: application/json' \
    --data-raw '{
@@ -26,7 +26,7 @@ Simple example how to make simple payment
    ```
 3. Create checkout with details from your order. It's POST HTTP call with JSON body. Call have to contain also Authorization header with Bearer token from previous step
    ```bash
-   curl --location --request POST 'https://app.payout.one/api/v1/checkouts' \
+   curl --location --request POST 'https://sandbox.payout.one/api/v1/checkouts' \
    --header 'Content-Type: application/json' \
    --header 'Authorization: Bearer SFMyNTY.g2gDYSFuBgCaSXELfgFiAAFRgA.WnBcvEfet2jJr4OPF984RGTKu-8HcHPQKJitk_kJKiU' \
    --header 'Accept: application/json' \
@@ -104,7 +104,7 @@ Simple example how to make simple payment
            "name": "John Doe",
            "postal_code": "BL92883"
        },
-       "checkout_url": "https://test.payout.one/checkouts/U0ZNeU5UWS5nMmdEZEFBQUFBSmtBQU5oY0dsaElXUUFBbWxrWWdBQ0tJZHVCZ0JtS1hrTGZnRmlBQUZSZ0EuR2xYdDlsZjY4NDNIY2xaUXFXTFBGdHFETWZDNmw3SXViOG1wM0VXYi1nOA",
+       "checkout_url": "https://sandbox.payout.one/checkouts/U0ZNeU5UWS5nMmdEZEFBQUFBSmtBQU5oY0dsaElXUUFBbWxrWWdBQ0tJZHVCZ0JtS1hrTGZnRmlBQUZSZ0EuR2xYdDlsZjY4NDNIY2xaUXFXTFBGdHFETWZDNmw3SXViOG1wM0VXYi1nOA",
        "currency": "EUR",
        "customer": {
            "email": "john.doe@payout.one",
