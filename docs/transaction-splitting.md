@@ -119,74 +119,88 @@ The payment experience for your customers remains unchanged:
 
 ## Webhooks
 
-### Transaction Events
+### Checkout Events
 
-You'll receive separate webhook notifications for each split transaction:
+You'll receive **one webhook notification** when the checkout is completed, with split transaction details included:
 
-#### MTPL Transaction
 ```json
 {
-  "event": "transaction.succeeded",
+  "event": "checkout.succeeded",
   "data": {
-    "transaction_id": "txn_mtpl_456",
-    "checkout_id": "checkout_abc123",
-    "amount": 150.00,
+    "object": "checkout",
+    "id": "checkout_abc123",
+    "external_id": "order_12345",
+    "amount": 45000,
     "currency": "RON",
-    "offer_id": "MTPL",
-    "products": [
+    "redirect_url": "https://yoursite.com/payment/success",
+    "customer": {
+      "first_name": "John",
+      "last_name": "Doe",
+      "email": "customer@example.com"
+    },
+    "payment": {
+      "object": "payment",
+      "status": "successful",
+      "payment_method": "PayU",
+      "failure_reason": "",
+      "created_at": 1641234567,
+      "fee": 2250,
+      "net": 42750
+    },
+    "split_transactions": [
       {
-        "name": "MTPL Basic Coverage",
-        "amount": 150.00,
-        "offer_id": "MTPL"
+        "transaction_id": "txn_mtpl_456",
+        "amount": 15000,
+        "offer_id": "MTPL",
+        "bank_account": "RO23CITI0000000000000001"
+      },
+      {
+        "transaction_id": "txn_casco_789",
+        "amount": 30000,
+        "offer_id": "CASCO",
+        "bank_account": "RO23BTRL0000000000000001"
       }
     ],
-    "bank_account": "RO23CITI0000000000000001"
+    "metadata": {},
+    "status": "succeeded"
   }
 }
 ```
 
-#### CASCO Transaction
-```json
-{
-  "event": "transaction.succeeded",
-  "data": {
-    "transaction_id": "txn_casco_789",
-    "checkout_id": "checkout_abc123",
-    "amount": 300.00,
-    "currency": "RON",
-    "offer_id": "CASCO",
-    "products": [
-      {
-        "name": "CASCO Premium Coverage",
-        "amount": 300.00,
-        "offer_id": "CASCO"
-      }
-    ],
-    "bank_account": "RO23BTRL0000000000000001"
-  }
-}
-```
+> **Note**: Amounts are in cents (e.g., 45000 = €450.00)
 
 ### Webhook Handling
 
-Update your webhook handler to process multiple transactions per checkout:
+Update your webhook handler to process the checkout completion with split transaction details:
 
 ```javascript
 // Example webhook handler
 app.post('/webhooks/payout', (req, res) => {
   const { event, data } = req.body;
 
-  if (event === 'transaction.succeeded') {
-    const { checkout_id, offer_id, amount } = data;
+  if (event === 'checkout.succeeded') {
+    const { id: checkout_id, external_id, split_transactions, status } = data;
 
-    // Update your system based on offer_id
-    if (offer_id === 'MTPL') {
-      // Handle MTPL transaction completion
-      updateInsurancePolicy(checkout_id, 'MTPL', amount);
-    } else if (offer_id === 'CASCO') {
-      // Handle CASCO transaction completion
-      updateInsurancePolicy(checkout_id, 'CASCO', amount);
+    // Check if this is a split transaction checkout
+    if (split_transactions && split_transactions.length > 0) {
+      // Process each split transaction
+      split_transactions.forEach(transaction => {
+        const { transaction_id, amount, offer_id, bank_account } = transaction;
+
+        // Update your system based on offer_id
+        if (offer_id === 'MTPL') {
+          // Handle MTPL transaction completion
+          // Note: amount is in cents, convert to currency units
+          updateInsurancePolicy(checkout_id, 'MTPL', amount / 100, transaction_id);
+        } else if (offer_id === 'CASCO') {
+          // Handle CASCO transaction completion
+          updateInsurancePolicy(checkout_id, 'CASCO', amount / 100, transaction_id);
+        }
+      });
     }
+
+    // Mark the overall checkout as complete
+    markCheckoutComplete(checkout_id, external_id);
   }
 
   res.status(200).send('OK');
