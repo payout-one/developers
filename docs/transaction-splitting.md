@@ -49,9 +49,9 @@ Each product in your checkout must include an `offer_id` to identify the product
 
 ### Creating Split Checkout
 
-#### Method 1: Explicit Control (Recommended)
-
 Set `should_split: true` to explicitly enable splitting:
+
+> **Important**: Transaction splitting will only occur when `should_split: true` is explicitly set. The system will not automatically detect or enable splitting based on product types.
 
 ```json
 POST /api/v1/checkouts
@@ -81,36 +81,7 @@ POST /api/v1/checkouts
 }
 ```
 
-#### Method 2: Automatic Detection
 
-The system automatically enables splitting when multiple product types are detected:
-
-```json
-POST /api/v1/checkouts
-
-{
-  "external_id": "order_12345",
-  "amount": 450.00,
-  "currency": "RON",
-  "products": [
-    {
-      "name": "MTPL Basic Coverage",
-      "amount": 150.00,
-      "offer_id": "MTPL"
-    },
-    {
-      "name": "CASCO Premium Coverage",
-      "amount": 300.00,
-      "offer_id": "CASCO"
-    }
-  ],
-  "customer": {
-    "email": "customer@example.com",
-    "name": "John Doe"
-  },
-  "redirect_url": "https://yoursite.com/payment/success"
-}
-```
 
 ### Checkout Response
 
