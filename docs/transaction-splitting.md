@@ -26,9 +26,23 @@ Transaction splitting enables you to:
 
 Contact your account manager to enable transaction splitting for your account.
 
-### 2. Product Configuration
+### 2. Configure Split Routing
 
-Each product in your checkout must include an `offer_id` to identify the product type:
+**Configure IBAN routing for your offer_ids through the merchant dashboard:**
+
+1. **Login to Merchant Dashboard**: Navigate to Settings → Split Routing
+2. **Add Routing Rules**: Configure where each offer_id should route funds
+
+**Example Configuration:**
+| Offer ID | IBAN | Description |
+|----------|------|-------------|
+| `MTPL` | `RO23CITI0000000000000001` | MTPL Insurance - Citi Bank Romania |
+| `CASCO` | `RO23BTRL0000000000000001` | CASCO Insurance - Banca Transilvania |
+| `LIFE` | `RO23INGB0000000000000001` | Life Insurance - ING Bank Romania |
+
+### 3. Product Configuration
+
+Each product in your checkout must include an `offer_id` that matches your configured routing rules:
 
 ```json
 {
@@ -38,12 +52,7 @@ Each product in your checkout must include an `offer_id` to identify the product
 }
 ```
 
-### 3. Supported Product Types
-
-| Product Type | offer_id | Routes To |
-|--------------|----------|-----------|
-| MTPL Insurance | `"MTPL"` | Citi Bank Romania |
-| CASCO Insurance | `"CASCO"` | Banca Transilvania |
+> **Important**: The `offer_id` must match exactly with the routing rules configured in your merchant dashboard. If no routing rule is found for an offer_id, the transaction will fail.
 
 ## API Integration
 
@@ -167,7 +176,9 @@ You'll receive **one webhook notification** when the checkout is completed, with
 }
 ```
 
-> **Note**: Amounts are in cents (e.g., 45000 = €450.00)
+> **Note**:
+> - Amounts are in cents (e.g., 45000 = €450.00)
+> - `bank_account` field shows the IBAN configured for each offer_id in your split routing rules
 
 ### Webhook Handling
 
@@ -307,34 +318,59 @@ Use test offer_ids in your development environment:
 
 Use standard Payout test cards for payment testing. Split functionality works with all supported payment methods.
 
-## Error Handling
+## Split Routing Management
 
-### Common Scenarios
+### Managing via Merchant Dashboard
 
-| Scenario | Behavior |
-|----------|----------|
-| Feature not enabled | Standard single transaction created |
-| Unknown offer_id | Product skipped, others processed normally |
-| Single product type | Standard single transaction created |
-| Mixed valid/invalid offer_ids | Only valid products processed |
+1. **Login to Merchant Dashboard**: Navigate to Settings → Split Routing
+2. **Add New Rule**: Click "Add Routing Rule"
+3. **Configure**: Set offer_id, IBAN, and description
+4. **Save**: Rule becomes active immediately
 
-### Error Responses
+### Managing via API
 
+You can also manage split routing rules programmatically:
+
+#### Create Routing Rule
 ```json
+POST /api/v1/split-routing-rules
+
 {
-  "error": "invalid_offer_id",
-  "message": "Offer ID 'INVALID' is not supported",
-  "code": "SPLIT_001"
+  "offer_id": "MTPL",
+  "iban": "RO23CITI0000000000000001",
+  "description": "MTPL Insurance - Citi Bank Romania"
 }
 ```
+
+#### List Routing Rules
+```json
+GET /api/v1/split-routing-rules
+```
+
+#### Update Routing Rule
+```json
+PUT /api/v1/split-routing-rules/{rule_id}
+
+{
+  "iban": "RO23NEUE0000000000000001",
+  "description": "MTPL Insurance - New Bank"
+}
+```
+
+#### Delete Routing Rule
+```json
+DELETE /api/v1/split-routing-rules/{rule_id}
+```
+
+## Error Handling
 
 ## Support
 
 For technical integration support or questions about transaction splitting:
 
-- **Email**: developers@payout.com
+- **Email**: tech@payout.com
 - **Documentation**: https://developers.payout.com
-- **API Reference**: https://developers.payout.com/api
+- **API Reference**: https://postman.payout.one/
 
 For account setup and business questions:
 - **Email**: sales@payout.com
