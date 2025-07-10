@@ -1,8 +1,14 @@
-# Transaction Splitting for Insurance Companies
+# Transaction Splitting
 
 ## Overview
 
-Transaction splitting allows insurance companies to automatically split incoming payments into multiple transaction records based on product `offer_id` values. This enables separate tracking and reporting for different insurance products (MTPL, CASCO, etc.) within a single payment.
+Transaction splitting allows merchants to automatically split incoming payments into multiple transaction records based on product `offer_id` values. This enables separate tracking and reporting for different product types within a single payment.
+
+**Use Cases:**
+- Insurance companies (MTPL, CASCO products)
+- Marketplace vendors (different sellers)
+- Multi-brand retailers (different product lines)
+- Service providers (different service types)
 
 ## How It Works
 
@@ -26,14 +32,14 @@ Products must include an `offer_id` field to enable splitting:
 {
   "products": [
     {
-      "name": "MTPL Basic",
-      "offer_id": "MTPL",
+      "name": "Premium Service",
+      "offer_id": "PREMIUM",
       "unit_price": 100.00,
       "quantity": 1
     },
     {
-      "name": "CASCO Premium",
-      "offer_id": "CASCO",
+      "name": "Basic Service",
+      "offer_id": "BASIC",
       "unit_price": 200.00,
       "quantity": 1
     }
@@ -41,6 +47,11 @@ Products must include an `offer_id` field to enable splitting:
   "should_split": true
 }
 ```
+
+**Industry Examples:**
+- Insurance: `offer_id: "MTPL"`, `offer_id: "CASCO"`
+- Marketplace: `offer_id: "VENDOR_A"`, `offer_id: "VENDOR_B"`
+- Retail: `offer_id: "ELECTRONICS"`, `offer_id: "CLOTHING"`
 
 ## Webhook Response
 
@@ -61,12 +72,12 @@ Payment webhooks include split transaction information:
         {
           "transaction_id": "txn_789",
           "amount": 10000,
-          "offer_id": "MTPL"
+          "offer_id": "PREMIUM"
         },
         {
           "transaction_id": "txn_790",
           "amount": 20000,
-          "offer_id": "CASCO"
+          "offer_id": "BASIC"
         }
       ]
     }
@@ -82,16 +93,16 @@ Configure automatic payout routing through the merchant dashboard or API:
 {
   "split_routing_rules": [
     {
-      "offer_id": "MTPL",
+      "offer_id": "PREMIUM",
       "iban": "RO23CITI0000000000000001",
       "bank_name": "Citi Bank Romania",
-      "description": "MTPL Insurance Products"
+      "description": "Premium Service Payouts"
     },
     {
-      "offer_id": "CASCO",
+      "offer_id": "BASIC",
       "iban": "RO23BTRL0000000000000001",
       "bank_name": "Banca Transilvania",
-      "description": "CASCO Insurance Products"
+      "description": "Basic Service Payouts"
     }
   ]
 }
@@ -119,19 +130,19 @@ Authorization: Bearer your_api_token
   "data": [
     {
       "id": "rule_123",
-      "offer_id": "MTPL",
+      "offer_id": "PREMIUM",
       "iban": "RO23CITI0000000000000001",
       "bank_name": "Citi Bank Romania",
-      "description": "MTPL Insurance Products",
+      "description": "Premium Service Payouts",
       "created_at": "2024-01-15T10:30:00Z",
       "updated_at": "2024-01-15T10:30:00Z"
     },
     {
       "id": "rule_124",
-      "offer_id": "CASCO",
+      "offer_id": "BASIC",
       "iban": "RO23BTRL0000000000000001",
       "bank_name": "Banca Transilvania",
-      "description": "CASCO Insurance Products",
+      "description": "Basic Service Payouts",
       "created_at": "2024-01-15T10:35:00Z",
       "updated_at": "2024-01-15T10:35:00Z"
     }
@@ -150,10 +161,10 @@ Content-Type: application/json
 **Request Body:**
 ```json
 {
-  "offer_id": "MTPL",
+  "offer_id": "PREMIUM",
   "iban": "RO23CITI0000000000000001",
   "bank_name": "Citi Bank Romania",
-  "description": "MTPL Insurance Products"
+  "description": "Premium Service Payouts"
 }
 ```
 
@@ -162,10 +173,10 @@ Content-Type: application/json
 {
   "data": {
     "id": "rule_125",
-    "offer_id": "MTPL",
+    "offer_id": "PREMIUM",
     "iban": "RO23CITI0000000000000001",
     "bank_name": "Citi Bank Romania",
-    "description": "MTPL Insurance Products",
+    "description": "Premium Service Payouts",
     "created_at": "2024-01-15T11:00:00Z",
     "updated_at": "2024-01-15T11:00:00Z"
   }
@@ -185,7 +196,7 @@ Content-Type: application/json
 {
   "iban": "RO23CITI0000000000000002",
   "bank_name": "Citi Bank Romania - Updated",
-  "description": "Updated MTPL Insurance Products"
+  "description": "Updated Premium Service Payouts"
 }
 ```
 
@@ -194,10 +205,10 @@ Content-Type: application/json
 {
   "data": {
     "id": "rule_125",
-    "offer_id": "MTPL",
+    "offer_id": "PREMIUM",
     "iban": "RO23CITI0000000000000002",
     "bank_name": "Citi Bank Romania - Updated",
-    "description": "Updated MTPL Insurance Products",
+    "description": "Updated Premium Service Payouts",
     "created_at": "2024-01-15T11:00:00Z",
     "updated_at": "2024-01-15T11:30:00Z"
   }
@@ -259,7 +270,7 @@ Process refunds for specific offer_ids:
 
 ```json
 {
-  "offer_id": "MTPL",
+  "offer_id": "PREMIUM",
   "amount": 5000,
   "reason": "Partial cancellation"
 }
