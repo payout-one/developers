@@ -106,6 +106,144 @@ Manage split routing rules via API:
 - `PUT /api/v1/split_routing_rules/:id` - Update rule
 - `DELETE /api/v1/split_routing_rules/:id` - Delete rule
 
+#### List Split Routing Rules
+
+```bash
+GET /api/v1/split_routing_rules
+Authorization: Bearer your_api_token
+```
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "rule_123",
+      "offer_id": "MTPL",
+      "iban": "RO23CITI0000000000000001",
+      "bank_name": "Citi Bank Romania",
+      "description": "MTPL Insurance Products",
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": "rule_124",
+      "offer_id": "CASCO",
+      "iban": "RO23BTRL0000000000000001",
+      "bank_name": "Banca Transilvania",
+      "description": "CASCO Insurance Products",
+      "created_at": "2024-01-15T10:35:00Z",
+      "updated_at": "2024-01-15T10:35:00Z"
+    }
+  ]
+}
+```
+
+#### Create Split Routing Rule
+
+```bash
+POST /api/v1/split_routing_rules
+Authorization: Bearer your_api_token
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "offer_id": "MTPL",
+  "iban": "RO23CITI0000000000000001",
+  "bank_name": "Citi Bank Romania",
+  "description": "MTPL Insurance Products"
+}
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "id": "rule_125",
+    "offer_id": "MTPL",
+    "iban": "RO23CITI0000000000000001",
+    "bank_name": "Citi Bank Romania",
+    "description": "MTPL Insurance Products",
+    "created_at": "2024-01-15T11:00:00Z",
+    "updated_at": "2024-01-15T11:00:00Z"
+  }
+}
+```
+
+#### Update Split Routing Rule
+
+```bash
+PUT /api/v1/split_routing_rules/rule_125
+Authorization: Bearer your_api_token
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "iban": "RO23CITI0000000000000002",
+  "bank_name": "Citi Bank Romania - Updated",
+  "description": "Updated MTPL Insurance Products"
+}
+```
+
+**Response:**
+```json
+{
+  "data": {
+    "id": "rule_125",
+    "offer_id": "MTPL",
+    "iban": "RO23CITI0000000000000002",
+    "bank_name": "Citi Bank Romania - Updated",
+    "description": "Updated MTPL Insurance Products",
+    "created_at": "2024-01-15T11:00:00Z",
+    "updated_at": "2024-01-15T11:30:00Z"
+  }
+}
+```
+
+#### Delete Split Routing Rule
+
+```bash
+DELETE /api/v1/split_routing_rules/rule_125
+Authorization: Bearer your_api_token
+```
+
+**Response:**
+```json
+{
+  "message": "Split routing rule deleted successfully"
+}
+```
+
+#### Error Responses
+
+**400 Bad Request:**
+```json
+{
+  "errors": {
+    "offer_id": ["can't be blank"],
+    "iban": ["is invalid"]
+  }
+}
+```
+
+**404 Not Found:**
+```json
+{
+  "error": "Split routing rule not found"
+}
+```
+
+**409 Conflict:**
+```json
+{
+  "error": "A rule for this offer_id already exists"
+}
+```
+
 ### Dashboard Management
 
 Access the "Split Routing" section in your merchant dashboard to:
