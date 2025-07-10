@@ -268,17 +268,106 @@ Access the "Split Routing" section in your merchant dashboard to:
 
 Process refunds for specific offer_ids:
 
+**API Endpoint:**
+```bash
+POST /api/v1/refunds
+Content-Type: application/json
+Authorization: Bearer your_api_token
+```
+
+**Request Body:**
+```json
+{
+  "checkout_id": "checkout_123",
+  "offer_id": "PREMIUM",
+  "amount": 5000,
+  "reason": "Partial cancellation",
+  "nonce": "random_string",
+  "signature": "calculated_signature"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "refund_456",
+  "object": "refund",
+  "amount": 5000,
+  "currency": "RON",
+  "external_id": "checkout_123",
+  "status": "pending",
+  "metadata": {
+    "offer_id": "PREMIUM",
+    "transaction_splitting": true
+  },
+  "created_at": 1640995200
+}
+```
+
+### Get Split Refund Options
+
+Get all available refund options for a split transaction:
+
+**API Endpoint:**
+```bash
+GET /api/v1/refunds/{checkout_id}/split_options
+Authorization: Bearer your_api_token
+```
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "offer_id": "PREMIUM",
+      "product_name": "Premium Service",
+      "total_amount": 10000,
+      "refunded_amount": 2000,
+      "refundable_amount": 8000,
+      "can_refund": true
+    },
+    {
+      "offer_id": "BASIC",
+      "product_name": "Basic Service",
+      "total_amount": 20000,
+      "refunded_amount": 0,
+      "refundable_amount": 20000,
+      "can_refund": true
+    }
+  ]
+}
+```
+
+### Get Refundable Amount for Offer ID
+
+Check how much can be refunded for a specific offer_id:
+
+**API Endpoint:**
+```bash
+GET /api/v1/refunds/{checkout_id}/split_amount/{offer_id}
+Authorization: Bearer your_api_token
+```
+
+**Response:**
 ```json
 {
   "offer_id": "PREMIUM",
-  "amount": 5000,
-  "reason": "Partial cancellation"
+  "refundable_amount": 8000,
+  "currency": "RON"
 }
 ```
 
 ### Full Refunds
 
-Full refunds will process all transactions for the original payment automatically.
+Full refunds will process all transactions for the original payment automatically:
+
+```json
+{
+  "checkout_id": "checkout_123",
+  "nonce": "random_string",
+  "signature": "calculated_signature"
+}
+```
 
 ## Important Notes
 
