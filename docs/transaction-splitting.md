@@ -48,6 +48,8 @@ Products must include an `offer_id` field to enable splitting:
 }
 ```
 
+⚠️ **Important:** When creating a checkout with `should_split: true`, the sum of all product `unit_price * quantity` values **must equal the total checkout amount**.
+
 **Industry Examples:**
 - Insurance: `offer_id: "MTPL"`, `offer_id: "CASCO"`
 - Marketplace: `offer_id: "VENDOR_A"`, `offer_id: "VENDOR_B"`
@@ -87,78 +89,17 @@ Payment webhooks include split transaction information:
 
 ## Split Routing Configuration
 
-Configure automatic payout routing through the merchant dashboard or API:
+Split routing rules define **how payouts are distributed** for transactions with different `offer_id`s.  
+These rules **cannot be managed via API or dashboard** — they must be requested from our team.  
 
-```json
-{
-  "split_routing_rules": [
-    {
-      "offer_id": "PREMIUM",
-      "iban": "RO23CITI0000000000000001",
-      "bank_name": "Citi Bank Romania",
-      "description": "Premium Service Payouts"
-    },
-    {
-      "offer_id": "BASIC",
-      "iban": "RO23BTRL0000000000000001",
-      "bank_name": "Banca Transilvania",
-      "description": "Basic Service Payouts"
-    }
-  ]
-}
-```
+### How to Set Up Split Routing Rules
+To configure or update routing rules, please contact **support** or your **account manager** and provide:  
+- `offer_id` (must match your product configuration)  
+- Destination **IBAN**  
+- **Bank name**  
+- Optional **description**  
 
-### API Endpoints
-
-Manage split routing rules via API:
-
-- `GET /api/v1/split_routing_rules` - List rules
-- `POST /api/v1/split_routing_rules` - Create rule
-- `PUT /api/v1/split_routing_rules/:id` - Update rule
-- `DELETE /api/v1/split_routing_rules/:id` - Delete rule
-
-#### List Split Routing Rules
-
-```bash
-GET /api/v1/split_routing_rules
-Authorization: Bearer your_api_token
-```
-
-**Response:**
-```json
-{
-  "data": [
-    {
-      "id": "rule_123",
-      "offer_id": "PREMIUM",
-      "iban": "RO23CITI0000000000000001",
-      "bank_name": "Citi Bank Romania",
-      "description": "Premium Service Payouts",
-      "created_at": "2024-01-15T10:30:00Z",
-      "updated_at": "2024-01-15T10:30:00Z"
-    },
-    {
-      "id": "rule_124",
-      "offer_id": "BASIC",
-      "iban": "RO23BTRL0000000000000001",
-      "bank_name": "Banca Transilvania",
-      "description": "Basic Service Payouts",
-      "created_at": "2024-01-15T10:35:00Z",
-      "updated_at": "2024-01-15T10:35:00Z"
-    }
-  ]
-}
-```
-
-#### Create Split Routing Rule
-
-```bash
-POST /api/v1/split_routing_rules
-Authorization: Bearer your_api_token
-Content-Type: application/json
-```
-
-**Request Body:**
+**Example Request:**  
 ```json
 {
   "offer_id": "PREMIUM",
@@ -168,114 +109,26 @@ Content-Type: application/json
 }
 ```
 
-**Response:**
-```json
-{
-  "data": {
-    "id": "rule_125",
-    "offer_id": "PREMIUM",
-    "iban": "RO23CITI0000000000000001",
-    "bank_name": "Citi Bank Romania",
-    "description": "Premium Service Payouts",
-    "created_at": "2024-01-15T11:00:00Z",
-    "updated_at": "2024-01-15T11:00:00Z"
-  }
-}
-```
-
-#### Update Split Routing Rule
-
-```bash
-PUT /api/v1/split_routing_rules/rule_125
-Authorization: Bearer your_api_token
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "iban": "RO23CITI0000000000000002",
-  "bank_name": "Citi Bank Romania - Updated",
-  "description": "Updated Premium Service Payouts"
-}
-```
-
-**Response:**
-```json
-{
-  "data": {
-    "id": "rule_125",
-    "offer_id": "PREMIUM",
-    "iban": "RO23CITI0000000000000002",
-    "bank_name": "Citi Bank Romania - Updated",
-    "description": "Updated Premium Service Payouts",
-    "created_at": "2024-01-15T11:00:00Z",
-    "updated_at": "2024-01-15T11:30:00Z"
-  }
-}
-```
-
-#### Delete Split Routing Rule
-
-```bash
-DELETE /api/v1/split_routing_rules/rule_125
-Authorization: Bearer your_api_token
-```
-
-**Response:**
-```json
-{
-  "message": "Split routing rule deleted successfully"
-}
-```
-
-#### Error Responses
-
-**400 Bad Request:**
-```json
-{
-  "errors": {
-    "offer_id": ["can't be blank"],
-    "iban": ["is invalid"]
-  }
-}
-```
-
-**404 Not Found:**
-```json
-{
-  "error": "Split routing rule not found"
-}
-```
-
-**409 Conflict:**
-```json
-{
-  "error": "A rule for this offer_id already exists"
-}
-```
-
-### Dashboard Management
-
-Access the "Split Routing" section in your merchant dashboard to:
-- Create/Edit/Delete routing rules
-- View split transaction history
-- Configure default routing for unknown offer_ids
+### Default Handling
+- If a transaction’s `offer_id` does not have a routing rule, the payout will be directed to your **default settlement account**.  
+- All updates must go through our **support team**.  
 
 ## Refund Handling
 
+When processing refunds for split transactions, it is **mandatory** to include the `offer_id` in the request body.  
+This ensures we know exactly which split transaction should be refunded.  
+
 ### Partial Refunds by Offer ID
 
-Process refunds for specific offer_ids:
+Process refunds for a specific `offer_id`:
 
-**API Endpoint:**
 ```bash
 POST /api/v1/refunds
 Content-Type: application/json
 Authorization: Bearer your_api_token
 ```
 
-**Request Body:**
+**Request Body (mandatory `offer_id`):**
 ```json
 {
   "checkout_id": "checkout_123",
@@ -305,10 +158,6 @@ Authorization: Bearer your_api_token
 ```
 
 ### Get Split Refund Options
-
-Get all available refund options for a split transaction:
-
-**API Endpoint:**
 ```bash
 GET /api/v1/refunds/{checkout_id}/split_options
 Authorization: Bearer your_api_token
@@ -335,25 +184,6 @@ Authorization: Bearer your_api_token
       "can_refund": true
     }
   ]
-}
-```
-
-### Get Refundable Amount for Offer ID
-
-Check how much can be refunded for a specific offer_id:
-
-**API Endpoint:**
-```bash
-GET /api/v1/refunds/{checkout_id}/split_amount/{offer_id}
-Authorization: Bearer your_api_token
-```
-
-**Response:**
-```json
-{
-  "offer_id": "PREMIUM",
-  "refundable_amount": 8000,
-  "currency": "RON"
 }
 ```
 
