@@ -157,48 +157,6 @@ Authorization: Bearer your_api_token
 }
 ```
 
-### Get Split Refund Options
-```bash
-GET /api/v1/refunds/{checkout_id}/split_options
-Authorization: Bearer your_api_token
-```
-
-**Response:**
-```json
-{
-  "data": [
-    {
-      "offer_id": "PREMIUM",
-      "product_name": "Premium Service",
-      "total_amount": 10000,
-      "refunded_amount": 2000,
-      "refundable_amount": 8000,
-      "can_refund": true
-    },
-    {
-      "offer_id": "BASIC",
-      "product_name": "Basic Service",
-      "total_amount": 20000,
-      "refunded_amount": 0,
-      "refundable_amount": 20000,
-      "can_refund": true
-    }
-  ]
-}
-```
-
-### Full Refunds
-
-Full refunds will process all transactions for the original payment automatically:
-
-```json
-{
-  "checkout_id": "checkout_123",
-  "nonce": "random_string",
-  "signature": "calculated_signature"
-}
-```
-
 ## Important Notes
 
 - Transaction splitting works with all payment methods (cards, bank transfers, etc.)
