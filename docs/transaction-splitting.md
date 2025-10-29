@@ -18,6 +18,10 @@ When transaction splitting is enabled:
 3. All money goes to your account regardless of offer_id
 4. Split routing rules can be configured for automatic payouts
 
+💡 Note:
+If you want payouts to be routed automatically based on offer_id, you must send should_split: true — even if there is only one product or offer in the checkout.
+This ensures that the transaction is properly tagged with the offer_id and can follow your configured split routing rules.
+
 ## Enabling Transaction Splitting
 
 Two conditions must be met:
@@ -66,20 +70,22 @@ Payment webhooks include split transaction information:
   "type": "payment",
   "data": {
     "payment": {
-      "id": "pay_456",
+      "id": 123,
       "amount": 30000,
       "currency": "RON",
       "status": "successful",
       "split_transactions": [
         {
-          "transaction_id": "txn_789",
+          "transaction_id": 123,
           "amount": 10000,
-          "offer_id": "PREMIUM"
+          "offer_id": "PREMIUM",
+          "bank_account": "SK1234124124" // Optional if not split rules for this OFFER_ID set we sent null
         },
         {
-          "transaction_id": "txn_790",
+          "transaction_id": 456,
           "amount": 20000,
-          "offer_id": "BASIC"
+          "offer_id": "BASIC",
+          "bank_account": "SK1546456456" // Optional if not split rules for this OFFER_ID set we sent null
         }
       ]
     }
