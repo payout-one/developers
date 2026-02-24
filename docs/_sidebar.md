@@ -20,3 +20,4 @@
     - [Apple Pay JS](/payment-gateway/use-cases/apple-pay-js.md "Apple Pay JS")
     - [Checkout payment methods](/payment-gateway/use-cases/checkout-payment-methods.md "Checkout payment methods")
     - [Capture & Cancel](/payment-gateway/use-cases/capture.md "Capture & Cancel")
+    - [Checkout Verification Webhook](/payment-gateway/use-cases/checkout-verification-webhook.md "Checkout Verification Webhook")
