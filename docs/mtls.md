@@ -49,7 +49,7 @@ Once the CSR is signed, the certificate fingerprint is automatically linked to y
 
 ### 3. Authorize
 
-Obtain a Bearer token using the standard authorization endpoint:
+Obtain a Bearer token using the standard authorization endpoint. Note that the authorization endpoint is on the main API domain, not the mTLS domain:
 
 ```bash
 curl --location --request POST 'https://app.payout.one/api/v1/authorize' \
@@ -72,14 +72,14 @@ Response:
 
 ### 4. Make API Calls with Your Client Certificate
 
-Include the signed certificate and private key in every request to `/api/v2` endpoints:
+The `/api/v2` endpoints are hosted on a dedicated mTLS domain. Include the signed certificate and private key in every request:
 
 ```bash
 curl --cert client-cert.pem --key client.key \
   --header 'Content-Type: application/json' \
   --header 'Authorization: Bearer <your_token>' \
   --header 'Accept: application/json' \
-  https://app.payout.one/api/v2/withdrawals
+  https://api.payout.one/api/v2/withdrawals
 ```
 
 ## API v2 Endpoints
@@ -110,7 +110,7 @@ curl --cert client-cert.pem --key client.key \
     "nonce": "<nonce>",
     "statement_descriptor": "Withdrawal description"
   }' \
-  https://app.payout.one/api/v2/withdrawals
+  https://api.payout.one/api/v2/withdrawals
 ```
 
 > [!NOTE]
