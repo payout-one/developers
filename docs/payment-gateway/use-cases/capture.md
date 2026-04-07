@@ -105,6 +105,7 @@ This feature needs to be enabled for your specific account, therefore if you pla
         "amount": 300,
         "object": "checkout",
         "status": "succeeded",
+        "is_status_final": true,
         "payment": {
           "fee": 35,
           "net": 1535,

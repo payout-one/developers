@@ -170,6 +170,7 @@ Simple example how to make simple payment
            "amount": 300,
            "object": "checkout",
            "status": "succeeded",
+           "is_status_final": true,
            "payment":
            {
                "fee": 8,
@@ -199,6 +200,9 @@ Simple example how to make simple payment
        "external_id": "1472"
    }
    ```
+
+   > [!NOTE]
+   > The `is_status_final` field indicates whether the checkout has reached a terminal state and will no longer change. For `succeeded` checkouts it is always `true`. For `expired` checkouts it becomes `true` only after 6 days from expiration (to allow time for any pending bank transfer payments to arrive and be reconciled).
    Signature is generated from string with this pattern:
    ```
    external_id|type|nonce|client_secret
@@ -213,7 +217,9 @@ Simple example how to make simple payment
    ```
    > [!NOTE]
    > Some algorithms implementations generate output in UPPERCASE form so please change all characters into lowercase form.
-8. Merchant's order can be marked as paid after webhook type "checkout.succeeded" is received and verified.
+8. Merchant's order can be marked as paid after webhook type `checkout.succeeded` is received and verified. The `is_status_final: true` field in the payload confirms the checkout will not change further.
+
+   Optionally, you can also listen for the `checkout.finalized` webhook event, which is sent at the moment `is_status_final` transitions to `true`. This is useful for `expired` checkouts where finalization happens 6 days after expiration. The `checkout.finalized` event is available on request — contact support to enable it for your account.
 
 **Test cards**
 

@@ -43,7 +43,8 @@ This webhook is only triggered for bank-based payment methods (bank transfer, ba
             "net": 292
         },
         "metadata": null,
-        "status": "succeeded"
+        "status": "succeeded",
+        "is_status_final": true
     },
     "nonce": "QjJqWEtiVDBNSmMyTm11dg",
     "signature": "f3b8264f42930eff215c6570f4bcdd50bcedcaf3c6da8ccfd301c6de41f36607"
