@@ -1,194 +1,232 @@
-# mTLS (Mutual TLS) Authentication
+# M2M API — mTLS + QSEAL
 
-Payout API v2 endpoints are secured with mutual TLS (mTLS) authentication. This provides an additional layer of security beyond standard Bearer token authentication — every API call must be accompanied by a valid client certificate issued by Payout.
+Payout API v2 endpoints for M2M (machine-to-machine) payment initiation are secured with two qualified certificates issued by a Qualified Trust Service Provider (QTSP) under the EU eIDAS regulation:
 
-## Overview
+- **QWAC** (Qualified Website Authentication Certificate) — establishes a mutually authenticated TLS connection (mTLS).
+- **QSEAL** (Qualified Electronic Seal Certificate) — digitally signs each payment instruction (detached JWS).
 
-mTLS ensures that both the server and the client verify each other's identity during the TLS handshake. This means:
+This model is aligned with the Berlin Group NextGenPSD2 framework and is required by Article 17 RTS to SCA for the corporate payment process exemption.
 
-- The **server** presents its certificate to the client (standard HTTPS).
-- The **client** presents its certificate to the server, proving its identity.
+## Endpoints
 
-Only requests with a valid client certificate that is registered to your API key will be accepted on `/api/v2` endpoints.
+| Environment | mTLS host |
+|---|---|
+| **Sandbox** | `https://api-mtls-sandbox.payout.one` |
+| **Production** | `https://api-mtls.payout.one` |
 
-## How It Works
+The token-issuing endpoint and certificate import endpoints remain on the standard hosts (`sandbox.payout.one` / `app.payout.one`).
 
-1. You generate a private key and a Certificate Signing Request (CSR).
-2. You upload the CSR via the Payout Merchant Portal.
-3. Payout signs your CSR with its Certificate Authority (CA) and returns a signed client certificate.
-4. You use the signed certificate and your private key when making API calls to `/api/v2` endpoints.
-
-The server verifies:
-- **TLS layer (nginx):** The client certificate is signed by the Payout CA and the client possesses the corresponding private key.
-- **Application layer:** The certificate fingerprint matches the one registered to your API key.
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/v1/authorize` | Obtain Bearer token from `client_id` + `client_secret` |
+| `POST` | `/api/v1/m2m/certificates` | Import a QWAC or QSEAL certificate |
+| `GET` | `/api/v1/m2m/certificates` | List your imported certificates |
+| `GET` | `/api/v1/m2m/certificates/:thumbprint/status` | Check certificate approval status |
+| `DELETE` | `/api/v1/m2m/certificates/:thumbprint` | Remove a certificate |
+| `POST` | `/api/v2/withdrawals` | **mTLS + QSEAL** — create a withdrawal |
+| `GET` | `/api/v2/withdrawals` | **mTLS** — list withdrawals |
+| `GET` | `/api/v2/withdrawals/:id` | **mTLS** — retrieve withdrawal |
+| `POST` | `/api/v2/withdrawals/:id/cancel` | **mTLS + QSEAL** — cancel a withdrawal (only when status is `pending`) |
+| `POST` | `/api/v2/withdrawals/:id/cancel_allowed` | **mTLS** — check whether cancel is allowed |
 
 ## Setup
 
-### 1. Generate a Private Key and CSR
+### 1. Obtain certificates from a QTSP
 
-Use OpenSSL to generate a private key and a Certificate Signing Request:
+You must obtain both a QWAC and a QSEAL certificate from any EU-recognised Qualified Trust Service Provider listed in the [EU Trusted List](https://ec.europa.eu/tools/lotl/eu-lotl.xml). Examples: I.CA, Disig, D-Trust, Buypass, GlobalSign Qualified, A-Trust, Certinomis.
 
-```bash
-openssl genrsa -out client.key 2048
-openssl req -new -key client.key -out client.csr -subj "/CN=your-company-name"
-```
+Requirements:
 
-> [!IMPORTANT]
-> Keep your private key (`client.key`) secure. Never share it with anyone, including Payout. Only the CSR is uploaded.
+- **QWAC** — issued for TLS client authentication, key usage `digitalSignature` + `keyEncipherment`.
+- **QSEAL** — issued for electronic seals, key usage `nonRepudiation`.
+- Both must contain your organisation identifier (IČO / LEI) in the certificate subject (`organizationIdentifier` attribute).
+- Minimum key size: RSA 2048 or ECDSA P-256.
 
-### 2. Upload the CSR in the Merchant Portal
+Generate the private keys yourself and send only the CSR to the QTSP. **The private keys must never leave your infrastructure.**
 
-1. Log in to the Merchant Portal ([Sandbox](https://sandbox.payout.one) or [Production](https://app.payout.one)).
-2. Navigate to **Developers** → **API Keys** → select your API key → **Edit**.
-3. Go to the **mTLS** tab.
-4. Upload your `client.csr` file.
-5. Click **Sign CSR**.
-6. Download the signed certificate (`client-cert.pem`).
-
-Once the CSR is signed, the certificate fingerprint is automatically linked to your API key. All subsequent calls to `/api/v2` must include this certificate.
-
-### 3. Authorize
-
-Obtain a Bearer token using the standard authorization endpoint. Note that the authorization endpoint is on the main API domain, not the mTLS domain:
+### 2. Obtain a Bearer token
 
 ```bash
-curl --location --request POST 'https://app.payout.one/api/v1/authorize' \
---header 'Content-Type: application/json' \
---header 'Accept: application/json' \
---data-raw '{
-  "client_id": "<your_client_id>",
-  "client_secret": "<your_client_secret>"
-}'
+curl -X POST https://app.payout.one/api/v1/authorize \
+  -H "Content-Type: application/json" \
+  -d '{"client_id":"<CLIENT_ID>","client_secret":"<CLIENT_SECRET>"}'
 ```
 
 Response:
 
 ```json
+{ "token": "...", "valid_for": 6000 }
+```
+
+### 3. Import your certificates
+
+Upload the PEM-encoded QWAC and QSEAL certificates (public part only, not the private keys):
+
+```bash
+curl -X POST https://app.payout.one/api/v1/m2m/certificates \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "qwac",
+    "pem": "-----BEGIN CERTIFICATE-----\n..."
+  }'
+```
+
+Repeat for the QSEAL certificate with `"type": "qseal"`.
+
+Response (initial state `pending`):
+
+```json
 {
-  "token": "SFMyNTY...",
-  "valid_for": 6000
+  "type": "qwac",
+  "thumbprint": "49165a9f...",
+  "status": "pending",
+  "issuer_dn": "CN=...,O=...",
+  "subject_dn": "C=SK,...,organizationIdentifier=PSDSK-NBS-50487787,CN=...",
+  "subject_org_id": "PSDSK-NBS-50487787",
+  "valid_from": "2025-06-09T06:23:06Z",
+  "valid_until": "2026-06-09T06:23:06Z"
 }
 ```
 
-### 4. Make API Calls with Your Client Certificate
+### 4. Wait for manual approval
 
-The `/api/v2` endpoints are hosted on a dedicated mTLS domain. Include the signed certificate and private key in every request:
-
-```bash
-curl --cert client-cert.pem --key client.key \
-  --header 'Content-Type: application/json' \
-  --header 'Authorization: Bearer <your_token>' \
-  --header 'Accept: application/json' \
-  https://api.payout.one/api/v2/withdrawals
-```
-
-## API v2 Endpoints
-
-### Create Withdrawal
-
-```
-POST /api/v2/withdrawals
-```
+Payout manually verifies that the imported certificates match the contractual data of your account. You can check the status at any time:
 
 ```bash
-curl --cert client-cert.pem --key client.key \
-  --header 'Content-Type: application/json' \
-  --header 'Authorization: Bearer <your_token>' \
-  --header 'Accept: application/json' \
-  --header 'Idempotency-Key: <unique_key>' \
-  --data-raw '{
-    "amount": 300,
-    "currency": "EUR",
-    "external_id": "<merchant_id>",
-    "iban": "<iban>",
-    "customer": {
-      "first_name": "John",
-      "last_name": "Doe",
-      "email": "john.doe@example.com"
-    },
-    "signature": "<signature>",
-    "nonce": "<nonce>",
-    "statement_descriptor": "Withdrawal description"
-  }' \
-  https://api.payout.one/api/v2/withdrawals
+curl https://app.payout.one/api/v1/m2m/certificates/<thumbprint>/status \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
+After approval the status changes to `approved` and the certificate becomes usable for M2M operations.
+
+### 5. Call the M2M API
+
+Once both certificates are `approved`, you can call the v2 endpoints on the dedicated mTLS host using your QWAC during the TLS handshake.
+
+## Signing payment instructions with QSEAL
+
+Each request that creates or modifies a payment (`POST /api/v2/withdrawals`, `POST /api/v2/withdrawals/:id/cancel`, etc.) must be signed with a detached JWS produced by the private key of your QSEAL certificate.
+
+### Required headers
+
+| Header | Value |
+|---|---|
+| `Authorization` | `Bearer <TOKEN>` |
+| `Content-Type` | `application/json` |
+| `Digest` | `SHA-256=<base64(sha256(body))>` |
+| `X-JWS-Signature` | `<protected-header>..<signature>` (detached JWS) |
+
+### JWS protected header
+
+The protected header is a base64url-encoded JSON object:
+
+```json
+{
+  "alg": "PS256",
+  "typ": "JOSE+JSON",
+  "x5t#S256": "<sha256 thumbprint of QSEAL cert, lowercase hex>",
+  "crit": ["sigT", "sigD"],
+  "sigT": "2026-05-15T10:00:00Z",
+  "sigD": {
+    "mId": "http://uri.etsi.org/19182/HttpHeaders",
+    "pars": ["digest"]
+  }
+}
+```
+
+The signed payload is the value of the `Digest` header (not the body itself). Accepted algorithms: `PS256`, `RS256`, `ES256`.
+
+### Signing flow (pseudocode)
+
+```
+body          = '{"amount":"100","currency":"EUR",...}'
+digest_b64    = base64( sha256(body) )
+digest_header = "SHA-256=" + digest_b64
+
+protected_b64 = base64url( JSON.stringify(protected_header) )
+payload_b64   = base64url( digest_header )
+signing_input = protected_b64 + "." + payload_b64
+
+signature_b64 = base64url( sign(signing_input, qseal_private_key, "PS256") )
+
+x_jws_signature = protected_b64 + ".." + signature_b64
+```
+
+### Server-side verification
+
+Payout verifies, for every QSEAL-signed request:
+
+1. The `Digest` header matches the recomputed SHA-256 of the body.
+2. The protected header carries an `x5t#S256` matching an `approved` QSEAL certificate registered to your account.
+3. The certificate is within its validity period.
+4. `sigT` is within ±5 minutes of server time (replay protection).
+5. The JWS signature is valid against the QSEAL public key.
+
+Any failure results in HTTP `403 Forbidden`.
+
+## Example: full request
+
+```http
+POST /api/v2/withdrawals HTTP/1.1
+Host: api-mtls.payout.one
+Authorization: Bearer <TOKEN>
+Content-Type: application/json
+Digest: SHA-256=Lk8nE3bXPzZl0vKqK4kxA7FpQs4sLm1L3xVpNlRb6w0=
+X-JWS-Signature: eyJhbGciOiJQUzI1NiIsInR5cCI6IkpPU0UrSlNPTiIsIng1dCNTMjU2I...
+
+{
+  "amount": "10000",
+  "currency": "EUR",
+  "external_id": "merchant-tx-2026-05-15-001",
+  "iban": "SK0511000000002600000054",
+  "customer": {
+    "first_name": "Anna",
+    "last_name": "Nová",
+    "email": "anna.nova@example.com"
+  },
+  "statement_descriptor": "Platba 2026/05",
+  "nonce": "5b6e9c1a-f4a2-4c11-9e56-2f93e1c7a3d0"
+}
 ```
 
 > [!NOTE]
-> Amount is in cents (EUR), so 3 EUR is 300. The same applies for other currencies — for example, 300 CZK is 30000.
+> When the request is signed with QSEAL, the legacy HMAC `signature` field used in `/api/v1/withdrawals` is **not required** in v2. QSEAL provides equivalent integrity and authenticity for the entire payload.
 
-**Signature** is generated from the following pattern:
+## Certificate lifecycle
 
-```
-amount|currency|external_id|iban|nonce|client_secret
-```
+### Renewal
 
-This string is hashed with SHA256 and encoded in lowercase hexadecimal form.
+When your certificate approaches expiry, obtain a new one from the QTSP and import it via `POST /api/v1/m2m/certificates`. The new certificate is approved separately and runs in parallel with the previous one until that one expires — no downtime.
 
-### List Withdrawals
+### Revocation
 
-```
-GET /api/v2/withdrawals
-```
+You can remove your own certificate at any time:
 
-Optional query parameters: `limit`, `offset`, `order` (ASC/DESC).
-
-### Get Withdrawal
-
-```
-GET /api/v2/withdrawals/:id
+```bash
+curl -X DELETE https://app.payout.one/api/v1/m2m/certificates/<thumbprint> \
+  -H "Authorization: Bearer <TOKEN>"
 ```
 
-### Cancel Withdrawal
+Payout may also revoke a certificate if it has been compromised or if the contractual relationship ends. In that case, you will be notified by email and via webhook (`m2m_certificate.revoked`).
 
-```
-POST /api/v2/withdrawals/:id/cancel
-```
+### Compromise
 
-### Check Cancel Allowed
+If you suspect your private key has been compromised:
 
-```
-POST /api/v2/withdrawals/:id/cancel_allowed
-```
+1. Revoke the certificate at the QTSP that issued it.
+2. Remove it from Payout (`DELETE`).
+3. Notify Payout at `security@payout.one`.
+4. Generate a new key pair and obtain a fresh certificate.
+5. Import the new certificate and wait for re-approval.
 
-## Error Responses
+## HTTP error codes
 
-| HTTP Status | Meaning |
+| Code | Meaning |
 |---|---|
-| 403 Forbidden | Client certificate is missing, invalid, or does not match the API key. |
-| 401 Unauthorized | Bearer token is missing or expired. |
-
-## Security Architecture
-
-The mTLS implementation uses a two-layer verification model:
-
-1. **TLS Layer (Nginx Ingress)** — During the TLS handshake, the server requests a client certificate. Nginx verifies that:
-   - The certificate is signed by the Payout Certificate Authority.
-   - The client possesses the private key corresponding to the certificate.
-
-2. **Application Layer (Payout API)** — After the TLS handshake, the application verifies that:
-   - The SHA-256 fingerprint of the presented certificate matches the fingerprint registered to the API key.
-
-This dual verification ensures that even if a certificate signed by the same CA is compromised, it cannot be used with a different API key.
-
-## Certificate Management
-
-- Each API key can have **one active certificate** at a time.
-- To rotate a certificate, generate a new CSR, upload it via the Merchant Portal, and start using the new certificate. The previous certificate will be invalidated.
-- Certificates are signed by the Payout CA with a defined validity period.
-
-## FAQ
-
-**Can I use the same certificate for multiple API keys?**
-No. Each API key must have its own unique certificate.
-
-**What happens if I call `/api/v2` without a certificate?**
-You will receive a `403 Forbidden` response.
-
-**What happens if I call `/api/v2` with a certificate that does not match my API key?**
-You will receive a `403 Forbidden` response.
-
-**Can I still use `/api/v1` endpoints?**
-Yes. The `/api/v1` endpoints remain available and do not require a client certificate.
-
-**What certificate format is required?**
-The CSR must be in PEM format (the standard output of `openssl req`). The signed certificate returned by Payout is also in PEM format.
+| `401 Unauthorized` | Missing or invalid Bearer token |
+| `403 Forbidden` | mTLS failure, QSEAL signature failure, or business rule rejection (insufficient balance, IBAN blocked, etc.) |
+| `404 Not Found` | Resource (certificate, withdrawal) not found or not owned by your account |
+| `409 Conflict` | Certificate with the same thumbprint already imported |
+| `422 Unprocessable Entity` | Validation error (malformed PEM, invalid IBAN, missing field, etc.) |
+| TLS handshake refused | Client certificate missing, expired, revoked, or not issued by a trusted QTSP |
