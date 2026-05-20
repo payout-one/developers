@@ -7,6 +7,8 @@ Payout API v2 endpoints for M2M (machine-to-machine) payment initiation are secu
 
 This model is aligned with the Berlin Group NextGenPSD2 framework and is required by Article 17 RTS to SCA for the corporate payment process exemption.
 
+The mTLS certificate-management endpoints under `/api/v1/mtls/certificates` are the **shared infrastructure** for any server-to-server Payout API that requires a TLS client certificate. Today that means PSD2 payment initiation (this page); upcoming products such as Verification of Payee will reuse the same import/approval flow with a less strict certificate profile.
+
 ## Endpoints
 
 | Environment | mTLS host |
@@ -19,10 +21,10 @@ The token-issuing endpoint and certificate import endpoints remain on the standa
 | Method | Path | Purpose |
 |---|---|---|
 | `POST` | `/api/v1/authorize` | Obtain Bearer token from `client_id` + `client_secret` |
-| `POST` | `/api/v1/m2m/certificates` | Import a QWAC or QSEAL certificate |
-| `GET` | `/api/v1/m2m/certificates` | List your imported certificates |
-| `GET` | `/api/v1/m2m/certificates/:thumbprint/status` | Check certificate approval status |
-| `DELETE` | `/api/v1/m2m/certificates/:thumbprint` | Remove a certificate |
+| `POST` | `/api/v1/mtls/certificates` | Import a QWAC or QSEAL certificate |
+| `GET` | `/api/v1/mtls/certificates` | List your imported certificates |
+| `GET` | `/api/v1/mtls/certificates/:thumbprint/status` | Check certificate approval status |
+| `DELETE` | `/api/v1/mtls/certificates/:thumbprint` | Remove a certificate |
 | `POST` | `/api/v2/withdrawals` | **mTLS + QSEAL** — create a withdrawal |
 | `GET` | `/api/v2/withdrawals` | **mTLS** — list withdrawals |
 | `GET` | `/api/v2/withdrawals/:id` | **mTLS** — retrieve withdrawal |
@@ -63,7 +65,7 @@ Response:
 Upload the PEM-encoded QWAC and QSEAL certificates (public part only, not the private keys):
 
 ```bash
-curl -X POST https://app.payout.one/api/v1/m2m/certificates \
+curl -X POST https://app.payout.one/api/v1/mtls/certificates \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -94,7 +96,7 @@ Response (initial state `pending`):
 Payout manually verifies that the imported certificates match the contractual data of your account. You can check the status at any time:
 
 ```bash
-curl https://app.payout.one/api/v1/m2m/certificates/<thumbprint>/status \
+curl https://app.payout.one/api/v1/mtls/certificates/<thumbprint>/status \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
@@ -197,18 +199,18 @@ X-JWS-Signature: eyJhbGciOiJQUzI1NiIsInR5cCI6IkpPU0UrSlNPTiIsIng1dCNTMjU2I...
 
 ### Renewal
 
-When your certificate approaches expiry, obtain a new one from the QTSP and import it via `POST /api/v1/m2m/certificates`. The new certificate is approved separately and runs in parallel with the previous one until that one expires — no downtime.
+When your certificate approaches expiry, obtain a new one from the QTSP and import it via `POST /api/v1/mtls/certificates`. The new certificate is approved separately and runs in parallel with the previous one until that one expires — no downtime.
 
 ### Revocation
 
 You can remove your own certificate at any time:
 
 ```bash
-curl -X DELETE https://app.payout.one/api/v1/m2m/certificates/<thumbprint> \
+curl -X DELETE https://app.payout.one/api/v1/mtls/certificates/<thumbprint> \
   -H "Authorization: Bearer <TOKEN>"
 ```
 
-Payout may also revoke a certificate if it has been compromised or if the contractual relationship ends. In that case, you will be notified by email and via webhook (`m2m_certificate.revoked`).
+Payout may also revoke a certificate if it has been compromised or if the contractual relationship ends. In that case, you will be notified by email and via webhook (`mtls_certificate.revoked`).
 
 ### Compromise
 

@@ -21,4 +21,5 @@
     - [Checkout payment methods](/payment-gateway/use-cases/checkout-payment-methods.md "Checkout payment methods")
     - [Capture & Cancel](/payment-gateway/use-cases/capture.md "Capture & Cancel")
     - [Checkout Verification Webhook](/payment-gateway/use-cases/checkout-verification-webhook.md "Checkout Verification Webhook")
+    - [Payment instructions (manual bank transfer)](/payment-gateway/use-cases/payment-instructions.md "Payment instructions")
 - [FraudNet Federated Learning](fraudnet-fl-client.md "FraudNet Federated Learning client & service manual")
