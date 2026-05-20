@@ -8,7 +8,11 @@
   - [Identity verification](/payout-id/identity-verification.md "Identity verification")
 - [Banklink (OpenBanking Aggregator)](banklink.md "Banklink")
 - [OpenBanking PSD2 API](psd2.md "PSD2")
-- [IBAN Verification](verification.md "Verifications")
+- Server-to-Server APIs (mTLS)
+  - [mTLS Client Certificates](certificates.md "mTLS Client Certificates")
+  - [M2M Withdrawals](m2m.md "M2M Withdrawals")
+  - [Verification of Payee](vop.md "Verification of Payee")
+- [IBAN Ownership Verification (Banklink)](verification.md "IBAN Ownership Verification")
 - [Payment Gateway](payment-gateway.md "Payment Gateway")
   - [Integrations](/payment-gateway/integrations.md "Integrations list")
   - Use cases
