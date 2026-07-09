@@ -1,11 +1,5 @@
 # Payout Authz — Mobile API
 
-> [!WARNING]
-> **Internal, unlisted page.** This document is intentionally not linked from the
-> sidebar, top navigation, or search. It is reachable only via its direct
-> `#/internal/payout-authz-mobile-api` link. Treat the URL as internal and do not
-> link it from public pages.
-
 `payout-authz` is the transaction-authorization service. It enrolls a user's
 mobile device, issues challenges (login / withdrawal / batch withdrawal), pushes
 them to the device, and verifies the device's **ES256 signature** when the user
@@ -13,12 +7,10 @@ approves. This page documents the HTTP API consumed by the **payout-authz-mobile
 Flutter app; the backend-facing endpoints (challenge creation, device listing) are
 summarized at the end.
 
-> [!NOTE]
-> **Source of truth.** The machine-readable contract is the OpenAPI 3.1 spec in
-> the `payout-one/payout-authz-contracts` repository
-> (`openapi/payout-authz.yaml`). This page is a human-readable companion; when the
-> two disagree, the OpenAPI file and the deployed service win. A Dart client can be
-> generated from that spec (`configs/dart.yaml`).
+The machine-readable source of truth is the OpenAPI 3.1 spec in the
+`payout-one/payout-authz-contracts` repository (`openapi/payout-authz.yaml`); this
+page is its human-readable companion, and a Dart client can be generated from it
+(`configs/dart.yaml`). When they disagree, the spec and the deployed service win.
 
 ## Base URL
 
@@ -139,10 +131,11 @@ Returned by the list and get endpoints and echoed on creation.
 | `status` | string | See table above. |
 | `expires_at` | date-time | ISO 8601, 3 minutes after creation. |
 | `attempts_left` | integer | Starts at 2. |
-| `payload_hash` | string | Lowercase hex SHA-256 of the JSON payload. |
+| `payload_hash` | string | Lowercase hex SHA-256 of the challenge's canonical authorization view (`{ payload, items }` — see [Signing an approval set](#signing-an-approval-set)). The app should independently **recompute** this from the `payload`/`items` it renders to the user rather than trust-copy this field, since it's what binds the approval signature to what the user actually saw. |
 | `payload` | object | Type-specific details (see below). |
 | `reference` | string | Human-readable code shown to the user (`txn_id`, `batch_id`, or a generated `LOGIN-XXXXXXXX`). |
 | `items_count` | integer | Present only for `withdrawal_batch`. |
+| `items` | array | Present only for `withdrawal_batch`: the line items, `{ amount, currency, iban }` each, already sorted the same way `payload_hash` requires (ascending by each item's own canonical-bytes string) — see [Signing an approval set](#signing-an-approval-set). |
 | `metadata` | object | Present only for `withdrawal_batch`: `{ batch_id, amount, currency }`. |
 
 `payload` contents by type:
@@ -199,30 +192,53 @@ Approves and/or rejects one or more challenges in a single **ES256-signed**
 request. See [Signing an approval set](#signing-an-approval-set) for how the
 signature is built.
 
+> [!WARNING]
+> **Breaking (v1.2.0).** The signed set now binds each decision to the exact
+> transaction payload the user was shown (`payload_hash`) and adds a
+> whole-set `timestamp` + `nonce`. Signatures built against the old 3-key
+> object (`challenge_id`/`decision`/`user_id` only) no longer reproduce the
+> server's canonical bytes and are rejected with `401 invalid_signature`.
+> `payout-authz` and `payout-authz-mobile` must deploy this together.
+
 **Request body**
 
 | Field | Type | Notes |
 |-------|------|-------|
 | `device_id` | uuid | The enrolled device. |
-| `approvals` | array | 1–50 items. Each: `{ challenge_id, decision }` where `decision` is `approve` or `reject`. |
+| `approvals` | array | 1–50 items. Each: `{ challenge_id, decision, payload_hash }` where `decision` is `approve` or `reject` and `payload_hash` is the SHA-256 hex digest computed per [Signing an approval set](#signing-an-approval-set). |
 | `signature_alg` | string | Must be `ES256`. |
-| `signature_der` | string | Base64-encoded DER ECDSA signature over the canonical approval set. |
+| `signature_der` | string | Base64-encoded DER ECDSA signature over the canonical **signed set** (`{ approvals, timestamp, nonce }`, each approval including `payload_hash`). |
+| `timestamp` | integer | Unix seconds when the set was signed. Signed as a JSON **integer**, not a string. Must be within the server's freshness window (120s by default, plus 5s of allowed clock skew) or the whole set is rejected. |
+| `nonce` | string | Client-generated single-use value. A repeat within the replay window rejects the whole set. |
 
 > [!NOTE]
-> Only `challenge_id` and `decision` are read from each item. Any extra fields the
-> app includes (e.g. `payload_hash`, `user_id`) are ignored by the server. The
-> `user_id` used in the signed message is injected server-side from the device
-> record — see the signing section.
+> `challenge_id`, `decision`, and `payload_hash` are read from each item.
+> `payload_hash` is recomputed server-side from the **stored** challenge and
+> verified; a mismatch fails only that item (`payload_mismatch`), reported in
+> `errors` below — it does not by itself invalidate the rest of the set's
+> signature. Any other field an item includes (e.g. `user_id`) is ignored —
+> the `user_id` in the signed message is always the enrolled owner's id,
+> injected server-side. See the signing section for the full algorithm.
 
 ```json
 {
   "device_id": "550e8400-e29b-41d4-a716-446655440000",
   "approvals": [
-    { "challenge_id": "d290f1ee-6c54-4b01-90e6-d701748f0851", "decision": "approve" },
-    { "challenge_id": "b7d3e8c2-4a1f-4e9d-8c5b-2f1a3d6e8b9c", "decision": "reject" }
+    {
+      "challenge_id": "00000000-0000-0000-0000-000000000002",
+      "decision": "approve",
+      "payload_hash": "772bdcf2b507bc072c0f7a27e6733a163df5f908b906ff3611c57139a0625981"
+    },
+    {
+      "challenge_id": "00000000-0000-0000-0000-000000000001",
+      "decision": "reject",
+      "payload_hash": "4ba67e21b1e9486465170eece00474686d15542855d28ba38fd68e6cbc938a42"
+    }
   ],
   "signature_alg": "ES256",
-  "signature_der": "MEUCIQD1KrQvSKJh0TcMwxKkqPp3OV8r9fZ2xY3wB5kA7cD8eQIgXnY9zL2mP4qR6sT8uV0wX2yA4bC6dE8fG0hI2jK4lM6="
+  "signature_der": "MEUCIQD6bU4B78zNE+q7KQpLlHkYeFBZ4/+K2ljjms7kDGGPxgIgMZRU4lVTNy7x6bJr/6v6/nawD2dc2B1suOObJO4gIO8=",
+  "timestamp": 1770000000,
+  "nonce": "vector-nonce-001"
 }
 ```
 
@@ -230,8 +246,8 @@ signature is built.
 
 ```json
 {
-  "approved_ids": ["d290f1ee-6c54-4b01-90e6-d701748f0851"],
-  "rejected_ids": ["b7d3e8c2-4a1f-4e9d-8c5b-2f1a3d6e8b9c"],
+  "approved_ids": ["00000000-0000-0000-0000-000000000002"],
+  "rejected_ids": ["00000000-0000-0000-0000-000000000001"],
   "errors": []
 }
 ```
@@ -241,17 +257,20 @@ signature is built.
 > `errors` **with HTTP 200** — inspect the body, not just the status. A non-200
 > status means the whole set was rejected. Each `errors` item is
 > `{ challenge_id, code, message }`, where `code` is one of `not_found`,
-> `expired`, `attempts_exhausted`, `invalid_state`, `unauthorized`, or
-> `invalid_decision`.
+> `expired`, `attempts_exhausted`, `invalid_state`, `unauthorized`,
+> `invalid_decision`, or `payload_mismatch` (the signed `payload_hash` didn't
+> match the server-recomputed value for the stored challenge).
 
 **Errors (whole set rejected)**
 
 | HTTP | `code` | When |
 |------|--------|------|
-| 400 | `invalid_approval_set` | Malformed set. |
+| 400 | `invalid_approval_set` | Malformed set (including a missing/malformed `payload_hash`, `timestamp`, or `nonce`). |
 | 400 | `unsupported_signature_algorithm` | `signature_alg` is not `ES256`. |
 | 401 | `invalid_signature` | ES256 verification failed. |
 | 401 | `device_revoked` | The device has been revoked. |
+| 401 | `stale_timestamp` | `timestamp` is outside the freshness window (120s, +5s clock skew). |
+| 401 | `replayed` | `nonce` was already used within the replay window. |
 | 404 | `not_found` | Unknown `device_id`. |
 
 ### `POST /devices/{id}/revoke`
@@ -281,32 +300,123 @@ request body is empty.
 
 ## Signing an approval set
 
+> [!WARNING]
+> **Breaking (v1.2.0).** The signed set now includes a per-item `payload_hash`
+> and a top-level `timestamp`/`nonce`. This is a byte-for-byte cross-language
+> contract, pinned by `apps/core/test/fixtures/approval_vectors.json` in the
+> `payout-authz` repo — copy that fixture into the mobile repo and assert
+> against it in a Dart test. A single differing byte (key order, whitespace,
+> number formatting, an un-normalized amount string) produces a different
+> hash/signature and the server rejects it with `401 invalid_signature` (or,
+> for a per-item `payload_hash` mismatch alone, `payload_mismatch` on that
+> item).
+
 The `signature_der` in `POST /approvals` is an **ES256 (ECDSA / P-256 / SHA-256)**
-signature over the **canonical JSON** of the approval set, produced with the
-device's private key. Build the signed message exactly as the server does:
+signature over the **canonical JSON** of the signed set, produced with the
+device's private key. Build it exactly as the server does:
 
-1. For each decision, build the object
-   `{ "challenge_id": <id>, "decision": <approve|reject>, "user_id": <userId> }`,
-   where `user_id` is the enrolled user's id (returned at enrollment).
-2. Sort the objects **ascending by `challenge_id`**.
-3. Wrap them: `{ "approvals": [ ...sorted objects... ] }`.
-4. Canonicalize: serialize to JSON with **all object keys sorted lexicographically,
-   recursively**, and **no insignificant whitespace**.
-5. Sign the UTF-8 bytes of that string with ES256. Base64-encode the DER signature
-   into `signature_der`.
+### 1. Compute `payload_hash` for every challenge being decided
 
-For the two-item example above (user `7c9e6679-7425-40de-944b-e07fc1f90ae7`), the
-exact string that gets signed is:
+`payload_hash` is the lowercase hex SHA-256 digest of the canonical bytes of
+the challenge's **authorization view**:
 
-```json
-{"approvals":[{"challenge_id":"b7d3e8c2-4a1f-4e9d-8c5b-2f1a3d6e8b9c","decision":"reject","user_id":"7c9e6679-7425-40de-944b-e07fc1f90ae7"},{"challenge_id":"d290f1ee-6c54-4b01-90e6-d701748f0851","decision":"approve","user_id":"7c9e6679-7425-40de-944b-e07fc1f90ae7"}]}
+```
+{ "payload": <the challenge's `payload` object, exactly as returned by
+               GET /challenges / the challenge object>,
+  "items":   <line items, see below> }
 ```
 
+- **`login` and `withdrawal` challenges**: `items` is always `[]`.
+- **`withdrawal_batch` challenges**: `items` is the array of
+  `{ "amount", "currency", "iban" }` objects from the challenge's `items`
+  field (see [Challenge object](#challenge-object)), **sorted ascending by
+  each item's own canonical-bytes string** — i.e. by the UTF-8 bytes of that
+  single item's `{"amount":...,"currency":...,"iban":...}` canonical JSON,
+  compared byte-by-byte (NOT by array/DB order, and NOT a numeric sort on
+  `amount`). The `GET /challenges` response already returns `items` in this
+  sorted order, but don't rely on that — re-derive the sort independently;
+  this is the single biggest cross-language determinism risk.
+- **Amounts are decimal-valued strings, hashed verbatim.** `payload.amount`,
+  `payload.total_amount`, and each batch item's `amount` are canonical
+  decimal strings as stored/returned by the server (e.g. `"10.50"`, never
+  `"10.5"` or scientific notation). Hash the **exact string** the API
+  returned — never re-parse it into a number, reformat it, round it, or
+  strip/add trailing zeros. A client-side reformat is the most likely source
+  of a byte-parity break.
+
+Canonicalize with the same rule used everywhere in this doc: JSON with **all
+object keys sorted lexicographically, recursively**, and **no insignificant
+whitespace**.
+
+Worked examples (from the fixture — reproduce these exactly):
+
+```
+# login challenge, no items
+{"items":[],"payload":{"reference":"LOGIN-VEC001","requested_at":"2026-07-10T12:00:00Z","type":"login"}}
+→ payload_hash = 4ba67e21b1e9486465170eece00474686d15542855d28ba38fd68e6cbc938a42
+
+# single withdrawal, no items
+{"items":[],"payload":{"amount":"10.50","currency":"EUR","iban":"DE89370400440532013000","name":"Jane Doe","reference":"WD-VEC001","requested_at":"2026-07-10T12:05:00Z","type":"withdrawal"}}
+→ payload_hash = 772bdcf2b507bc072c0f7a27e6733a163df5f908b906ff3611c57139a0625981
+
+# withdrawal_batch, 2 items — note items are sorted 30.00 before 70.00
+# ("3" < "7" in each item's own canonical-bytes string), NOT input order
+{"items":[{"amount":"30.00","currency":"EUR","iban":"SK8975000000000012345671"},{"amount":"70.00","currency":"EUR","iban":"SK3112000000198742637541"}],"payload":{"batch_id":"BATCH-VEC001","currency":"EUR","items_count":2,"reference":"BATCH-VEC001","requested_at":"2026-07-10T12:10:00Z","total_amount":"100.00","type":"withdrawal_batch"}}
+→ payload_hash = b638bf41ebdbe32b07c6b2682aa9ac3a2caf3008c1b5ed532ae19f9cdd0d7d8e
+```
+
+### 2. Build and sign the approvals wrapper
+
+1. For each decision, build the object
+   `{ "challenge_id": <id>, "decision": <approve|reject>, "payload_hash": <from step 1>, "user_id": <userId> }`,
+   where `user_id` is the enrolled user's id (returned at enrollment).
+2. Sort the objects **ascending by `challenge_id`**.
+3. Wrap them with the whole-set fields:
+   `{ "approvals": [ ...sorted objects... ], "timestamp": <unix seconds, integer>, "nonce": <string> }`.
+   `timestamp` MUST be a JSON **integer** in the signed bytes (not a numeric
+   string). `nonce` is a client-generated single-use string.
+4. Canonicalize: serialize to JSON with all object keys sorted
+   lexicographically, recursively, and no insignificant whitespace.
+5. Sign the UTF-8 bytes of that string with ES256. Base64-encode the DER
+   signature into `signature_der`.
+
+For the request-body example above (user `00000000-0000-0000-0000-0000000000aa`,
+`timestamp` `1770000000`, `nonce` `vector-nonce-001`), the exact string that
+gets signed — byte-for-byte identical to `signed_set_vector.canonical_bytes`
+and `verify_vector.signing_input` in the fixture — is:
+
+```json
+{"approvals":[{"challenge_id":"00000000-0000-0000-0000-000000000001","decision":"reject","payload_hash":"4ba67e21b1e9486465170eece00474686d15542855d28ba38fd68e6cbc938a42","user_id":"00000000-0000-0000-0000-0000000000aa"},{"challenge_id":"00000000-0000-0000-0000-000000000002","decision":"approve","payload_hash":"772bdcf2b507bc072c0f7a27e6733a163df5f908b906ff3611c57139a0625981","user_id":"00000000-0000-0000-0000-0000000000aa"}],"nonce":"vector-nonce-001","timestamp":1770000000}
+```
+
+The `signature_der` in the request-body example above is a real, verifiable
+ES256 signature over this exact string (the fixture's `verify_vector`
+includes the matching test-only private/public keypair, so a Dart
+implementation can both re-sign this input and verify the committed
+signature against it).
+
 > [!WARNING]
-> The server recomputes this string and **injects `user_id` from the device
-> record**. If your local canonicalization differs (key order, whitespace, or a
-> different `user_id`), verification fails with `401 invalid_signature`. Match the
-> canonical form byte-for-byte.
+> The server recomputes this string — including recomputing every
+> `payload_hash` **from the stored challenge**, never from the client's value
+> — and **injects `user_id` from the device record**. If your local
+> canonicalization differs (key order, whitespace, a different `user_id`, or
+> a mis-derived `payload_hash`), verification fails with `401
+> invalid_signature`, or, for a `payload_hash`-only mismatch on one item,
+> that item fails with `payload_mismatch` while the rest of the set is still
+> processed. Match the canonical form byte-for-byte.
+
+### 3. Freshness and replay
+
+- `timestamp` must be within **120 seconds** of the server's clock (plus 5s
+  of allowed clock skew into the future) or the whole set is rejected with
+  `401 stale_timestamp`, checked before any challenge is touched.
+- A `nonce` already seen within twice that window is rejected with `401
+  replayed`.
+- An exact byte-identical resubmission (same approvals, `payload_hash`es,
+  `timestamp`, and `nonce` as a previously recorded approval) is treated as
+  an idempotent retry — it returns the original cached result and skips the
+  nonce-replay check, so a legitimate retry after a dropped response doesn't
+  fail as a replay.
 
 ## Push notifications
 
