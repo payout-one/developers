@@ -2,8 +2,8 @@
 
 The Payout server-to-server APIs are authenticated with an **mTLS client certificate** that you obtain from a Qualified Trust Service Provider (QTSP) and import into your Payout account. The same certificate infrastructure is reused by every server-to-server product:
 
-- [**M2M Withdrawals**](./m2m.md) — Payout API v2 withdrawal initiation. Requires a QWAC carrying a PSD2 role attribute **plus** a QSEAL for detached payment-instruction signatures.
-- [**Verification of Payee (VoP)**](./vop.md) — pre-payment IBAN/name check. Requires a plain eIDAS QWAC (no PSD2 role attribute needed, no QSEAL).
+- [**M2M Withdrawals**](./m2m.md) — Payout API v2 withdrawal initiation. Requires a QWAC for the mTLS connection **plus** a QSEAL for detached payment-instruction signatures.
+- [**Verification of Payee (VoP)**](./vop.md) — pre-payment IBAN/name check. Requires a QWAC only (no QSEAL).
 - *(more products to come — same import flow.)*
 
 If you already imported a certificate for one product, you can reuse it for the other(s) as long as it satisfies their respective profile requirements.
@@ -13,8 +13,9 @@ If you already imported a certificate for one product, you can reuse it for the 
 | Profile | What it is | Required for |
 |---|---|---|
 | **QWAC** (Qualified Website Authentication Certificate) | Establishes the mTLS connection. Issued by a QTSP, listed in the EU Trusted List. | All server-to-server APIs |
-| **QWAC with PSD2 role** | A QWAC whose `organizationIdentifier` carries a PSD2 role attribute (`PSDxx-…`), assigned to your firm by the national competent authority. | M2M Withdrawals only |
 | **QSEAL** (Qualified Electronic Seal Certificate) | Signs payment instructions (detached JWS). Issued by a QTSP. | M2M Withdrawals only |
+
+A standard eIDAS QWAC and QSEAL are sufficient — **no PSD2-specific extensions** (QcStatement-PSD2 per ETSI TS 119 495, PSP role attributes such as `PSP_AS`/`PSP_PI`/`PSP_AI`/`PSP_IC`) are required. Those are issued only to licensed payment service providers; M2M clients are typically merchants and other B2B entities and obtain plain qualified certificates from any QTSP in the EU Trusted List.
 
 Common requirements for all profiles:
 
@@ -88,8 +89,8 @@ Response (initial state `pending`):
   "thumbprint": "49165a9f...",
   "status": "pending",
   "issuer_dn": "CN=...,O=...",
-  "subject_dn": "C=SK,...,organizationIdentifier=PSDSK-NBS-50487787,CN=...",
-  "subject_org_id": "PSDSK-NBS-50487787",
+  "subject_dn": "C=SK,...,organizationIdentifier=NTRSK-12345678,CN=...",
+  "subject_org_id": "NTRSK-12345678",
   "valid_from": "2025-06-09T06:23:06Z",
   "valid_until": "2026-06-09T06:23:06Z"
 }

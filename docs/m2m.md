@@ -2,7 +2,7 @@
 
 The **M2M Withdrawals** API is Payout API v2's server-to-server interface for initiating, retrieving and cancelling withdrawals (outbound transfers from your Payout balance to a customer's IBAN). It is secured by two qualified certificates issued by a Qualified Trust Service Provider (QTSP) under the EU eIDAS regulation:
 
-- **QWAC** (Qualified Website Authentication Certificate) — establishes a mutually authenticated TLS connection (mTLS) and carries your PSD2 role attribute (`PSDxx-…`).
+- **QWAC** (Qualified Website Authentication Certificate) — establishes a mutually authenticated TLS connection (mTLS).
 - **QSEAL** (Qualified Electronic Seal Certificate) — digitally signs each payment instruction (detached JWS).
 
 This setup follows the Berlin Group NextGenPSD2 framework and satisfies Article 17 RTS to SCA, which lets Payout claim the corporate-payment-process exemption from Strong Customer Authentication for these withdrawals.
@@ -26,11 +26,11 @@ This setup follows the Berlin Group NextGenPSD2 framework and satisfies Article 
 
 ## Prerequisites
 
-Before you can call any v2 withdrawal endpoint you need an `approved` **QWAC** *and* an `approved` **QSEAL** certificate registered to your account. Both must be issued by a QTSP listed in the [EU Trusted List](https://ec.europa.eu/tools/lotl/eu-lotl.xml), and your QWAC's `organizationIdentifier` must carry a PSD2 role attribute (`PSDxx-…`) assigned by your national competent authority.
+Before you can call any v2 withdrawal endpoint you need an `approved` **QWAC** *and* an `approved` **QSEAL** certificate registered to your account. Both must be issued by a QTSP listed in the [EU Trusted List](https://ec.europa.eu/tools/lotl/eu-lotl.xml). Standard eIDAS qualified certificates are sufficient — no PSD2-specific extensions are required (see [Certificates § Certificate profiles](./certificates.md#certificate-profiles)).
 
 Full setup is in [Certificates § Setup](./certificates.md#setup). In summary:
 
-1. Obtain QWAC + QSEAL from a QTSP (CSR must include the PSD2 role attribute on the QWAC).
+1. Obtain QWAC + QSEAL from a QTSP (standard eIDAS qualified certificates, no PSD2 extensions required).
 2. Import both via `POST /api/v1/mtls/certificates` against the standard host (`sandbox.payout.one` / `app.payout.one`).
 3. Wait for manual approval by Payout.
 4. Call the v2 endpoints on the mTLS host, presenting the QWAC during the TLS handshake.
