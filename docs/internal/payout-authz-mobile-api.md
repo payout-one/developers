@@ -27,22 +27,49 @@ All requests and responses are `application/json`.
 
 ## Authentication
 
-There is **no `Authorization` / bearer header** on any endpoint. Authentication is
-contextual:
+There is **no `Authorization` / bearer header** on any mobile-facing endpoint.
+Authentication is contextual, and the app enrolls and uses **two separate ES256
+keypairs** for two separate purposes:
+
+- **Approval key** (`public_key_pem`) — gated behind biometrics or a device
+  credential. Signs `POST /approvals` (a body signature over the approval set —
+  see [Signing an approval set](#signing-an-approval-set)).
+- **Device / proof-of-possession (PoP) key** (`pop_public_key_pem`) — **not**
+  gated behind biometrics or a device credential. Signs the `DevicePoP` request
+  headers (`X-Device-Id`, `X-Timestamp`, `X-Nonce`, `X-Signature-Alg`,
+  `X-Signature`) required by `GET /challenges`, self-service
+  `POST /devices/{id}/revoke`, and `POST /devices/{id}/integrity` — see
+  [Device proof-of-possession (PoP) headers](#device-proof-of-possession-pop-headers).
+
+Both keys are required at enrollment; there is no fallback from one to the
+other, and a PoP signature never authenticates an approval submission (or vice
+versa). Separating the keys means polling for pending challenges — or a device
+revoking itself — never triggers a biometric or device-credential prompt,
+while every money-moving or consent decision still requires one.
+
+Per endpoint:
 
 - **Enrollment** — the app proves the user's identity by sending the OAuth 2.0
   access token (a JWT issued by PayoutID) in the request **body** as
   `access_token`. The service validates it against the PayoutID JWKS and derives
   `user_id` from it; the app never sends `user_id` at enrollment.
-- **Approvals** — integrity is guaranteed by an **ES256 signature** over the
-  approval set, produced with the device's enrolled private key. The device is
-  identified by `device_id`.
-- **Challenge polling and device revoke** — device-bound: the app sends the
-  `device_id` it received at enrollment.
+- **`GET /challenges`, self-service `POST /devices/{id}/revoke`,
+  `POST /devices/{id}/integrity`** — `DevicePoP`: the app signs the request with
+  the device/PoP key. No bearer token is issued or sent.
+- **`POST /approvals`** — no header at all. Integrity is guaranteed by an
+  **ES256 signature** (`signature_der`) over the canonical approval set,
+  produced with the device's **approval key**.
+- **Backend-facing endpoints** (challenge creation, device listing, and
+  `POST /devices/{id}/revoke` when a backend service revokes on a user's
+  behalf) — a bearer **ServiceToken**: an OAuth 2.0 client-credentials access
+  token issued by `payout_id`, scoped `authz:challenge:write`. These are called
+  server-to-server by `payout_merchant` / `payout_id`, never by the mobile app;
+  see [Backend-facing endpoints](#backend-facing-endpoints-reference).
 
 > [!TIP]
-> The private key never leaves the device. It is generated on-device during
-> enrollment; only the public key (PEM) is uploaded. Approvals are signed locally.
+> Neither private key ever leaves the device. Both are generated on-device
+> during enrollment; only the public keys (PEM) are uploaded. Approvals and
+> PoP headers are signed locally.
 
 ## Enrollment
 
@@ -55,29 +82,44 @@ enrollment.
    flow with PKCE. See [PayoutID OAuth2](/payout-id/oauth-new.md). The app scans a
    QR code that carries the `authorize_url`, completes the browser flow, and
    exchanges the `authorization_code` for an `access_token`.
-2. **Complete enrollment** by posting the device's public key and push token.
+2. **Complete enrollment** by posting the device's two public keys and push
+   token.
 
 ### `POST /authn/enroll/complete`
 
-Registers the device and stores its ES256 public key.
+Registers the device and stores its **two** ES256 public keys — a deliberate
+two-key split, generated and held separately on-device, never the same key
+used for both purposes:
+
+- `public_key_pem` — the **approval key**, gated behind biometrics or a
+  device credential. Verifies `POST /approvals` signatures.
+- `pop_public_key_pem` — the **device proof-of-possession key**, not gated
+  behind biometrics or a device credential. Verifies the `DevicePoP`
+  (`X-Signature`) header on `GET /challenges`, self-service
+  `POST /devices/{id}/revoke`, and `POST /devices/{id}/integrity`.
+
+Both are required; the server does not accept a single shared key, and there
+is no fallback from one to the other — a device enrolled without
+`pop_public_key_pem` fails `DevicePoP` verification with `missing_pop_key`.
 
 **Request body**
 
 | Field | Type | Required | Notes |
 |-------|------|----------|-------|
 | `access_token` | string | ✅ | OAuth access token (JWT) from PayoutID. Identifies the user. |
-| `public_key_pem` | string | ✅ | Device ES256 (P-256) public key, PEM format. |
+| `public_key_pem` | string | ✅ | Device ES256 (P-256) **approval** public key, PEM format. Biometric-/device-credential-gated; signs approval sets. |
+| `pop_public_key_pem` | string | ✅ | Device ES256 (P-256) **proof-of-possession** public key, PEM format. Not gated behind biometrics or a device credential; signs the `DevicePoP` header. A separate keypair from `public_key_pem` — never reuse it. |
 | `push_token` | string | ✅ | APNs token or FCM registration token. |
 | `platform` | string | ✅ | `ios` or `android`. |
-| `biometrics_enabled` | boolean | ✅ | Whether approvals unlock with biometrics. |
+| `biometrics_enabled` | boolean | ✅ | Whether the approval key unlocks with biometrics. The app has no PIN of its own: when this is `false`, the OS device credential (passcode/PIN) is the fallback gate on the approval key, not an app-level PIN. |
 | `device_name` | string | ➖ | Shown in device lists. |
-| `pin_hash` | string | ⚠️ | Client-computed hash of the device PIN. **Required when `biometrics_enabled` is `false`.** The raw PIN never leaves the device. |
 | `attestation_json` | object | ➖ | Optional device attestation data. |
 
 ```json
 {
   "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
   "public_key_pem": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...\n-----END PUBLIC KEY-----",
+  "pop_public_key_pem": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgBF...\n-----END PUBLIC KEY-----",
   "push_token": "fcm:dZx8vN3kQ2m...",
   "platform": "ios",
   "biometrics_enabled": true,
@@ -146,11 +188,21 @@ Returned by the list and get endpoints and echoed on creation.
 
 ## Mobile endpoints
 
-### `GET /challenges?device_id={deviceId}`
+### `GET /challenges`
 
-Lists the **pending** challenges for the user that owns `device_id`. Use it to
-reconcile state on app foreground or after a missed push. Expired challenges are
-transitioned to `expired` server-side and are not returned.
+Requires **`DevicePoP`** — see
+[Device proof-of-possession (PoP) headers](#device-proof-of-possession-pop-headers).
+Lists the **pending** challenges for the caller's authenticated device;
+identity comes from the PoP signature, not from a query/body param (the
+signature does not cover the query string). Use it to reconcile state on app
+foreground or after a missed push. Expired challenges are transitioned to
+`expired` server-side and are not returned.
+
+An optional `device_id` query param is accepted only as a same-device sanity
+check: if present it must equal the authenticated device's id, otherwise the
+request is rejected with `403 device_mismatch` — a caller can't use its own
+valid PoP signature to ask for another device's challenges by tampering with
+the query string.
 
 **Response `200 OK`**
 
@@ -180,11 +232,19 @@ transitioned to `expired` server-side and are not returned.
 
 **Errors**
 
-| HTTP | `code` | When |
-|------|--------|------|
-| 400 | `invalid_request` | Missing `device_id`. |
-| 401 | `device_revoked` | The device has been revoked. |
-| 404 | `device_not_found` | Unknown `device_id`. |
+Auth failures use the `{"error": "<reason>"}` shape, not `{"code", "message"}`
+— see [Device proof-of-possession (PoP) headers](#device-proof-of-possession-pop-headers).
+
+| HTTP | `error` | When |
+|------|---------|------|
+| 401 | `missing_pop_headers` | One or more `X-Device-Id` / `X-Timestamp` / `X-Nonce` / `X-Signature-Alg` / `X-Signature` headers is missing or malformed. |
+| 401 | `unsupported_signature_algorithm` | `X-Signature-Alg` is not `ES256`. |
+| 401 | `stale_timestamp` | `X-Timestamp` is outside the freshness window. |
+| 401 | `replayed` | `X-Nonce` was already used within the replay window. |
+| 401 | `invalid_device` | Unknown or revoked device id. |
+| 401 | `missing_pop_key` | The device has no `pop_public_key_pem` on record (legacy enrollment predating the two-key split). |
+| 401 | `invalid_signature` | ES256 verification against the device's PoP key failed. |
+| 403 | `device_mismatch` | The `device_id` query param doesn't match the authenticated device. |
 
 ### `POST /approvals`
 
@@ -193,7 +253,7 @@ request. See [Signing an approval set](#signing-an-approval-set) for how the
 signature is built.
 
 > [!WARNING]
-> **Breaking (v1.2.0).** The signed set now binds each decision to the exact
+> **Breaking (v2.0.0).** The signed set now binds each decision to the exact
 > transaction payload the user was shown (`payload_hash`) and adds a
 > whole-set `timestamp` + `nonce`. Signatures built against the old 3-key
 > object (`challenge_id`/`decision`/`user_id` only) no longer reproduce the
@@ -280,6 +340,13 @@ the app to clear local enrollment and publishes a `device.revoked` event
 (downstream services fall back to TOTP). The app calls this during un-enroll. The
 request body is empty.
 
+Requires **`DevicePoP`** (self-revoke — see
+[Device proof-of-possession (PoP) headers](#device-proof-of-possession-pop-headers))
+**or** a backend-facing `ServiceToken`. A `DevicePoP` caller may only revoke its
+own device: the path `{id}` must equal the authenticated device's id, otherwise
+the request is rejected with `403 forbidden` — a device can't use its own valid
+PoP signature to revoke a different device.
+
 **Response `200 OK`**
 
 ```json
@@ -292,16 +359,76 @@ request body is empty.
 
 **Errors**
 
-| HTTP | `code` | When |
-|------|--------|------|
+| HTTP | `code` / `error` | When |
+|------|------------------|------|
 | 400 | `already_revoked` | Device is already revoked. |
+| 401 | *(DevicePoP failure reasons — see [Device proof-of-possession (PoP) headers](#device-proof-of-possession-pop-headers))* | Missing/malformed PoP headers, bad signature, stale timestamp, replayed nonce, or an unknown/revoked PoP device — when using `DevicePoP`. |
+| 403 | `forbidden` | A `DevicePoP`-authenticated device attempted to revoke a different device id. |
 | 404 | `not_found` | Unknown device. |
 | 500 | `revocation_failed` | Update failed. |
+
+### `POST /devices/{id}/integrity`
+
+Requires **`DevicePoP`** — see
+[Device proof-of-possession (PoP) headers](#device-proof-of-possession-pop-headers).
+Because this request carries a body, the PoP signature's `body_sha256` covers
+the raw JSON request body.
+
+The app self-reports a runtime-integrity verdict (root/jailbreak/hook/emulator/
+tamper detection — e.g. from freerasp) for the device identified by `{id}`,
+which must equal the authenticated device's id (otherwise `403
+device_mismatch`).
+
+> [!NOTE]
+> **Warn-not-block.** A compromised verdict is never rejected — the server
+> always records the report (caching the latest verdict on the device record,
+> and writing an audit-log entry keyed by device + user when the compromised
+> state changes) and responds `200`. This endpoint does not gate any
+> operation; it exists purely to give operators visibility into which
+> enrolled devices are running on compromised hardware/OS.
+
+**Request body**
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `platform` | string | ✅ | `ios` or `android`. Compared against the device's enrolled platform as a data-quality signal; a mismatch is recorded, never rejected. |
+| `threats` | array of string | ✅ | Threat identifiers detected on-device (e.g. freerasp threat names); `[]` when clean. Non-string entries are dropped and the list is capped server-side — never rejected for being too long or malformed. |
+| `compromised` | boolean | ✅ | Overall compromised verdict for this report. |
+| `attestation` | object \| null | ➖ | Optional opaque platform-attestation blob (Play Integrity / App Attest). Accepted and verified server-side on receipt; only the verification outcome is recorded — the raw blob is never persisted. |
+
+```json
+{
+  "platform": "android",
+  "threats": ["privilegedAccess", "hooks"],
+  "compromised": true,
+  "attestation": null
+}
+```
+
+**Response `200 OK`**
+
+Always returned on success — this endpoint never blocks a compromised report.
+
+```json
+{
+  "recorded": true,
+  "compromised": true
+}
+```
+
+**Errors**
+
+| HTTP | `code` / `error` | When |
+|------|------------------|------|
+| 400 | `invalid_request` | Missing or invalid `platform` / `compromised` / `threats`. |
+| 401 | *(DevicePoP failure reasons)* | Missing/malformed PoP headers, bad signature, stale timestamp, replayed nonce, or an unknown/revoked PoP device. |
+| 403 | `device_mismatch` | A `DevicePoP`-authenticated device attempted to report integrity for a different device id. |
+| 500 | `record_failed` | Update failed. |
 
 ## Signing an approval set
 
 > [!WARNING]
-> **Breaking (v1.2.0).** The signed set now includes a per-item `payload_hash`
+> **Breaking (v2.0.0).** The signed set now includes a per-item `payload_hash`
 > and a top-level `timestamp`/`nonce`. This is a byte-for-byte cross-language
 > contract, pinned by `apps/core/test/fixtures/approval_vectors.json` in the
 > `payout-authz` repo — copy that fixture into the mobile repo and assert
@@ -313,7 +440,8 @@ request body is empty.
 
 The `signature_der` in `POST /approvals` is an **ES256 (ECDSA / P-256 / SHA-256)**
 signature over the **canonical JSON** of the signed set, produced with the
-device's private key. Build it exactly as the server does:
+device's **approval** private key (never the PoP key — see
+[Authentication](#authentication)). Build it exactly as the server does:
 
 ### 1. Compute `payload_hash` for every challenge being decided
 
@@ -418,6 +546,77 @@ signature against it).
   nonce-replay check, so a legitimate retry after a dropped response doesn't
   fail as a replay.
 
+## Device proof-of-possession (PoP) headers
+
+`GET /challenges`, self-service `POST /devices/{id}/revoke`, and
+`POST /devices/{id}/integrity` require **`DevicePoP`**: the app signs the
+request with its enrolled **device/PoP key** (`pop_public_key_pem` — never the
+approval key `public_key_pem`; a PoP signature never authenticates
+`POST /approvals`, and an approval signature never satisfies `DevicePoP`). No
+bearer token is issued or sent — the app doesn't hold anything long-lived to
+present; it signs each request fresh.
+
+OpenAPI has no way to express a multi-header signature scheme, so all five of
+the following headers must be present together:
+
+| Header | Notes |
+|--------|-------|
+| `X-Device-Id` | The enrolled device id. |
+| `X-Timestamp` | Integer unix seconds. Rejected with `401 stale_timestamp` if outside a small freshness window (server-configured; default **60s**, plus 5s of allowed clock skew into the future). |
+| `X-Nonce` | Client-generated single-use value. A repeat within the freshness window is rejected with `401 replayed`. |
+| `X-Signature-Alg` | Must be the literal string `ES256`. |
+| `X-Signature` | Base64-encoded DER ECDSA signature (the same encoding `POST /approvals`' `signature_der` uses). |
+
+### Signing input
+
+The signature covers the **canonical JSON** (object keys sorted
+lexicographically, recursively, no insignificant whitespace — the same rule
+used in [Signing an approval set](#signing-an-approval-set)) of:
+
+```
+{"method": "<HTTP method, uppercase>",
+ "path": "<request path, no query string, including the `/api` prefix — i.e. what the server sees as `conn.request_path`>",
+ "device_id": "<X-Device-Id>",
+ "timestamp": <X-Timestamp, as an integer>,
+ "nonce": "<X-Nonce>",
+ "body_sha256": "<lowercase hex SHA-256 of the raw request body>"}
+```
+
+- `method` is upper-cased (`GET`, `POST`).
+- `path` excludes the query string. It includes the `/api` prefix — e.g.
+  `/api/challenges`, `/api/devices/550e8400-e29b-41d4-a716-446655440000/revoke`,
+  `/api/devices/550e8400-e29b-41d4-a716-446655440000/integrity` — not just the
+  path relative to this document's [Base URL](#base-url) table.
+- `body_sha256` is the lowercase hex SHA-256 digest of the **raw** request
+  body bytes. For a body-less request (`GET /challenges`, self-service
+  `POST /devices/{id}/revoke`, whose body is empty) this is the SHA-256 of the
+  empty string. For `POST /devices/{id}/integrity`, it's the hash of the raw
+  JSON body bytes actually sent — hash before any re-serialization, since a
+  different byte sequence produces a different hash and the signature won't
+  verify.
+
+Sign the UTF-8 bytes of the canonical string with ES256 (ECDSA / P-256 /
+SHA-256) using the device/PoP private key. Base64-encode the DER signature
+into `X-Signature`.
+
+The server verifies against the device's stored `pop_public_key_pem` and
+rejects any failure (missing/malformed header, unsupported algorithm, stale
+timestamp, replayed nonce, unknown or revoked device, a device with no PoP key
+on record, or a bad signature) with `401` and `{"error": "<reason>"}`.
+
+### Freshness and replay
+
+- `X-Timestamp` must be within the server's freshness window (default **60
+  seconds**, plus 5s of allowed clock skew into the future) or the request is
+  rejected with `401 stale_timestamp`.
+- An `X-Nonce` already seen within twice that window is rejected with `401
+  replayed`.
+
+> [!NOTE]
+> This window and default (60s) are narrower than the 120s used for
+> `POST /approvals`' `timestamp`/`nonce` — the two freshness checks are
+> independently configured and not interchangeable.
+
 ## Push notifications
 
 The device's push token (`push_token`) is registered once, during
@@ -429,7 +628,14 @@ register the token through any separate endpoint.
 ## Backend-facing endpoints (reference)
 
 These are called server-to-server by `payout_merchant` / `payout_id`, not by the
-mobile app. They are fully documented in the OpenAPI spec.
+mobile app, and require a bearer **ServiceToken** — an OAuth 2.0
+client-credentials access token issued by `payout_id`, RS256/JWKS-verified and
+scoped `authz:challenge:write` — sent as `Authorization: Bearer <token>`. They
+are fully documented in the OpenAPI spec.
+
+`POST /devices/{id}/revoke` also accepts a `ServiceToken` (in addition to
+`DevicePoP`, self-revoke only) so a backend service can revoke any device on a
+user's behalf — see the mobile endpoints section above.
 
 | Endpoint | Purpose |
 |----------|---------|
