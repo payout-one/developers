@@ -5,8 +5,6 @@ The **M2M Withdrawals** API is Payout API v2's server-to-server interface for in
 - **QWAC** (Qualified Website Authentication Certificate) — establishes a mutually authenticated TLS connection (mTLS).
 - **QSEAL** (Qualified Electronic Seal Certificate) — digitally signs each payment instruction (detached JWS).
 
-This setup follows the Berlin Group NextGenPSD2 framework and satisfies Article 17 RTS to SCA, which lets Payout claim the corporate-payment-process exemption from Strong Customer Authentication for these withdrawals.
-
 > Certificate import, approval and lifecycle are documented separately in [**Certificates**](./certificates.md). This page covers only what is **withdrawal-specific**: hosts, endpoints, QSEAL signing, and the M2M-specific error behaviour.
 
 ## Endpoints
@@ -26,7 +24,7 @@ This setup follows the Berlin Group NextGenPSD2 framework and satisfies Article 
 
 ## Prerequisites
 
-Before you can call any v2 withdrawal endpoint you need an `approved` **QWAC** *and* an `approved` **QSEAL** certificate registered to your account. Both must be issued by a QTSP listed in the [EU Trusted List](https://ec.europa.eu/tools/lotl/eu-lotl.xml). Standard eIDAS qualified certificates are sufficient — no PSD2-specific extensions are required (see [Certificates § Certificate profiles](./certificates.md#certificate-profiles)).
+Before you can call any v2 withdrawal endpoint you need an `approved` **QWAC** *and* an `approved` **QSEAL** certificate registered to your account. Both must be issued by a supported QTSP on the [EU Trusted List](https://ec.europa.eu/tools/lotl/eu-lotl.xml) — currently **I.CA** and **Disig** (for a certificate from another EUTL QTSP, contact [tech@payout.one](mailto:tech@payout.one)). Standard eIDAS qualified certificates are sufficient — no PSD2-specific extensions are required (see [Certificates § Certificate profiles](./certificates.md#certificate-profiles)).
 
 Full setup is in [Certificates § Setup](./certificates.md#setup). In summary:
 

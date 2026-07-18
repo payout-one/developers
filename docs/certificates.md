@@ -15,11 +15,11 @@ If you already imported a certificate for one product, you can reuse it for the 
 | **QWAC** (Qualified Website Authentication Certificate) | Establishes the mTLS connection. Issued by a QTSP, listed in the EU Trusted List. | All server-to-server APIs |
 | **QSEAL** (Qualified Electronic Seal Certificate) | Signs payment instructions (detached JWS). Issued by a QTSP. | M2M Withdrawals only |
 
-A standard eIDAS QWAC and QSEAL are sufficient — **no PSD2-specific extensions** (QcStatement-PSD2 per ETSI TS 119 495, PSP role attributes such as `PSP_AS`/`PSP_PI`/`PSP_AI`/`PSP_IC`) are required. Those are issued only to licensed payment service providers; M2M clients are typically merchants and other B2B entities and obtain plain qualified certificates from any QTSP in the EU Trusted List.
+A standard eIDAS QWAC and QSEAL are sufficient — **no PSD2-specific extensions** (QcStatement-PSD2 per ETSI TS 119 495, PSP role attributes such as `PSP_AS`/`PSP_PI`/`PSP_AI`/`PSP_IC`) are required. Those are issued only to licensed payment service providers; M2M clients are typically merchants and other B2B entities and obtain plain qualified certificates from a supported EU Trusted List QTSP (currently I.CA and Disig; for another issuer, contact [tech@payout.one](mailto:tech@payout.one)).
 
 Common requirements for all profiles:
 
-- Issued by a QTSP listed in the [EU Trusted List](https://ec.europa.eu/tools/lotl/eu-lotl.xml). Examples: I.CA, Disig, D-Trust, Buypass, GlobalSign Qualified, A-Trust, Certinomis.
+- Issued by a QTSP listed in the [EU Trusted List](https://ec.europa.eu/tools/lotl/eu-lotl.xml). **Currently supported issuers: I.CA (První certifikační autorita) and Disig.** To use a certificate from another EU Trusted List QTSP, contact [tech@payout.one](mailto:tech@payout.one) and we will add its CA to our trust store.
 - Contains your organisation identifier (IČO / LEI / VAT) in the `organizationIdentifier` subject attribute.
 - Key usage matches the certificate's role:
   - QWAC — `digitalSignature` + `keyEncipherment`
@@ -153,5 +153,5 @@ If you suspect your private key has been compromised:
 | `403 Forbidden` | Certificate not `approved`, not owned by your account, or expired/revoked. |
 | `404 Not Found` | Certificate with the given thumbprint not found (or not owned by your account). |
 | `409 Conflict` | Certificate with the same thumbprint already imported. |
-| `422 Unprocessable Entity` | Validation error (malformed PEM, key usage doesn't match the declared `type`, issuer not in EU Trusted List, missing field, etc.). |
+| `422 Unprocessable Entity` | Validation error (malformed PEM, key usage doesn't match the declared `type`, issuer not in Payout's trust store / unsupported QTSP, missing field, etc.). |
 | TLS handshake refused | At the mTLS host: client certificate missing, expired, revoked, or not issued by a trusted QTSP. |
