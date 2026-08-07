@@ -1,0 +1,18 @@
+{
+  "name": "@payout/mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server exposing the Payout API to agents — spec lookup plus live sandbox calls.",
+  "type": "module",
+  "bin": { "payout-mcp": "./server.js" },
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "yaml": "^2.5.0",
+    "zod": "^3.23.0"
+  },
+  "engines": { "node": ">=18" }
+}
