@@ -1,0 +1,170 @@
+<title>{{TITLE}} — Payout API Reference</title>
+<style>
+  :root {
+    --ground:#FBFBFA; --raised:#FFFFFF; --ink:#14171C; --muted:#5C6570; --faint:#8A929B;
+    --rule:#E4E5E2; --accent:#1F6F5C; --accent-soft:#E7F0EC;
+    --get:#2A5FA8; --post:#1F6F5C; --put:#8A6A1F; --delete:#9A3B2F; --warn:#9A5A18;
+    --code-bg:#F4F5F2;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:#0E1114; --raised:#14181D; --ink:#E8EAE6; --muted:#98A0A9; --faint:#6C757E;
+      --rule:#232930; --accent:#4FBF9F; --accent-soft:#12241F;
+      --get:#74A6E8; --post:#4FBF9F; --put:#D3B064; --delete:#E08877; --warn:#D89A5B;
+      --code-bg:#171C21;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0E1114; --raised:#14181D; --ink:#E8EAE6; --muted:#98A0A9; --faint:#6C757E;
+    --rule:#232930; --accent:#4FBF9F; --accent-soft:#12241F;
+    --get:#74A6E8; --post:#4FBF9F; --put:#D3B064; --delete:#E08877; --warn:#D89A5B;
+    --code-bg:#171C21;
+  }
+  :root[data-theme="light"] {
+    --ground:#FBFBFA; --raised:#FFFFFF; --ink:#14171C; --muted:#5C6570; --faint:#8A929B;
+    --rule:#E4E5E2; --accent:#1F6F5C; --accent-soft:#E7F0EC;
+    --get:#2A5FA8; --post:#1F6F5C; --put:#8A6A1F; --delete:#9A3B2F; --warn:#9A5A18;
+    --code-bg:#F4F5F2;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--sans); font-size:0.9375rem; line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  a { color:var(--accent); text-underline-offset:2px; text-decoration-thickness:1px; }
+  a:focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:2px; }
+
+  .banner {
+    background:var(--accent-soft); border-bottom:1px solid var(--rule);
+    padding:0.6rem 1.5rem; font-family:var(--mono); font-size:0.75rem;
+    color:var(--muted); display:flex; flex-wrap:wrap; gap:0.5rem 1rem; align-items:baseline;
+  }
+  .banner strong { color:var(--accent); font-weight:600; letter-spacing:0.04em; }
+
+  .masthead { border-bottom:1px solid var(--rule); padding:2.5rem 1.5rem 2rem; }
+  .masthead-inner { max-width:84rem; margin:0 auto; display:flex; flex-direction:column; gap:0.5rem; }
+  .eyebrow { font-family:var(--mono); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.14em; color:var(--faint); }
+  h1 { margin:0 0 0.5rem; font-family:var(--mono); font-size:1.9rem; font-weight:600; letter-spacing:-0.02em; text-wrap:balance; }
+
+  .shell {
+    max-width:84rem; margin:0 auto; padding:0 1.5rem 5rem;
+    display:grid; grid-template-columns:14rem minmax(0,1fr); gap:3rem; align-items:start;
+  }
+  nav { position:sticky; top:1.5rem; padding-top:2.5rem; max-height:calc(100vh - 3rem); overflow-y:auto; }
+  nav h2 { font-family:var(--mono); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--faint); margin:1.5rem 0 0.5rem; font-weight:500; }
+  nav h2:first-child { margin-top:0; }
+  nav h2 a { color:inherit; text-decoration:none; }
+  nav h2 a:hover { color:var(--accent); }
+  nav ul { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.1rem; }
+  nav li a { display:flex; gap:0.5rem; align-items:baseline; padding:0.25rem 0.5rem; margin-left:-0.5rem; border-radius:3px; color:var(--muted); text-decoration:none; font-size:0.82rem; }
+  nav li a:hover { background:var(--code-bg); color:var(--ink); }
+
+  main { padding-top:2.5rem; display:flex; flex-direction:column; gap:3rem; min-width:0; }
+
+  .verb { font-family:var(--mono); font-size:0.66rem; font-weight:600; letter-spacing:0.05em; min-width:2.6rem; }
+  .verb.get{color:var(--get)} .verb.post{color:var(--post)}
+  .verb.put,.verb.patch{color:var(--put)} .verb.delete{color:var(--delete)}
+
+  .group > h2 { font-family:var(--mono); font-size:1.375rem; font-weight:600; letter-spacing:-0.01em; margin:0 0 0.5rem; scroll-margin-top:1.5rem; }
+
+  .endpoint {
+    border-top:1px solid var(--rule); padding-top:1.5rem; margin-top:2.5rem;
+    display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:2rem;
+    scroll-margin-top:1.5rem;
+  }
+  /* Endpoints documented with a parameter table take the full width and put
+     the example underneath -- a 6-column table in a half-width column wraps
+     its description cell to one word per line. */
+  .endpoint.wide { grid-template-columns:minmax(0,1fr); gap:1.5rem; }
+  .endpoint.wide .example { max-width:46rem; }
+  .endpoint-doc { min-width:0; display:flex; flex-direction:column; gap:0.6rem; }
+  .endpoint-doc > h3 { margin:0; font-size:1.0625rem; font-weight:600; letter-spacing:-0.01em; }
+  .sig { display:flex; align-items:baseline; gap:0.6rem; flex-wrap:wrap; font-family:var(--mono); font-size:0.8rem; }
+  .sig .path { color:var(--ink); word-break:break-all; }
+
+  .example { display:flex; flex-direction:column; gap:0.5rem; min-width:0; }
+  .example h4 { margin:0.5rem 0 0; font-family:var(--mono); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--faint); font-weight:500; }
+  .example h4:first-child { margin-top:0; }
+
+  pre {
+    margin:0; background:var(--code-bg); border:1px solid var(--rule); border-radius:5px;
+    padding:0.9rem 1rem; overflow-x:auto; font-family:var(--mono); font-size:0.78rem; line-height:1.55;
+  }
+  pre code { background:none; padding:0; font-size:inherit; }
+  code { font-family:var(--mono); background:var(--code-bg); padding:0.1em 0.35em; border-radius:3px; font-size:0.86em; }
+
+  /* ---- rendered markdown from the collection ------------------------- */
+  .prose { min-width:0; }
+  .prose > *:first-child { margin-top:0; }
+  .prose > *:last-child { margin-bottom:0; }
+  .prose p { margin:0 0 0.9rem; color:var(--muted); max-width:68ch; }
+  .prose h1, .prose h2, .prose h3, .prose h4 {
+    font-family:var(--mono); font-weight:600; letter-spacing:-0.01em;
+    margin:1.6rem 0 0.6rem; color:var(--ink); text-wrap:balance;
+  }
+  .prose h1 { font-size:1.1rem; }
+  .prose h2 { font-size:1rem; }
+  .prose h3, .prose h4 { font-size:0.9rem; }
+  .prose ul, .prose ol { margin:0 0 0.9rem; padding-left:1.2rem; color:var(--muted); }
+  .prose li { margin:0.2rem 0; }
+  .prose a { word-break:break-word; }
+  .prose hr { border:0; border-top:1px solid var(--rule); margin:1.5rem 0; }
+  .prose blockquote { margin:0 0 0.9rem; padding-left:0.9rem; border-left:2px solid var(--accent); color:var(--muted); }
+  .prose table { border-collapse:collapse; width:100%; font-size:0.8rem; margin:0 0 0.9rem; }
+  .prose th, .prose td { text-align:left; padding:0.45rem 0.8rem 0.45rem 0; border-bottom:1px solid var(--rule); vertical-align:top; color:var(--muted); }
+  .prose th { font-family:var(--mono); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--faint); font-weight:500; white-space:nowrap; }
+  .prose td:first-child { font-family:var(--mono); color:var(--ink); }
+  .prose td code { font-size:0.92em; }
+  .table-scroll { overflow-x:auto; margin:0 0 0.9rem; }
+  /* Scroll rather than crush: below this width the description column
+     degenerates into one word per line. */
+  .table-scroll table { margin:0; min-width:42rem; }
+  .prose td:last-child { padding-right:0; min-width:16rem; }
+  .missing-img {
+    display:inline-flex; align-items:baseline; gap:0.4rem;
+    font-family:var(--mono); font-size:0.72rem; color:var(--faint);
+    border:1px dashed var(--rule); border-radius:4px; padding:0.35rem 0.6rem;
+  }
+
+  footer { border-top:1px solid var(--rule); padding:2rem 1.5rem 3rem; color:var(--faint); font-size:0.8rem; }
+  footer div { max-width:70ch; margin:0 auto; }
+
+  @media (max-width: 62rem) {
+    .shell { grid-template-columns:minmax(0,1fr); gap:0; }
+    nav { position:static; max-height:none; padding:2rem 0 1.5rem; border-bottom:1px solid var(--rule); }
+    nav ul { display:grid; grid-template-columns:repeat(auto-fill, minmax(13rem,1fr)); }
+    .endpoint { grid-template-columns:minmax(0,1fr); gap:1.25rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior:auto !important; } }
+</style>
+
+<div class="banner">
+  <strong>PREVIEW</strong>
+  <span>Faithful port of the current Postman docs — every description carried over verbatim. Fixes and additions come next.</span>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="eyebrow">Payout · Public API</div>
+    <h1>{{TITLE}}</h1>
+    <div class="prose">{{INTRO}}</div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav aria-label="Endpoints">{{NAV}}</nav>
+  <main>{{BODY}}</main>
+</div>
+
+<footer>
+  <div>
+    Generated from the exported Postman collection. Text, tables and code samples are reproduced
+    as-is so this page can be diffed against the current Postman-hosted documentation.
+    Images hosted on <code>statics.payout.one</code> are shown as links — the preview environment
+    blocks external assets, they will load normally on your own hosting.
+  </div>
+</footer>

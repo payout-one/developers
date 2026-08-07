@@ -1,0 +1,362 @@
+openapi: 3.1.0
+info:
+  title: Payout OpenBanking PSD2 API
+  version: 1.0.0
+  description: PSD2 like API to interact with Payout account system.
+servers:
+- url: https://app.payout.one
+  description: Production
+- url: https://sandbox.payout.one
+  description: Sandbox
+security:
+- bearerAuth: []
+x-sections: {}
+paths:
+  /api/psd2/v1/enrol:
+    post:
+      summary: enrol
+      operationId: enrol
+      tags:
+      - 'Enrollment '
+      description: 'Enrol new client. This call will return new client credentials, which will be disabled.
+        Client TPP then will by contacted via first contact email and process will be finished manualy.
+        This request must by done using PSD2 certificate.
+
+
+        # Request
+
+        |Name|Type|Description|
+
+        |----|----|-----------|
+
+        | licenseNumber | string | PSD2 license number of TPP |
+
+        | clientName | string | Client name of TPP |
+
+        | logoUri | string | URL to publicli accesible logo of TPP |
+
+        | scopes | string[] | List of scopes which TPP will require |
+
+        | contacts | string[] | List of emails which can by used to contact TPP, must be at least one
+        |
+
+        | redirectUris | string[] | Redirect URL''s which TPP will use |
+
+        | certificate | string | Base64 encoded PSD2 certificate |
+
+
+        # Response
+
+        | Name | Type |
+
+        | ---- | ---- |
+
+        | licenseNumber | string |
+
+        | clientId | string |
+
+        | clientSecret | string |
+
+        | clientName | string |
+
+        | logoUri | string |
+
+        | scopes | string[] |
+
+        | contacts | string[] |
+
+        | redirectUris | string[] |'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              licenseNumber: '12345'
+              clientName: Testovic Postman, s.r.o
+              certificate: MIIEkzCCA3ugAwIBAgIJAK0JKpzx6C9mMA0GCSqGSIb3DQEBCwUAMIGSMQswCQYDVQQGEwJTSzEPMA0GA1UECAwGWmlsaW5hMQ8wDQYDVQQHDAZaaWxpbmExFzAVBgNVBAoMDlBheW91dCwgcy5yLm8uMQswCQYDVQQLDAJJVDESMBAGA1UEAwwJbG9jYWxob3N0MScwJQYJKoZIhvcNAQkBFhhtYXJ0aW4uY2VybmFrQHBheW91dC5vbmUwHhcNMjAxMjE0MDYyNTE1WhcNMjIwNDI4MDYyNTE1WjCBkjELMAkGA1UEBhMCU0sxDzANBgNVBAgMBlppbGluYTEPMA0GA1UEBwwGWmlsaW5hMRcwFQYDVQQKDA5QYXlvdXQsIHMuci5vLjELMAkGA1UECwwCSVQxJzAlBgkqhkiG9w0BCQEWGG1hcnRpbi5jZXJuYWtAcGF5b3V0Lm9uZTESMBAGA1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzInaKn0XdvTSpSNYzbZI1A4gky0zoyBggz5Q7sGHokZyiriCRYxHw91jkSskp0RU7xV41zf651+z3FtB8U/vUmsNZfX1eJ/MaSPfnohATQVzC+GxLtO89gGlKLD+ihMfXMfQf+yt76eA/bslvGp36EYhW1ou2+DjRzae4eyoFEUTdGoAtXArLslrK01VJdR9yxUYRDtm5S+hhAboJzyNry/I5I15fZkf8t3jJeSzBNLwuW4IP4nu18DdwmOnw63yRlHUpgYQzqvv/+xgf3HcgqUkORq2HXbAHaEYe1S5P/6kvupZmz+vbHbx3Bvsbt9mkgg/OpYIU2WfJ9NLcLUT5wIDAQABo4HpMIHmMIGxBgNVHSMEgakwgaahgZikgZUwgZIxCzAJBgNVBAYTAlNLMQ8wDQYDVQQIDAZaaWxpbmExDzANBgNVBAcMBlppbGluYTEXMBUGA1UECgwOUGF5b3V0LCBzLnIuby4xCzAJBgNVBAsMAklUMRIwEAYDVQQDDAlsb2NhbGhvc3QxJzAlBgkqhkiG9w0BCQEWGG1hcnRpbi5jZXJuYWtAcGF5b3V0Lm9uZYIJAMidpY+XJANIMAkGA1UdEwQCMAAwCwYDVR0PBAQDAgTwMBgGA1UdEQQRMA+CDWNsaWVudC5wYXlvdXQwDQYJKoZIhvcNAQELBQADggEBAJwuqXE21bA5kkcZYRYw9rhXzo/EMhCqUxsprVEk990536X1YBIBUUJk4cI1TjReOZAi1cMG2qpk46Ex4vXKyx8jbcPXchf30B9shaxZETahJ2I8w8J1hBMnSY3gfv8mwooRrjmZJsd8+zIVf/5L+vdZgqHru53huOSEoQLJKkgAqX3qDczqoaFV7Rx5oVI77P9sXcIN39Rr2rlh5P87k0yxmEYecPq/Cd98NJBRTCE94aPOGyysfPvZ6gAcXPcui47PZLeTeIk+SsIBPHFhSe7RuFa4vAj6CY//t14XmCyzcHCW05W32+6Zn97CFKwEazQqdUuhalHkn3fyZhmy5IY=
+              scopes:
+              - AISP
+              contacts:
+              - test@example.com
+              redirectUris:
+              - https://oauth.pstmn.io/v1/browser-callback
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /api/psd2/v1/accounts:
+    get:
+      summary: list accounts
+      operationId: list_accounts
+      tags:
+      - AIS
+      description: "List all accounts of current user\n\n# Response\n| Name | Type | Description |\n|\
+        \ ---- | ---- | ----------- |\n| identification | Identification | | \n| name | string | Name\
+        \ of account |\n| productName | string | Name of product which is represented by this account\
+        \ |\n| type | string | Type of account, staticalli \"CACC\" |\n| baseCurrency| string | Currency\
+        \ code of account according to ISO 4217 - 3 capital letters, statically \"EUR\" |\n| servicer\
+        \ |  string | Name of service responsible for this account |\n| consent | string | Scopes acquired\
+        \ for this account |\n\n## Identification\n| Name | Type | Description |\n| ---- | ---- | -----------\
+        \ |\n| identifier | string | Unique identification |"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /api/psd2/v1/accounts/information:
+    post:
+      summary: account info
+      operationId: account_info
+      tags:
+      - AIS
+      description: "Retrieve detailed info about user account\n\n# Request\n| Name | Type | Description\
+        \ | Example |\n| ---- | ---- | ----------- | ------- |\n| identifier | string | Identificator\
+        \ of account | \"xHiZzdwcxMOu\" |\n\n# Response\n| Name | Type |\n| ---- | ---- |\n| account |\
+        \ Account |\n| balances | Balance[] |\n\n## Account\n| Name | Type | Description |\n| ---- | ----\
+        \ | ----------- | \n| name | string | Name of account |\n| productName | Name of product of which\
+        \ instance is this account |\n| baseCurrency | string | Basic currency of thsi account in ISO\
+        \ 4217 |\n| type | string | ISO 20022 - Cash Account Type Code |\n\n## Balance \n| Name | Type\
+        \ | Description |\n| ---- | ---- | ----------- |\n| name | string | Name of account | \n| typeCodeOrProprietary\
+        \ | string | Staticali \"ITAV\" |\n| amount | Amount | |\n| creditDebitIndicator | CreditDebitIndicator\
+        \ | |"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              identifier: xHiZzdwcxMOu
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /api/psd2/v1/accounts/transactions:
+    post:
+      summary: list transactions
+      operationId: list_transactions
+      tags:
+      - AIS
+      description: "List all transactions for user or account\n\n## Transaction\n| Name | Type | Description\
+        \ | Example |\n| ---- | ---- | ----------- | ------- |\n| amount | Amount | Value of transaction\
+        \ | |\n| creditDebitIndicator | \"CRDT\" \\| \"DBIT\" | Indicates if this transaction is credit\
+        \ or debit transaction | \"CRDT\" |\n| reversalIndicator | boolean | Indicates if this transaction\
+        \ is rollback of some previous transaction | true |\n| status | \"INFO\" \\| \"BOOKED\" | Indicates\
+        \ whatever transaction was executed (\"INFO\") or is pending (\"BOOKED\") | \"INFO\" |\n| bookingDate\
+        \ | string | | \"2008-03-20\" |\n| valueDate | stirng | | \"2008-03-20\" |\n| bankTransactionCode\
+        \ | enum | `TODO` | |\n| transactionDetails | TransactionDetails | | |\n| additionalTransactionInformation\
+        \ | string | Aditional technical information about transaction | |\n\n## Amount\nRepresent value\
+        \ with currency\n\n| Name | Type | Description | Example |\n| ---- | ---- | ----------- | -------\
+        \ |\n| value | number | Number rounded to 2 decimals representing amount of money | 0.12 |\n|\
+        \ currency | string | Currency code according to ISO 4217 - 3 capital letters | \"EUR\" |\n\n\
+        ## TransactionDetails\n| Name | Type | Description | Example |\n| ---- | ---- | ----------- |\
+        \ ------- |\n| references | References | Attribute that identify transaction | |\n| relatedParties\
+        \ | RelatedParties | Parties between which transaction is executed | | \n| relatedDates | RelatedDates\
+        \ | Important dates from transaction processing | |\n\n## References\n| Name | Type | Description\
+        \ | Example |\n| ---- | ---- | ----------- | ------- |\n| accountServicerReference | string |\
+        \ Internal service provider transaction reference | | \n| endToEndIdentification | string | Client\
+        \ assigned transaction reference | |\n\n## RelatedParties\n| Name | Type | Description | Example\
+        \ |\n| ---- | ---- | ----------- | ------- |\n| debtor | Party | | | \n| debtorAccount | PartyIdentification\
+        \ | |\n| creditor | Party | | |\n| creditorAccount | PartyIdentification | |\n\n## Party\n| Name\
+        \ | Type | Description |\n| ---- | ---- | ------- |\n| name | string | Name of the party |\n\n\
+        ## PartyAccount \n| Name | Type | Description |\n| ---- | ---- | ----------- |\n| identification\
+        \ | string | Globaly identifies party, can by internal identificator, IBAN, etc. |"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                identifier:
+                  type: string
+                  description: Identifier of account for which to return transactions
+                  example: Wh_qu9uJ0XoN
+                dateFrom:
+                  type: string
+                  description: Limit results to by never that specified date
+                  example: '2020-12-20'
+                dateTo:
+                  type: string
+                  description: Limit results to by older than specified date
+                  example: '2020-08-21'
+                status:
+                  type: string
+                  description: 'false'
+                  default: Filter transactions by their state
+                pageSize:
+                  type: number
+                  description: Number of results to return
+                  example: 20.0
+                  default: 50.0
+                page:
+                  type: number
+                  description: Current page in pagination
+                  example: 4.0
+                  default: 0.0
+            example:
+              page: 2
+              identifier: xHiZzdwcxMOu
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pageCount:
+                    type: number
+                    description: Total number of pages after filtering
+                    example: 3.0
+                  transactions:
+                    description: List of returned transactions
+                    type: string
+        '401':
+          description: Missing or invalid bearer token
+  /api/psd2/v1/payments/standard/sba:
+    post:
+      summary: standard sba payment
+      operationId: standard_sba_payment
+      tags:
+      - PISP
+      description: "Initialize payment using json format\n\n# Request\n| Name | Type | Required | Description\
+        \ | Example |\n| ---- | ---- | -------- | ----------- | ------- |\n| instructionIdentification\
+        \ | string | true | Client assigned instruction identification | \"aff52ratg5ageh53\" |\n| debtor\
+        \ | Debtor | true | | |\n| creditor | Creditor | true | | | \n| instructedAmount | Amount | true\
+        \ | | | \n| endToEndIdentification | string | false | | | \n| remittanceInformation | string |\
+        \ false | | |\n\n## Debtor\n| Name | Type | Description |\n| ---- | ---- | ----------- |\n| identifier\
+        \ | string | Debtor identifier, mostil account identifier |\n\n## Creditor\n| Name | Type | Description\
+        \ |\n| ---- | ---- | ----------- |\n| name | string | Full name or company name of creditor |\n\
+        | iban | string | |\n| email | string | |\n\n## Amount \n| Name | Type | Description |\n| ----\
+        \ | ---- | ----------- |\n| value | number | Number with two decimals representing money amount\
+        \ |\n| currency | string | Currency code according to ISO 4217 |\n\n# Response\n| Name | Type\
+        \ | Description | Example |\n| ---- | ---- | ----------- | ------- |\n| orderId | string | | |\n\
+        | status | string | | |\n| statusDatetime | string | Date and time when status was read | \"2020-12-09\
+        \ 23:27:30.697662Z\"|"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              instructionIdentification: some-random-string
+              debtor:
+                identifier: xHiZzdwcxMOu
+              creditor:
+                name: Jozko Mrkvicka
+                iban: creditor_iban
+                email: jozko.mrkvicka@pompo.po
+              instructedAmount:
+                value: 1.0
+                currency: EUR
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /api/psd2/v1/payments/submission:
+    post:
+      summary: submit payment
+      operationId: submit_payment
+      tags:
+      - PISP
+      description: Submit initialized payment for processing. This request is done only access token that
+        can be retrieved using `authorization_code` oauth2 mathod to special endpoint xxxx/:order_id and
+        requires scope `PISPSUBMIT`.
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /api/psd2/v1/payments/{ORDER_ID}/status:
+    get:
+      summary: order status
+      operationId: order_status
+      tags:
+      - PISP
+      description: Return actual status of the order
+      parameters:
+      - name: ORDER_ID
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /api/psd2/v1/accounts/balanceCheck:
+    post:
+      summary: balance check
+      operationId: balance_check
+      tags:
+      - PIISP
+      description: "Check if account has enought resources to fullfill specified request\n\n| Name | Type\
+        \ | Description |\n| ---- | ---- | ----------- |\n| instructionIdentification | string | Technial\
+        \ payment identificator generated by PIISP |\n| creationDateTime | string | The date and time\
+        \ in RFC3339 format at which a particular action has been requested or executed. |\n| identifier\
+        \ | string | Payout account unique identificator |\n| amount | Amount | |\n\n## Amount\n| Name\
+        \ | Type | Description |\n| ---- | ---- | ----------- |\n| amount | number | Numeric value of\
+        \ the amount as a fractional number. |\n| currency | string | Alphabetic codes from ISO 4712.\
+        \ |\n\n# Response \n| Name | Type | Description |\n| ---- | ---- | ----------- |\n| response |\
+        \ string | Either \"APPR\" or \"DECL\" |\n| dateTime | string | The date and time in RFC3339 format\
+        \ at which a particular action has been requested or executed. |"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              instructionIdentification: What-Ever
+              identifier: xHiZzdwcxMOu
+              amount:
+                amount: 6000
+                currency: EUR
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Token from POST /api/v1/authorize.
+  schemas: {}

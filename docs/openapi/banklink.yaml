@@ -1,0 +1,329 @@
+openapi: 3.1.0
+info:
+  title: Payout Banklink API
+  version: 1.0.0
+  description: PSD2 API aggregator and more
+servers:
+- url: https://app.payout.one
+  description: Production
+- url: https://sandbox.payout.one
+  description: Sandbox
+security:
+- bearerAuth: []
+x-sections: {}
+paths:
+  /accounts:
+    post:
+      summary: List Accounts
+      operationId: list_accounts
+      tags:
+      - accounts
+      description: Retrieve current user connected accounts
+      parameters:
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Number of accounts per page, default is 50, maximum is 100
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Index of page to display, starting from 1
+      - name: order
+        in: query
+        required: false
+        schema:
+          type: string
+        description: "Sort order:\n  * `asc` - Ascending, from A to Z\n  * `desc` - Descending, from Z\
+          \ to A\ndefault is `asc`"
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /accounts/balance:
+    post:
+      summary: Account Balances
+      operationId: account_balances
+      tags:
+      - accounts
+      description: Retrieve current user account balance directly from bank
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              bank: vub
+              iban: nostrud incididunt aute occaecat
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /accounts/information:
+    post:
+      summary: Account Information
+      operationId: account_information
+      tags:
+      - accounts
+      description: Retrieve current user account information directly from bank
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              bank: vub
+              iban: nostrud incididunt aute occaecat
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /accounts/verify-iban:
+    post:
+      summary: Verify IBAN
+      operationId: verify_iban
+      tags:
+      - accounts
+      description: Verify that current user has access to account with specified IBAN
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              bank: vub
+              iban: nostrud incididunt aute occaecat
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /api/v1/accounts/details:
+    post:
+      summary: Account Details
+      operationId: account_details
+      tags:
+      - accounts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              bank: vub
+              iban: SK0511000000002600000054
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /api/v1/provider/accounts:
+    post:
+      summary: Consent Accounts
+      operationId: consent_accounts
+      tags:
+      - accounts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              consent_id: 123
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /payments/{integration}/{payment_product}:
+    post:
+      summary: Payment initialisation
+      operationId: payment_initialisation
+      tags:
+      - payments
+      parameters:
+      - name: integration
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: payment_product
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              endToEndIndentification: /VS1/SS2/KS3
+              creditorAgent: GIBASKBX
+              creditorName: John Doe
+              debtorName: Test Testovic
+              remittanceInformationUnstructured: Testing
+              debtorAccount:
+                iban: SK5409000000005037706253
+              creditorAccount:
+                iban: SK0511000000002600000054
+              instructedAmount:
+                amount: '1.00'
+                currency: EUR
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /payments/{payment_id}/status:
+    get:
+      summary: Payment status
+      operationId: payment_status
+      tags:
+      - payments
+      parameters:
+      - name: payment_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /api/v1/integrations:
+    get:
+      summary: List Integrations
+      operationId: list_integrations
+      tags:
+      - integrations
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /api/v1/verifications:
+    post:
+      summary: Create Verification
+      operationId: create_verification
+      tags:
+      - verifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              iban: CZ4108000000000782553098
+              first_name: Jirí
+              last_name: Spokojený
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /api/v1/verifications/{verification_id}:
+    get:
+      summary: Get Verification Status
+      operationId: get_verification_status
+      tags:
+      - verifications
+      parameters:
+      - name: verification_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /transactions:
+    post:
+      summary: /transactions
+      operationId: transactions
+      description: Retrieve current user transactions directly from bank
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              bank: vub
+              iban: nostrud incididunt aute occaecat
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Token from POST /api/v1/authorize.
+  schemas: {}
