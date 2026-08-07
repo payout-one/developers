@@ -1,0 +1,137 @@
+openapi: 3.1.0
+info:
+  title: PayoutID OAuth2
+  version: 1.0.0
+  description: Payout OAuth2 authentication and authorization server
+servers:
+- url: https://app.payout.one
+  description: Production
+- url: https://sandbox.payout.one
+  description: Sandbox
+security:
+- bearerAuth: []
+x-sections: {}
+paths:
+  /oauth/authorize:
+    get:
+      summary: Authorization redirect for user
+      operationId: authorization_redirect_for_user
+      description: Endpoint where client should redirect user for authorization
+      parameters:
+      - name: client_id
+        in: query
+        required: false
+        schema:
+          type: string
+        description: (Required) Client ID of application that is triing to authorize user
+      - name: response_type
+        in: query
+        required: false
+        schema:
+          type: string
+        description: '(Required) '
+      - name: redirect_uri
+        in: query
+        required: false
+        schema:
+          type: string
+        description: (Required) Redirect uri that was registered for this client
+      - name: scope
+        in: query
+        required: false
+        schema:
+          type: string
+        description: (Required) Required scopes to authorize
+      - name: code_challenge
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 'code_challenge code_challenge = BASE64URL-ENCODE(SHA256(ASCII(code_verifier))) see
+
+          RFC 7636 https://tools.ietf.org/html/rfc7636
+
+          '
+      - name: code_challenge_method
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Code challenge method, must by set to `S256`
+      - name: state
+        in: query
+        required: false
+        schema:
+          type: string
+        description: This parameter is send back in redirect url to indetifiy request/response pairs
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /oauth/token:
+    post:
+      summary: Endpoint to retrieve authorization token
+      operationId: endpoint_to_retrieve_authorization_token
+      description: 'Endpoint where client can retrieve authorization token after successfull
+
+        authorization or refresh expired access token with valid refresh token'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              grant_type: authorization_code
+              client_id: 2591CF97-1AFB-4D63-8B42-2D0CD6194CAF
+              client_secret: 4c4f4df3-d026--8c4b-98e0434c882a
+              code: 8167B030-A72A-466E-9EDC-7377B15C9C7B
+              redirect_uri: https://example.com
+              code_verifier: 60ac297b-c100-42ce-be0d-46b14a0b0hee
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /id/sessions/external:
+    get:
+      summary: Sign Out
+      operationId: sign_out
+      description: "Redirect to ask currently logged in user in PayoutID to log out, after successful\
+        \ logout, user is redirected back to application.\n\n[  \n](https://desktop.postman.com/?desktopVersion=10.5.2&userId=10478778&teamId=59082)"
+      parameters:
+      - name: client_id
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: redirect_uri
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Token from POST /api/v1/authorize.
+  schemas: {}

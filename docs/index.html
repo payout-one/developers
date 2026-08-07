@@ -39,9 +39,24 @@
   <script src="https://unpkg.com/docsify-copy-code@2"></script>
   <script src="//cdn.jsdelivr.net/npm/@alertbox/docsify-footer/dist/docsify-footer.min.js"></script>
   <script>
-    if (typeof navigator.serviceWorker !== "undefined") {
+    // The service worker is stale-while-revalidate and races cache against
+    // network, so during local development it keeps serving the previous
+    // _sidebar.md / *.md for a reload or two after you edit them. Skip it on
+    // localhost, and tear down any registration left over from an earlier run.
+    (function () {
+      if (typeof navigator.serviceWorker === "undefined") return;
+      var local = ["localhost", "127.0.0.1", "[::1]", ""].indexOf(location.hostname) > -1;
+      if (local) {
+        navigator.serviceWorker.getRegistrations().then(function (rs) {
+          rs.forEach(function (r) { r.unregister(); });
+        });
+        if (window.caches && caches.keys) {
+          caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); });
+        }
+        return;
+      }
       navigator.serviceWorker.register("sw.js");
-    }
+    })();
   </script>
   <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/external-script.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>

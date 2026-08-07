@@ -1,0 +1,1203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FraudNet Federated Learning — Payout Developers</title>
+<meta name="description" content="FraudNet Federated Learning — Payout developer guide.">
+<meta name="theme-color" content="#3A1768">
+<link rel="alternate" type="text/markdown" href="../md/fraudnet-fl-client.md">
+<style>
+  /* Palette from payout_merchant/assets/css:
+     #3A1768 primary · #330864 deep · #6430B2 bright · #795F95 muted
+     #CBB5D4 lavender · #3F9A57 success · #FFC107 warning            */
+  :root {
+    --brand:#3A1768; --brand-deep:#330864; --brand-bright:#6430B2;
+    --brand-muted:#795F95; --lavender:#CBB5D4;
+
+    --ground:#FFFFFF; --raised:#FFFFFF; --sunken:#F7F4FB;
+    --ink:#221B2C; --muted:#544C60; --faint:#867C93;
+    --rule:#EBE5F1; --rule-strong:#DCD2E6;
+    --accent:#6430B2; --accent-ink:#3A1768; --accent-soft:#F1EBF7;
+    --masthead:#3A1768; --masthead-ink:#FFFFFF; --masthead-dim:#CBB5D4;
+
+    --get:#3A1768; --post:#3F9A57; --put:#B8860B; --delete:#B0186A;
+    --danger:#B0186A; --warn:#8A6100;
+
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --bar: 3.25rem;
+  }
+
+  /* Dark: a purple-tinted near-black ground with lavender accents. The brand
+     purple is too saturated to sit behind body text, so it moves to the
+     masthead and the accents lighten instead of inverting. */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:#141019; --raised:#1B1622; --sunken:#1F1929;
+      --ink:#EDE8F3; --muted:#A79CB5; --faint:#7C7189;
+      --rule:#2C2438; --rule-strong:#3D3350;
+      --accent:#B08BE0; --accent-ink:#CBB5D4; --accent-soft:#271A3A;
+      --masthead:#241338; --masthead-ink:#F2EDF7; --masthead-dim:#A392B5;
+      --get:#B08BE0; --post:#5FBF7C; --put:#D3B064; --delete:#E06B9E;
+      --danger:#E06B9E; --warn:#D3B064;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#141019; --raised:#1B1622; --sunken:#1F1929;
+    --ink:#EDE8F3; --muted:#A79CB5; --faint:#7C7189;
+    --rule:#2C2438; --rule-strong:#3D3350;
+    --accent:#B08BE0; --accent-ink:#CBB5D4; --accent-soft:#271A3A;
+    --masthead:#241338; --masthead-ink:#F2EDF7; --masthead-dim:#A392B5;
+    --get:#B08BE0; --post:#5FBF7C; --put:#D3B064; --delete:#E06B9E;
+    --danger:#E06B9E; --warn:#D3B064;
+  }
+  :root[data-theme="light"] {
+    --ground:#FFFFFF; --raised:#FFFFFF; --sunken:#F7F4FB;
+    --ink:#221B2C; --muted:#544C60; --faint:#867C93;
+    --rule:#EBE5F1; --rule-strong:#DCD2E6;
+    --accent:#6430B2; --accent-ink:#3A1768; --accent-soft:#F1EBF7;
+    --masthead:#3A1768; --masthead-ink:#FFFFFF; --masthead-dim:#CBB5D4;
+    --get:#3A1768; --post:#3F9A57; --put:#B8860B; --delete:#B0186A;
+    --danger:#B0186A; --warn:#8A6100;
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--sans); font-size:0.9375rem; line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  a { color:var(--accent); text-underline-offset:2px; }
+  a:focus-visible, button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:3px; }
+
+  /* ---- masthead ---- */
+  .bar {
+    position:sticky; top:0; z-index:40; height:var(--bar);
+    background:var(--masthead); color:var(--masthead-ink);
+    display:flex; align-items:center; gap:1.25rem; padding:0 1.25rem;
+  }
+  .brand { font-weight:700; letter-spacing:-0.015em; color:var(--masthead-ink);
+           text-decoration:none; font-size:0.95rem; white-space:nowrap; }
+  .brand span { color:var(--lavender); font-weight:400; }
+  .bar nav { display:flex; gap:0.2rem; margin-right:auto; }
+  .bar nav a {
+    font-size:0.8rem; color:var(--masthead-dim); text-decoration:none;
+    padding:0.32rem 0.65rem; border-radius:5px;
+  }
+  .bar nav a:hover { color:var(--masthead-ink); background:rgba(255,255,255,.09); }
+  .bar nav a[aria-current="page"] { color:var(--masthead-ink); background:rgba(255,255,255,.14); }
+
+  .toolbtn {
+    font-size:0.74rem; background:rgba(255,255,255,.08); color:var(--masthead-dim);
+    border:1px solid rgba(255,255,255,.16); border-radius:5px;
+    padding:0.32rem 0.6rem; cursor:pointer; font-family:inherit;
+  }
+  .toolbtn:hover { color:var(--masthead-ink); background:rgba(255,255,255,.16); }
+  #search-open { min-width:9rem; display:flex; justify-content:space-between; gap:0.8rem; }
+  #search-open kbd { font-family:var(--mono); opacity:.75; }
+
+  /* ---- shell ---- */
+  .shell {
+    display:grid; grid-template-columns:17rem minmax(0,1fr);
+    align-items:start; gap:0;
+  }
+  .sidenav {
+    position:sticky; top:var(--bar); max-height:calc(100vh - var(--bar));
+    overflow-y:auto; padding:1.6rem 1rem 3rem 1.5rem;
+    border-right:1px solid var(--rule);
+  }
+  .sidenav h3 {
+    font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em;
+    color:var(--brand-muted); margin:1.5rem 0 0.45rem; font-weight:700;
+  }
+  :root[data-theme="dark"] .sidenav h3 { color:var(--faint); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sidenav h3 { color:var(--faint); } }
+  .sidenav h3:first-child { margin-top:0; }
+  .sidenav ul { list-style:none; margin:0; padding:0; }
+  .sidenav li a {
+    display:block; padding:0.26rem 0.6rem; margin-left:-0.6rem; border-radius:5px;
+    color:var(--muted); text-decoration:none; font-size:0.845rem;
+  }
+  .sidenav li a:hover { background:var(--sunken); color:var(--ink); }
+  .sidenav li a[aria-current="page"] { background:var(--accent-soft); color:var(--accent-ink); font-weight:600; }
+  .sidenav .sub { padding-left:0.8rem; border-left:1px solid var(--rule); margin-left:0.35rem; }
+  .sidenav .ops { margin:0.15rem 0 0.5rem 0.35rem; padding-left:0.8rem;
+                  border-left:1px solid var(--rule-strong); }
+  .sidenav .ops a { display:flex; gap:0.45rem; align-items:baseline; font-size:0.79rem; padding:0.2rem 0.5rem; }
+  .sidenav .ops .m { font-family:var(--mono); font-size:0.58rem; font-weight:700;
+                     letter-spacing:0.04em; min-width:2.1rem; color:var(--faint); }
+  .sidenav .ops a:hover .m { color:var(--accent); }
+
+  main { padding:0 0 6rem; min-width:0; }
+  /* Content is centred within the area right of the nav, with equal gutters.
+     Left-aligning it dumped every spare pixel on the right and read as
+     unbalanced next to Stripe. Section rules stay full-bleed. */
+  .inner { max-width:90rem; margin:0 auto; padding:0 2rem; }
+  .page-head { padding-top:2.25rem; padding-bottom:0.5rem; margin-bottom:0; }
+  .intro { padding:0 0 2.5rem; }
+  main > .prose { max-width:90rem; margin:0 auto; padding:0 2rem; }
+  .eyebrow { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.12em;
+             color:var(--brand-muted); font-weight:700; }
+  :root[data-theme="dark"] .eyebrow { color:var(--faint); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .eyebrow { color:var(--faint); } }
+  h1 { margin:0.35rem 0 0; font-size:1.8rem; font-weight:650;
+       letter-spacing:-0.025em; text-wrap:balance; color:var(--ink); }
+
+  /* ---- prose ---- */
+  .prose > *:first-child { margin-top:0; }
+  .prose p, .prose li { color:var(--muted); }
+  .prose p { margin:0 0 1rem; max-width:78ch; }
+  .prose h1,.prose h2,.prose h3,.prose h4 {
+    font-weight:650; color:var(--ink); letter-spacing:-0.018em;
+    margin:2rem 0 0.7rem; scroll-margin-top:calc(var(--bar) + 1rem);
+  }
+  .prose h1 { font-size:1.35rem; } .prose h2 { font-size:1.12rem; }
+  .prose h3 { font-size:0.98rem; } .prose h4 { font-size:0.9rem; }
+  .prose ul,.prose ol { margin:0 0 1rem; padding-left:1.25rem; }
+  .prose li { margin:0.25rem 0; }
+  .prose hr { border:0; border-top:1px solid var(--rule); margin:2rem 0; }
+  .prose blockquote {
+    margin:0 0 1rem; padding:0.6rem 0.9rem; border-left:3px solid var(--accent);
+    background:var(--accent-soft); border-radius:0 5px 5px 0; color:var(--muted);
+  }
+  .prose blockquote p:last-child { margin-bottom:0; }
+  .prose img { max-width:100%; height:auto; border-radius:6px; border:1px solid var(--rule); }
+  .prose table { border-collapse:collapse; width:100%; font-size:0.83rem; }
+  .prose th,.prose td { text-align:left; padding:0.55rem 0.9rem 0.55rem 0;
+                        border-bottom:1px solid var(--rule); vertical-align:top; color:var(--muted); }
+  .prose th { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.09em;
+              color:var(--brand-muted); font-weight:700; white-space:nowrap; }
+  .prose td:first-child { font-family:var(--mono); color:var(--ink); }
+  .table-scroll { overflow-x:auto; margin:0 0 1rem; }
+  .table-scroll table { min-width:38rem; }
+
+  code { font-family:var(--mono); font-size:0.86em; background:var(--sunken);
+         color:var(--accent-ink); padding:0.13em 0.38em; border-radius:4px; }
+  pre {
+    margin:0 0 1rem; background:var(--sunken); border:1px solid var(--rule);
+    border-radius:7px; padding:0.9rem 1rem;
+    font-family:var(--mono); font-size:0.79rem; line-height:1.6; color:var(--ink);
+    /* Wrap rather than scroll: bearer tokens and long JSON strings were being
+       clipped at the right edge with no indication anything was missing. */
+    white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;
+  }
+  pre code { background:none; padding:0; font-size:inherit; color:inherit; }
+  .codeblock { position:relative; }
+  .copy {
+    position:absolute; top:0.5rem; right:0.5rem; opacity:0; transition:opacity .12s;
+    font-size:0.66rem; letter-spacing:0.03em; font-family:inherit;
+    background:var(--raised); color:var(--muted); border:1px solid var(--rule-strong);
+    border-radius:4px; padding:0.22rem 0.5rem; cursor:pointer;
+  }
+  .codeblock:hover .copy, .copy:focus-visible { opacity:1; }
+
+  /* ---- API reference ---- */
+  .op { border-top:1px solid var(--rule); padding:3rem 0; margin:0;
+        scroll-margin-top:calc(var(--bar) + 1rem); }
+  .op-head { display:flex; align-items:baseline; gap:0.7rem; flex-wrap:wrap; margin-bottom:0.4rem; }
+  .op-head h2 { margin:0; font-size:1.15rem; font-weight:650; letter-spacing:-0.02em; }
+  .verb {
+    font-family:var(--mono); font-size:0.64rem; font-weight:700; letter-spacing:0.06em;
+    padding:0.17rem 0.42rem; border-radius:4px; color:#fff;
+  }
+  .verb.get{background:var(--get)} .verb.post{background:var(--post)}
+  .verb.put,.verb.patch{background:var(--put)} .verb.delete{background:var(--delete)}
+  :root[data-theme="dark"] .verb { color:#141019; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .verb { color:#141019; } }
+  .op-path { font-family:var(--mono); font-size:0.83rem; color:var(--accent-ink);
+             word-break:break-all; margin-bottom:0.9rem; }
+  .op-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:2rem; align-items:start; }
+  .op-grid.stacked { grid-template-columns:minmax(0,1fr); }
+  .panel { position:sticky; top:calc(var(--bar) + 1.5rem); }
+  .panel h4, .schema h4 {
+    font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em;
+    color:var(--brand-muted); font-weight:700; margin:0 0 0.45rem;
+  }
+  :root[data-theme="dark"] .panel h4, :root[data-theme="dark"] .schema h4 { color:var(--faint); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .panel h4,
+    :root:not([data-theme="light"]) .schema h4 { color:var(--faint); }
+  }
+  .schema { margin:1.3rem 0; }
+  .schema.nested {
+    margin:0.55rem 0 0.2rem; padding-left:0.9rem;
+    border-left:2px solid var(--rule-strong);
+  }
+  /* Identifier + flag + type on one line, description beneath at full width.
+     A three-column grid starved the description once anything nested. */
+  .prop { padding:0.6rem 0; border-bottom:1px solid var(--rule); }
+  .schema.nested .prop:last-child { border-bottom:0; padding-bottom:0.2rem; }
+  .prop-head { display:flex; align-items:baseline; gap:0.5rem; flex-wrap:wrap; }
+  .prop-name { font-family:var(--mono); font-size:0.83rem; color:var(--ink); font-weight:600; }
+  .prop-type { font-family:var(--mono); font-size:0.75rem; color:var(--accent); }
+  .prop-desc { color:var(--muted); font-size:0.83rem; margin-top:0.15rem; max-width:62ch; }
+  .prop-desc code { font-size:0.9em; }
+  .req { font-family:var(--mono); font-size:0.6rem; letter-spacing:0.06em;
+         color:var(--danger); text-transform:uppercase; font-weight:700; }
+  .tag { font-family:var(--mono); font-size:0.66rem; color:var(--faint); }
+  .op-md {
+    margin-left:auto; font-family:var(--mono); font-size:0.66rem; letter-spacing:0.05em;
+    color:var(--faint); text-decoration:none; border:1px solid var(--rule);
+    border-radius:4px; padding:0.15rem 0.42rem;
+  }
+  .op-md:hover { color:var(--accent); border-color:var(--accent); }
+
+  /* ---- code panels: dark in both themes, like Stripe ---- */
+  .cb { border-radius:8px; overflow:hidden; margin:0 0 0.9rem; border:1px solid #241A33; }
+  .cb-dark { background:#1C1428; }
+  .cb-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0.42rem 0.8rem; background:#160F20; border-bottom:1px solid #241A33;
+    font-family:var(--mono); font-size:0.63rem; text-transform:uppercase;
+    letter-spacing:0.11em; color:#9C8DB5;
+  }
+  .cb pre {
+    margin:0; background:transparent; border:0; border-radius:0;
+    padding:0.85rem 0.95rem; color:#E4DCF0; font-size:0.765rem; line-height:1.62;
+    white-space:pre-wrap; overflow-wrap:anywhere;
+  }
+  .cb .copy { background:#241A33; color:#B4A6C9; border-color:#33264a; }
+  .t-key  { color:#C4A6FF; }
+  .t-str  { color:#8FD9B6; }
+  .t-num  { color:#F2B880; }
+  .t-lit  { color:#F28FB0; }
+  .t-var  { color:#FFC107; }
+  .t-cmd  { color:#C4A6FF; font-weight:600; }
+  .t-flag { color:#8AA9D6; }
+  .t-url  { color:#8FD9B6; text-decoration:underline; text-decoration-color:#3d5a4d; }
+  .t-cm   { color:#7B6E90; font-style:italic; }
+
+  /* language tabs inside the code panel header */
+  .cb-head { gap:0.75rem; }
+  .langs { display:flex; gap:0.15rem; }
+  .lang {
+    font-family:var(--mono); font-size:0.62rem; letter-spacing:0.04em; cursor:pointer;
+    background:transparent; color:#8A7CA3; border:1px solid transparent;
+    border-radius:4px; padding:0.14rem 0.4rem; text-transform:none;
+  }
+  .lang:hover { color:#E4DCF0; }
+  .lang.on { background:#2C2140; color:#E4DCF0; border-color:#3B2D54; }
+  .lang-pane[hidden] { display:none; }
+
+  /* per-section toolbar: agent affordances */
+  .sec-tools { margin-left:auto; display:flex; gap:0.3rem; align-items:center; flex-wrap:wrap; }
+  .sec-btn {
+    font-size:0.68rem; letter-spacing:0.01em; font-family:inherit; cursor:pointer;
+    background:transparent; color:var(--faint); border:1px solid var(--rule);
+    border-radius:5px; padding:0.2rem 0.5rem; text-decoration:none; white-space:nowrap;
+  }
+  .sec-btn:hover { color:var(--accent); border-color:var(--accent); }
+  .sec-btn.done { color:var(--post); border-color:var(--post); }
+
+  /* ---- search ---- */
+  dialog#search {
+    border:1px solid var(--rule-strong); border-radius:11px; padding:0; width:min(38rem,92vw);
+    background:var(--raised); color:var(--ink); box-shadow:0 24px 60px rgba(58,23,104,.24);
+  }
+  dialog#search::backdrop { background:rgba(34,17,58,.45); }
+  #search input {
+    width:100%; border:0; border-bottom:1px solid var(--rule); background:transparent;
+    color:var(--ink); font-family:inherit; font-size:0.95rem; padding:0.95rem 1.05rem; outline:none;
+  }
+  #results { list-style:none; margin:0; padding:0.4rem; max-height:22rem; overflow-y:auto; }
+  #results li a { display:block; padding:0.5rem 0.65rem; border-radius:6px; text-decoration:none; color:var(--ink); }
+  #results li a:hover, #results li a.on { background:var(--accent-soft); }
+  #results .r-kind { font-family:var(--mono); font-size:0.62rem; text-transform:uppercase;
+                     letter-spacing:0.09em; color:var(--brand-muted); }
+  #results .r-ctx { color:var(--muted); font-size:0.78rem; }
+  #results .empty { padding:1rem; color:var(--faint); font-size:0.85rem; }
+
+
+  /* status badge, e.g. Beta */
+  .badge {
+    display:inline-block; font-family:var(--mono); font-size:0.64rem; font-weight:700;
+    letter-spacing:0.09em; text-transform:uppercase; padding:0.2rem 0.55rem;
+    border-radius:999px; vertical-align:middle;
+  }
+  .badge-beta { color:#8A6100; background:#FFF6D9; border:1px solid #F0D68A; }
+  :root[data-theme="dark"] .badge-beta { color:#F0C34B; background:#2A2313; border-color:#4A3D18; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .badge-beta { color:#F0C34B; background:#2A2313; border-color:#4A3D18; }
+  }
+  .prose p:has(> .badge:only-child) { margin-bottom:1.4rem; }
+
+  /* per-client tabs */
+  .tabs { margin:0 0 1.6rem; }
+  .tab-bar { display:flex; gap:0.1rem; flex-wrap:wrap; border-bottom:1px solid var(--rule); margin-bottom:1.2rem; }
+  .tab-bar button {
+    font-family:inherit; font-size:0.86rem; cursor:pointer; background:transparent;
+    color:var(--muted); border:0; border-bottom:2px solid transparent;
+    padding:0.55rem 0.9rem; margin-bottom:-1px; border-radius:0;
+  }
+  .tab-bar button:hover { color:var(--ink); }
+  .tab-bar button[aria-selected="true"] {
+    color:var(--accent-ink); border-bottom-color:var(--accent); font-weight:600;
+  }
+  .tab-pane[hidden] { display:none; }
+
+  /* Prose code blocks get the same dark treatment as the API panels, with a
+     labelled header -- a washed-out inline block reads as an afterthought next
+     to the reference pages. */
+  .prose .cb { margin:0 0 1.2rem; }
+  .cb-head .cb-lang { color:#9C8DB5; }
+  .cb-copy {
+    font-family:var(--mono); font-size:0.62rem; letter-spacing:0.05em; cursor:pointer;
+    background:transparent; color:#9C8DB5; border:1px solid #33264a;
+    border-radius:4px; padding:0.14rem 0.45rem;
+  }
+  .cb-copy:hover { color:#E4DCF0; border-color:#4B3A68; }
+
+  footer { border-top:1px solid var(--rule); margin-top:0; padding:1.75rem 0 3rem;
+           color:var(--faint); font-size:0.79rem; }
+  footer div { max-width:90rem; margin:0 auto; padding:0 2rem; }
+
+  @media (max-width:64rem) {
+    .shell { grid-template-columns:minmax(0,1fr); gap:0; }
+    .sidenav { position:static; max-height:none; padding:1.25rem 1.25rem;
+               border-right:0; border-bottom:1px solid var(--rule); }
+    main { padding:0 0 4rem; }
+    .inner, main > .prose, footer div { padding:0 1.25rem; }
+    .op { padding:2rem 0; }
+    .sidenav ul { display:grid; grid-template-columns:repeat(auto-fill,minmax(12rem,1fr)); }
+    .op-grid { grid-template-columns:minmax(0,1fr); }
+    .panel { position:static; }
+    .bar nav { display:none; }
+  }
+  @media (prefers-reduced-motion:reduce) { * { transition:none !important; scroll-behavior:auto !important; } }
+</style>
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="../index.html">payout <span>/ developers</span></a>
+  <nav><a href='../index.html'>Overview</a><a href='../api/payment.html'>API</a><a href='../mcp.html'>MCP</a></nav>
+  <button class="toolbtn" id="search-open" aria-label="Search"><span>Search</span><kbd>⌘K</kbd></button>
+  <button class="toolbtn" id="theme-toggle" title="Theme">auto</button>
+</header>
+
+<div class="shell">
+  <aside class="sidenav"><h3>API reference</h3><ul><li><a href="../api/banklink.html">Payout Banklink API</a></li><li><a href="../api/intel.html">Payout Intel API</a></li><li><a href="../api/payment.html">Payout Payment API</a></li><li><a href="../api/payout-id.html">PayoutID OAuth2</a></li><li><a href="../api/psd2.html">Payout OpenBanking PSD2 API</a></li></ul><h3>Agents</h3><ul><li><a href="../mcp.html">MCP server</a></li></ul><h3>Guides</h3><ul><li><a href="../guides/home.html">Home</a></li><li><a href="../guides/apis.html">API References</a></li><li><a href="../guides/services.html">Services</a></li><li><a href="../guides/payout-id.html">PayoutID (OIDC and Identity verification)</a></li><li class="sub"><a href="../guides/payout-id-oauth.html">OAuth2</a></li><li class="sub"><a href="../guides/payout-id-oauth-new.html">OAuth2 New</a></li><li class="sub"><a href="../guides/payout-id-banklink.html">Banklink</a></li><li class="sub"><a href="../guides/payout-id-identity-verification.html">Identity verification</a></li><li><a href="../guides/banklink.html">Banklink (OpenBanking Aggregator)</a></li><li><a href="../guides/psd2.html">OpenBanking PSD2 API</a></li><li><a href="../guides/certificates.html">Server-to-Server APIs (mTLS)</a></li><li class="sub"><a href="../guides/m2m.html">M2M Withdrawals</a></li><li class="sub"><a href="../guides/vop.html">Verification of Payee</a></li><li><a href="../guides/verification.html">IBAN Ownership Verification (Banklink)</a></li><li><a href="../guides/payment-gateway.html">Payment Gateway</a></li><li class="sub"><a href="../guides/payment-gateway-integrations.html">Integrations</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-simple-payment.html">Simple payment</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-refund.html">Refund</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-withdrawal.html">Withdrawal</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-store-card.html">Store card</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-recurrent-payment.html">Recurrent payment</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-apple-pay-js.html">Apple Pay JS</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-checkout-payment-methods.html">Checkout payment methods</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-capture.html">Capture &amp; Cancel</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-checkout-verification-webhook.html">Checkout Verification Webhook</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-payment-instructions.html">Payment instructions (manual bank transfer)</a></li><li><a href="../guides/fraudnet-fl-client.html">FraudNet Federated Learning</a></li></ul></aside>
+  <main>
+    <div class="page-head">
+      <div class="eyebrow">Guide</div>
+      <h1>FraudNet Federated Learning</h1>
+    </div>
+    <div class="prose"><h1 id="fraudnet-federated-learning">FraudNet Federated Learning</h1>
+<p>FraudNet lets you participate in fraud model training without sharing raw transaction data. Your transactions never leave your infrastructure — only encrypted model weights are exchanged with Payout's aggregation server. Predictions are served locally by an inference container that you run on your own hardware.</p>
+<p>This page is the end-to-end operator manual for both components:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Role</th>
+<th>Format</th>
+<th>Runs where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fraudnet-fl-client</code></td>
+<td>Contributes to federated training (periodic)</td>
+<td>Standalone binary</td>
+<td>Customer premises</td>
+</tr>
+<tr>
+<td><code>fraudnet-service</code></td>
+<td>Serves real-time fraud predictions</td>
+<td>OCI container archive</td>
+<td>Customer premises</td>
+</tr>
+<tr>
+<td>FL aggregation server</td>
+<td>Aggregates model updates across customers</td>
+<td>—</td>
+<td>Payout infrastructure</td>
+</tr>
+</tbody>
+</table></div>
+<p><img alt="FraudNet production topology" src="_media/fl-production-topology.svg" /></p>
+<h2 id="architecture-at-a-glance">Architecture at a glance</h2>
+<ul>
+<li><strong>Federated training</strong> runs in scheduled windows (weekly or monthly). Your client connects to Payout's FL server, trains locally on your CSV export, and sends back only model weights. The server averages updates across all participating customers and publishes an improved model.</li>
+<li><strong>Local inference</strong> runs continuously inside the <code>fraudnet-service</code> container on your infrastructure. It reads individual transactions from your PostgreSQL database and returns a fraud probability over HTTP.</li>
+<li><strong>Model delivery</strong>: after each training session Payout publishes the new ONNX model bundle to the <code>fraudnet-models</code> bucket on IBM Cloud Object Storage (S3-compatible). Each training month is a separate prefix, so older versions stay available for rollback or reproducibility. You pull the files with any S3 client using the read credentials issued per engagement.</li>
+<li><strong>Client binary and service container</strong> are delivered by Payout when your engagement starts and whenever a new release is cut. They are not versioned through the <code>fraudnet-models</code> bucket.</li>
+</ul>
+<blockquote>
+<p>[!NOTE]
+The FL client and the service are two separate binaries. You do not need both running at once — the client only runs during training windows, the service runs continuously.</p>
+</blockquote>
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="network">Network</h3>
+<ul>
+<li>Outbound gRPC to <code>fl.payout.one:443</code> during training windows. Staging uses <code>fl-staging.payout.one:443</code>.</li>
+<li>Outbound HTTPS to the IBM Cloud Object Storage endpoint (S3-compatible) for pulling model bundles from the <code>fraudnet-models</code> bucket.</li>
+</ul>
+<h3 id="hosts">Hosts</h3>
+<ul>
+<li>Linux host for the FL client. Binaries are built on <strong>amd64</strong> by default; <strong>aarch64</strong> builds are available on request.</li>
+<li>Linux host with Docker or Podman for the inference service.</li>
+<li>Optional GPU on the training host (CUDA is auto-detected; CPU-only training is supported).</li>
+</ul>
+<h3 id="data">Data</h3>
+<ul>
+<li>A CSV export of historical transactions for training. See <a href="#input-csv-schema">Input CSV schema</a>.</li>
+<li>A PostgreSQL database with the <code>ml_vector</code> view for live inference. See <a href="#database-setup">Database setup</a>.</li>
+</ul>
+<h3 id="credentials">Credentials</h3>
+<ul>
+<li>TLS root certificate for the FL server (provided by Payout).</li>
+<li>Your own mTLS client certificate + key pair, signed by the Payout CA. Required for production — the FL server will reject connections without a valid client certificate.</li>
+<li>An HMAC access key + secret for IBM Cloud Object Storage, scoped to read from the <code>fraudnet-models</code> bucket. (Payout issues these per engagement; IAM-based access is not offered.)</li>
+</ul>
+<hr />
+<h2 id="part-1-fl-client-training">Part 1: FL Client (training)</h2>
+<p><img alt="FL training round sequence" src="_media/fl-training-sequence.svg" /></p>
+<p>Training is <strong>server-initiated and round-based</strong>, not continuous. A session looks like this:</p>
+<ol>
+<li>Payout starts the FL server at an agreed time.</li>
+<li>You start your FL client and it connects to the server.</li>
+<li>The server waits until all expected clients are online.</li>
+<li>A fixed number of rounds runs (typically 10). Each round takes minutes.</li>
+<li>The server exports the new model and the session ends — all clients exit.</li>
+</ol>
+<h3 id="installation">Installation</h3>
+<p>Download the archive provided by Payout and extract it to a stable location:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Command Line</span><button class="cb-copy" type="button">copy</button></div><pre><code>tar<span class="t-flag"> -xzf</span> fraudnet-fl-client-&lt;version&gt;-linux-amd64.tar.gz \
+   <span class="t-flag"> -C</span> /opt/fraudnet/
+chmod +x /opt/fraudnet/fraudnet-fl-client/fraudnet-fl-client
+</code></pre></div>
+<p>The binary is self-contained (~1.5 GB) and includes PyTorch, Flower, and all dependencies. No system Python is required.</p>
+<blockquote>
+<p>[!NOTE]
+Use <code>-linux-arm64.tar.gz</code> on aarch64 hosts. Request an aarch64 build from Payout if you do not already have one.</p>
+</blockquote>
+<h3 id="input-csv-schema">Input CSV schema</h3>
+<p>The client reads a single CSV file containing historical transactions. Required columns:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Example</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>txn_id</code></td>
+<td>string</td>
+<td><code>TXN001</code></td>
+<td>Unique transaction identifier</td>
+</tr>
+<tr>
+<td><code>txn_status</code></td>
+<td>string</td>
+<td><code>1</code></td>
+<td><code>1</code> = success, <code>2</code> = failed</td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>float</td>
+<td><code>149.99</code></td>
+<td>Transaction amount</td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>string</td>
+<td><code>EUR</code></td>
+<td>ISO 4217 currency code</td>
+</tr>
+<tr>
+<td><code>txn_inserted_at</code></td>
+<td>timestamp</td>
+<td><code>2026-03-15 14:32:00</code></td>
+<td>Transaction timestamp</td>
+</tr>
+<tr>
+<td><code>customer_id</code></td>
+<td>string</td>
+<td><code>CUST123</code></td>
+<td>Customer identifier</td>
+</tr>
+<tr>
+<td><code>customer_email</code></td>
+<td>string</td>
+<td><code>john@example.com</code></td>
+<td>Customer email</td>
+</tr>
+<tr>
+<td><code>account_id</code></td>
+<td>string</td>
+<td><code>ACC001</code></td>
+<td>Merchant account ID</td>
+</tr>
+<tr>
+<td><code>payment_method_id</code></td>
+<td>int</td>
+<td><code>1</code></td>
+<td>Payment method type</td>
+</tr>
+<tr>
+<td><code>fai_bin_country</code></td>
+<td>string</td>
+<td><code>SK</code></td>
+<td>Card-issuing country</td>
+</tr>
+<tr>
+<td><code>kinit_risk_status</code></td>
+<td>float</td>
+<td><code>0.1</code></td>
+<td>Fraud label (see below)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Recommended columns (improve model accuracy if available):</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ac_phone</code></td>
+<td>string</td>
+<td>Customer phone number</td>
+</tr>
+<tr>
+<td><code>fai_status_3ds</code></td>
+<td>string</td>
+<td>3DS outcome (<code>Y</code> / <code>N</code> / <code>U</code>)</td>
+</tr>
+<tr>
+<td><code>fai_card_scheme</code></td>
+<td>string</td>
+<td>Card brand (visa, mastercard, …)</td>
+</tr>
+<tr>
+<td><code>checkout_products</code></td>
+<td>json</td>
+<td>Product list with quantities</td>
+</tr>
+<tr>
+<td><code>customer_inserted_at</code></td>
+<td>timestamp</td>
+<td>Customer account creation date</td>
+</tr>
+<tr>
+<td><code>payment_status</code></td>
+<td>string</td>
+<td>Payment status</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Fraud label (<code>kinit_risk_status</code>):</strong></p>
+<ul>
+<li><code>0.1</code> — confirmed legitimate transaction</li>
+<li><code>1.0</code> — confirmed fraud (chargeback, dispute, manual confirmation)</li>
+</ul>
+<p>The autoencoder trains <strong>only</strong> on rows where <code>kinit_risk_status = 0.1</code>. Rows labelled <code>1.0</code> are used to compute validation metrics. The quality of federated training depends directly on the quality of your labels.</p>
+<p><strong>Example CSV:</strong></p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">CSV</span><button class="cb-copy" type="button">copy</button></div><pre><code>txn_id,txn_status,amount,currency,txn_inserted_at,customer_id,customer_email,account_id,payment_method_id,fai_bin_country,kinit_risk_status
+&quot;TXN001&quot;,&quot;1&quot;,149.99,&quot;EUR&quot;,&quot;2026-03-15 14:32:00&quot;,&quot;CUST123&quot;,&quot;john@example.com&quot;,&quot;ACC001&quot;,1,&quot;SK&quot;,0.1
+&quot;TXN002&quot;,&quot;1&quot;,2500.00,&quot;EUR&quot;,&quot;2026-03-15 15:00:00&quot;,&quot;CUST456&quot;,&quot;suspicious@temp.org&quot;,&quot;ACC001&quot;,2,&quot;RU&quot;,1.0
+&quot;TXN003&quot;,&quot;2&quot;,29.99,&quot;USD&quot;,&quot;2026-03-15 14:35:00&quot;,&quot;CUST123&quot;,&quot;john@example.com&quot;,&quot;ACC001&quot;,1,&quot;CZ&quot;,0.1
+</code></pre></div>
+<h3 id="cli-reference">CLI reference</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--server</code></td>
+<td>yes</td>
+<td>FL server address in <code>host:port</code> form, e.g. <code>fl.payout.one:443</code></td>
+</tr>
+<tr>
+<td><code>--csv-path</code></td>
+<td>yes</td>
+<td>Path to the training CSV file</td>
+</tr>
+<tr>
+<td><code>--output-dir</code></td>
+<td>yes</td>
+<td>Directory where the local scaler and logs will be written</td>
+</tr>
+<tr>
+<td><code>--root-certificates</code></td>
+<td>yes (production)</td>
+<td>PEM file with the CA that signed the FL server certificate</td>
+</tr>
+<tr>
+<td><code>--client-cert</code></td>
+<td>yes (production)</td>
+<td>PEM file with your client certificate</td>
+</tr>
+<tr>
+<td><code>--client-key</code></td>
+<td>yes (production)</td>
+<td>PEM file with the private key for the client certificate</td>
+</tr>
+<tr>
+<td><code>--client-id</code></td>
+<td>no</td>
+<td>Human-readable client identifier for server logs</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>[!IMPORTANT]
+The production FL server requires mutual TLS. All three of <code>--root-certificates</code>, <code>--client-cert</code>, and <code>--client-key</code> must be supplied. A connection without a valid client certificate will be refused.</p>
+</blockquote>
+<h3 id="running-the-client">Running the client</h3>
+<p>Production (mutual TLS — required):</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Command Line</span><button class="cb-copy" type="button">copy</button></div><pre><code>/opt/fraudnet/fraudnet-fl-client/fraudnet-fl-client \
+   <span class="t-flag"> --server</span> fl.payout.one:443 \
+   <span class="t-flag"> --csv-path</span> /data/transactions.csv \
+   <span class="t-flag"> --output-dir</span> /var/lib/fraudnet/fl_output \
+   <span class="t-flag"> --root-certificates</span> /etc/ssl/payout-ca.pem \
+   <span class="t-flag"> --client-cert</span> /etc/ssl/fraudnet-client.pem \
+   <span class="t-flag"> --client-key</span> /etc/ssl/fraudnet-client.key \
+   <span class="t-flag"> --client-id</span> <span class="t-str">&quot;customer-abc&quot;</span>
+</code></pre></div>
+<p>Integration testing (staging):</p>
+<p>Payout operates a staging FL server at <code>fl-staging.payout.one:443</code> for customer integration tests. The staging endpoint is not always on — contact your Payout integration engineer to schedule a test window, during which a dedicated staging client certificate will be issued.</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Command Line</span><button class="cb-copy" type="button">copy</button></div><pre><code>/opt/fraudnet/fraudnet-fl-client/fraudnet-fl-client \
+   <span class="t-flag"> --server</span> fl-staging.payout.one:443 \
+   <span class="t-flag"> --csv-path</span> /data/transactions.csv \
+   <span class="t-flag"> --output-dir</span> /var/lib/fraudnet/fl_output \
+   <span class="t-flag"> --root-certificates</span> /etc/ssl/payout-staging-ca.pem \
+   <span class="t-flag"> --client-cert</span> /etc/ssl/fraudnet-client-staging.pem \
+   <span class="t-flag"> --client-key</span> /etc/ssl/fraudnet-client-staging.key \
+   <span class="t-flag"> --client-id</span> <span class="t-str">&quot;customer-abc-staging&quot;</span>
+</code></pre></div>
+<p>Use staging to validate the full path — network reachability, mTLS handshake, CSV schema, and your scheduler — before your first production session.</p>
+<p>The client exits with a non-zero status code if the CSV fails validation, the connection fails, or the session is aborted. Log output is structured JSON on stdout.</p>
+<h3 id="scheduling">Scheduling</h3>
+<p>Run the client from your usual scheduler. It only runs during the training window — there is no daemon to keep alive between sessions.</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">CRON</span><button class="cb-copy" type="button">copy</button></div><pre><code># Weekly training, Sunday 02:00 local time
+0 2 * * 0  /opt/fraudnet/fraudnet-fl-client/fraudnet-fl-client \
+             --server fl.payout.one:443 \
+             --csv-path /data/transactions.csv \
+             --output-dir /var/lib/fraudnet/fl_output \
+             --root-certificates /etc/ssl/payout-ca.pem \
+             --client-cert /etc/ssl/fraudnet-client.pem \
+             --client-key /etc/ssl/fraudnet-client.key
+</code></pre></div>
+<p>Payout schedules the FL server for the same window and notifies you of the time in advance. If your client does not connect before the server's <code>min_available_clients</code> timeout, the session continues without you — there is no penalty, but your data will not contribute to that round.</p>
+<h3 id="output">Output</h3>
+<p>After a successful session, <code>--output-dir</code> contains the per-customer preprocessing artifacts that pair with the model you just helped train:</p>
+<ul>
+<li><code>autoencoder_scaler.pkl</code> — StandardScaler fitted on your local data.</li>
+<li><code>autoencoder_features.pkl</code> — feature-order metadata captured from your local pipeline.</li>
+<li><code>onehot_encoder.pkl</code> — OneHotEncoder built from the categorical values present in your data.</li>
+<li>Structured logs for each round.</li>
+</ul>
+<p>These files are <strong>yours</strong>. Payout never receives them and never redistributes them — customer data distributions (amount ranges, currency mixes, card-scheme coverage) vary, and each customer's preprocessing must match their own inputs.</p>
+<blockquote>
+<p>[!IMPORTANT]
+Always pair the preprocessing artifacts from a given training session with the model that session produced. Copy this directory into the path the inference service mounts at <code>/app/models</code> together with the ONNX model files pulled from object storage — don't mix preprocessing files from one session with a model from another.</p>
+</blockquote>
+<hr />
+<h2 id="part-2-fraudnet-service-inference">Part 2: FraudNet Service (inference)</h2>
+<p><img alt="FraudNet service distribution" src="_media/fl-service-distribution.svg" /></p>
+<p>The service is a FastAPI application that runs in a container on your infrastructure. It reads transactions from your own PostgreSQL database, runs the ONNX autoencoder + XGBoost pipeline locally, and returns a fraud probability.</p>
+<h3 id="obtaining-the-service-container">Obtaining the service container</h3>
+<p>The <code>fraudnet-service-&lt;version&gt;.tar.gz</code> OCI container archive (≈300 MB) and a matching <code>.env.example</code> template are provided by Payout at engagement start and on each release. Install it once, then refresh only when Payout ships a new version — most deployments do not upgrade the container between training cycles.</p>
+<h3 id="obtaining-model-bundles">Obtaining model bundles</h3>
+<p>After every federated training session Payout publishes the freshly aggregated model artifacts to the <code>fraudnet-models</code> bucket on IBM Cloud Object Storage. The bucket is S3-compatible, so any S3 client (<code>aws</code>, <code>s3cmd</code>, <code>mc</code>, the IBM Cloud CLI, or your own SDK) works — point it at the IBM COS endpoint given to you and authenticate with your HMAC access key + secret.</p>
+<p><strong>What is in the bucket.</strong> Only the shared neural-net / classifier files Payout produces centrally. The per-customer preprocessing artifacts (scaler, features metadata, one-hot encoder) are <strong>not</strong> in the bucket — they are produced by your own FL client and live in the client's <code>--output-dir</code>.</p>
+<p><strong>Layout.</strong> All keys live under the top-level <code>models/</code> prefix of the bucket, with one sub-prefix per training date (<code>YYYY-MM-DD</code>). Older prefixes remain available so you can roll back or reproduce a past prediction.</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Code</span><button class="cb-copy" type="button">copy</button></div><pre><code>s3://fraudnet-models/models/
+├── 2026-02-01/
+│   ├── autoencoder_model.onnx
+│   ├── autoencoder_model.onnx.data
+│   └── classifier_head.onnx
+├── 2026-03-01/
+│   └── …
+└── 2026-04-01/
+    └── …
+</code></pre></div>
+<p><strong>Per-date files:</strong></p>
+<ul>
+<li><code>autoencoder_model.onnx</code> — ONNX-exported autoencoder (use in production)</li>
+<li><code>autoencoder_model.onnx.data</code> — external-weight data file referenced by the ONNX graph; must sit next to <code>autoencoder_model.onnx</code></li>
+<li><code>classifier_head.onnx</code> — ONNX-exported XGBoost classifier</li>
+</ul>
+<p>Pull the latest date's models with the AWS CLI (any S3-compatible client works the same):</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Command Line</span><button class="cb-copy" type="button">copy</button></div><pre><code>aws<span class="t-flag"> --endpoint-url</span> <span class="t-url">https://s3.&lt;region&gt;.cloud-object-storage.appdomain.cloud</span> \
+    s3 sync s3://fraudnet-models/models/2026-04-01/ /opt/fraudnet/models/
+</code></pre></div>
+<p>Or with the IBM Cloud CLI:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Command Line</span><button class="cb-copy" type="button">copy</button></div><pre><code>ibmcloud cos object-get<span class="t-flag"> --bucket</span> fraudnet-models \
+   <span class="t-flag"> --key</span> models/2026-04-01/autoencoder_model.onnx \
+    /opt/fraudnet/models/autoencoder_model.onnx
+</code></pre></div>
+<p>Then copy the preprocessing artifacts (<code>autoencoder_scaler.pkl</code>, <code>autoencoder_features.pkl</code>, <code>onehot_encoder.pkl</code>) from the FL client's <code>--output-dir</code> into the same directory — see <a href="#output">Output</a> in Part 1.</p>
+<p>The file names on object storage follow the training pipeline's convention (<code>autoencoder_model.onnx</code>, …). The service's default env-var paths assume shorter names (<code>autoencoder.pt</code>, <code>classifier_head.json</code>), so either rename on copy or override <code>AUTOENCODER_PATH</code>, <code>XGBOOST_PATH</code>, <code>SCALER_PATH</code>, <code>ENCODER_PATH</code>, and <code>FEATURES_PATH</code> (see <a href="#configuration">Configuration</a>) to point at the real files.</p>
+<p>Restart the service container after swapping the model files so it picks up the new ones.</p>
+<h3 id="loading-the-container">Loading the container</h3>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Command Line</span><button class="cb-copy" type="button">copy</button></div><pre><code># Podman
+podman load<span class="t-flag"> -i</span> fraudnet-service-&lt;version&gt;.tar.gz
+
+# or Docker
+docker load<span class="t-flag"> -i</span> fraudnet-service-&lt;version&gt;.tar.gz
+</code></pre></div>
+<p>The command prints the reference of the loaded image — use that reference in the <code>run</code> command below. Optionally retag it to something local-friendly:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Command Line</span><button class="cb-copy" type="button">copy</button></div><pre><code>podman tag &lt;loaded-reference&gt; fraudnet-service:&lt;version&gt;
+</code></pre></div>
+<h3 id="configuration">Configuration</h3>
+<p>Create a <code>.env</code> file based on <code>.env.example</code>. The service reads the following variables (defaults shown):</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DB_HOST</code></td>
+<td><code>localhost</code></td>
+<td>PostgreSQL host</td>
+</tr>
+<tr>
+<td><code>DB_PORT</code></td>
+<td><code>5432</code></td>
+<td>PostgreSQL port</td>
+</tr>
+<tr>
+<td><code>DB_DATABASE</code></td>
+<td><code>fraudnet</code></td>
+<td>Database name</td>
+</tr>
+<tr>
+<td><code>DB_USERNAME</code></td>
+<td><code>fraudnet_predictor</code></td>
+<td>Read-only user with <code>SELECT</code> on <code>ml_vector</code></td>
+</tr>
+<tr>
+<td><code>DB_PASSWORD</code></td>
+<td>—</td>
+<td><strong>Required.</strong> Password for <code>DB_USERNAME</code>.</td>
+</tr>
+<tr>
+<td><code>DB_SSLMODE</code></td>
+<td><code>require</code></td>
+<td>One of <code>disable</code>, <code>allow</code>, <code>prefer</code>, <code>require</code>, <code>verify-ca</code>, <code>verify-full</code></td>
+</tr>
+<tr>
+<td><code>DB_POOL_MIN_SIZE</code></td>
+<td><code>5</code></td>
+<td>Minimum connections in the pool</td>
+</tr>
+<tr>
+<td><code>DB_POOL_MAX_SIZE</code></td>
+<td><code>20</code></td>
+<td>Maximum connections in the pool</td>
+</tr>
+<tr>
+<td><code>MODEL_PATH</code></td>
+<td><code>./models</code></td>
+<td>Directory containing the model bundle</td>
+</tr>
+<tr>
+<td><code>SCALER_PATH</code></td>
+<td><code>./models/scaler.pkl</code></td>
+<td>Override individual model paths if needed</td>
+</tr>
+<tr>
+<td><code>AUTOENCODER_PATH</code></td>
+<td><code>./models/autoencoder.pt</code></td>
+<td>Point to <code>.onnx</code> for production</td>
+</tr>
+<tr>
+<td><code>XGBOOST_PATH</code></td>
+<td><code>./models/classifier_head.json</code></td>
+<td>Point to <code>.onnx</code> for production</td>
+</tr>
+<tr>
+<td><code>ENCODER_PATH</code></td>
+<td><code>./models/onehot_encoder.pkl</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>FEATURES_PATH</code></td>
+<td><code>./models/autoencoder_features.pkl</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>PORT</code></td>
+<td><code>8000</code></td>
+<td>HTTP port</td>
+</tr>
+<tr>
+<td><code>HOST</code></td>
+<td><code>0.0.0.0</code></td>
+<td>Bind address</td>
+</tr>
+<tr>
+<td><code>MAX_LOOKBACK_DAYS</code></td>
+<td><code>30</code></td>
+<td>How far back to query customer history for feature engineering</td>
+</tr>
+<tr>
+<td><code>PREDICTION_THRESHOLD</code></td>
+<td><code>0.5</code></td>
+<td>Probability cutoff for the <code>predicted_label</code> field in responses</td>
+</tr>
+<tr>
+<td><code>REQUIRE_AUTH</code></td>
+<td><code>true</code></td>
+<td>Set to <code>false</code> to disable the service's built-in auth check. Typical for customer-hosted deployments that place their own authorization (API gateway, reverse proxy, mesh policy) in front of the service.</td>
+</tr>
+<tr>
+<td><code>DEBUG</code></td>
+<td><code>false</code></td>
+<td>Enables reload + debug logging</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>[!IMPORTANT]
+In production, set <code>AUTOENCODER_PATH</code> and <code>XGBOOST_PATH</code> to the ONNX files. The ONNX runtime is ~250–330 MB smaller and 20–30 % faster than the PyTorch/XGBoost combination.</p>
+</blockquote>
+<h3 id="database-setup">Database setup</h3>
+<p>The service is schema-agnostic: it only ever reads from a single view named <code>ml_vector</code>. You own how that view is populated from your tables — your source schema will almost certainly differ from ours, so we do not ship a ready-made <code>ml_vector.sql</code>. You write the <code>SELECT</code> that maps your columns onto the contract below.</p>
+<p><strong>View contract.</strong> <code>ml_vector</code> must expose one row per transaction with the columns and types listed in the <a href="#input-csv-schema">Input CSV schema</a>, using the same column names. The only difference between training and inference:</p>
+<ul>
+<li><code>kinit_risk_status</code> is <strong>training-only</strong> and is not required by the inference view.</li>
+<li>All other <em>required</em> columns from the CSV schema must be present on the view.</li>
+<li><em>Recommended</em> columns, if you have them, improve prediction quality.</li>
+</ul>
+<p>After you have defined the view, create a read-only user for the service:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">SQL</span><button class="cb-copy" type="button">copy</button></div><pre><code>CREATE USER fraudnet_predictor WITH PASSWORD &#x27;change-me&#x27;;
+GRANT CONNECT ON DATABASE your_database TO fraudnet_predictor;
+GRANT USAGE ON SCHEMA public TO fraudnet_predictor;
+GRANT SELECT ON ml_vector TO fraudnet_predictor;
+</code></pre></div>
+<p>For acceptable latency on live traffic, make sure the underlying transaction table (call it <code>transactions</code>, <code>payments</code>, or whatever fits your schema) is indexed on the lookup columns the view uses. At minimum:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">SQL</span><button class="cb-copy" type="button">copy</button></div><pre><code>-- Replace &quot;transactions&quot; with your actual table name.
+CREATE INDEX IF NOT EXISTS idx_transactions_txn_id
+  ON transactions (txn_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_customer_date
+  ON transactions (customer_id, txn_inserted_at);
+</code></pre></div>
+<h3 id="running-the-service">Running the service</h3>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Command Line</span><button class="cb-copy" type="button">copy</button></div><pre><code>docker run<span class="t-flag"> -d</span> \
+ <span class="t-flag"> --name</span> fraudnet-service \
+ <span class="t-flag"> --env-file</span> /etc/fraudnet/fraudnet.env \
+ <span class="t-flag"> -v</span> /opt/fraudnet/models:/app/models:ro \
+ <span class="t-flag"> -p</span> 8000:8000 \
+  fraudnet-service:&lt;version&gt;
+</code></pre></div>
+<p>Check that it came up:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Command Line</span><button class="cb-copy" type="button">copy</button></div><pre><code><span class="t-cmd">curl</span> <span class="t-url">http://localhost:8000/api/v1/health</span>
+</code></pre></div>
+<p>Expected response:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;status&quot;</span>: <span class="t-str">&quot;healthy&quot;</span>,
+  <span class="t-key">&quot;models_loaded&quot;</span>: <span class="t-lit">true</span>,
+  <span class="t-key">&quot;database_connected&quot;</span>: <span class="t-lit">true</span>
+}
+</code></pre></div>
+<h3 id="calling-the-prediction-endpoint">Calling the prediction endpoint</h3>
+<p>The service does not ship with an opinionated authorization model. Run it with <code>REQUIRE_AUTH=false</code> and put your own authorization layer in front of it — an API gateway, reverse proxy, or service-mesh policy that terminates TLS and enforces whatever identity and scope model you already use.</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Command Line</span><button class="cb-copy" type="button">copy</button></div><pre><code><span class="t-cmd">curl</span><span class="t-flag"> -X</span> POST <span class="t-url">http://localhost:8000/api/v1/predict</span> \
+ <span class="t-flag"> -H</span> <span class="t-str">&quot;Content-Type: application/json&quot;</span> \
+ <span class="t-flag"> -d</span> <span class="t-str">'</span>{<span class="t-key">&quot;txn_id&quot;</span>: <span class="t-str">&quot;123456&quot;</span>}<span class="t-str">'</span>
+</code></pre></div>
+<p>Add your own <code>Authorization</code> header or other credentials at the proxy layer as required by your environment.</p>
+<blockquote>
+<p>[!IMPORTANT]
+Do not expose the service directly to the internet. It has no rate limiting or authorization when <code>REQUIRE_AUTH=false</code>; those controls are your responsibility.</p>
+</blockquote>
+<p>Response:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;txn_id&quot;</span>: <span class="t-str">&quot;123456&quot;</span>,
+  <span class="t-key">&quot;fraud_probability&quot;</span>: <span class="t-num">0.856</span>,
+  <span class="t-key">&quot;predicted_label&quot;</span>: <span class="t-num">1</span>,
+  <span class="t-key">&quot;reconstruction_error&quot;</span>: <span class="t-num">2.34</span>,
+  <span class="t-key">&quot;processing_time_ms&quot;</span>: <span class="t-num">145.2</span>
+}
+</code></pre></div>
+<p>Expected latency is 100–300 ms per call: 20–50 ms database query, 50–150 ms feature engineering, 10–20 ms model inference.</p>
+<p>For the full API reference — additional status codes, error payloads, and scope details — see <a href="../guides/internal-fraud-prediction-service.html">FraudNet API Documentation</a>.</p>
+<hr />
+<h2 id="end-to-end-workflow">End-to-end workflow</h2>
+<ol>
+<li>Receive the FL client binary, the service container archive, and the <code>fraudnet-models</code> bucket read credentials from Payout.</li>
+<li>Install the client and the service as described above.</li>
+<li>Define the <code>ml_vector</code> view in your database and provision a read-only user.</li>
+<li>Export your historical transactions to the CSV schema for training.</li>
+<li>Join the first scheduled training session — run the FL client during the window.</li>
+<li>After the session, pull the latest per-date prefix from <code>s3://fraudnet-models/models/&lt;YYYY-MM-DD&gt;/</code> into the directory mounted as <code>/app/models</code>, and copy the preprocessing files (<code>autoencoder_scaler.pkl</code>, <code>autoencoder_features.pkl</code>, <code>onehot_encoder.pkl</code>) from the FL client's <code>--output-dir</code> into the same place.</li>
+<li>Restart the service container so it picks up the new model files.</li>
+<li>Verify <code>GET /api/v1/health</code> and a few <code>POST /api/v1/predict</code> calls.</li>
+<li>Repeat steps 5–8 on each training cycle.</li>
+</ol>
+<hr />
+<h2 id="security-privacy">Security &amp; privacy</h2>
+<p><img alt="FL privacy data flow" src="_media/fl-privacy-model.svg" /></p>
+<h3 id="what-is-transmitted">What is transmitted</h3>
+<p>During training rounds the client sends only:</p>
+<ul>
+<li>encoder and decoder weight tensors</li>
+<li>BatchNorm running statistics</li>
+<li>a sample count per round</li>
+</ul>
+<p>A typical round transmits ≈200 KB of compressed numeric data. No identifiers, amounts, emails, IPs, card numbers, or other PII are ever sent to Payout.</p>
+<h3 id="transport">Transport</h3>
+<ul>
+<li>gRPC over <strong>mutual TLS 1.3</strong> to the FL server. The server authenticates to the client via the Payout CA; the client authenticates to the server via a certificate signed by the Payout CA and pinned to your engagement.</li>
+<li>The service-side inference API on your own infrastructure should be fronted by your existing TLS termination and OAuth2 infrastructure.</li>
+</ul>
+<h3 id="data-sovereignty">Data sovereignty</h3>
+<p>The <code>scaler.pkl</code> produced by the client is fitted on your local data. This is by design — it keeps local distributions (transaction amount ranges, currencies, etc.) private while still contributing to a shared global model. Because the scaler is per customer, scalers and models are not interchangeable between customers.</p>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Likely cause / fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Client exits with "CSV validation failed"</td>
+<td>A required column is missing or a timestamp does not parse. Cross-check <a href="#input-csv-schema">Input CSV schema</a>.</td>
+</tr>
+<tr>
+<td>Client fails to connect (gRPC: unavailable)</td>
+<td>Firewall is blocking outbound to <code>fl.payout.one:443</code>, or the training window has not started.</td>
+</tr>
+<tr>
+<td>Client fails TLS handshake</td>
+<td>Wrong <code>--root-certificates</code>, missing or expired <code>--client-cert</code> / <code>--client-key</code>, or clock skew on the host.</td>
+</tr>
+<tr>
+<td>"insufficient benign samples" error</td>
+<td>Your CSV has too few <code>kinit_risk_status = 0.1</code> rows. Export a longer history.</td>
+</tr>
+<tr>
+<td>Service <code>models_loaded: false</code> in health check</td>
+<td>A file listed in the model paths is missing or unreadable. Check the container's <code>/app/models</code> mount.</td>
+</tr>
+<tr>
+<td>Service <code>database_connected: false</code></td>
+<td><code>DB_*</code> variables, network reachability, or <code>ml_vector</code> permissions. Run <code>\dv ml_vector</code> as the predictor user.</td>
+</tr>
+<tr>
+<td>Slow predictions (&gt;500 ms)</td>
+<td>Missing indexes on your transaction table, or a single customer has &gt; 1000 transactions in the lookback window.</td>
+</tr>
+<tr>
+<td>401 / 403 on <code>/api/v1/predict</code></td>
+<td>Rejected by your fronting API gateway or reverse proxy, not by the service itself. Check the proxy's access logs and policy configuration.</td>
+</tr>
+</tbody>
+</table></div>
+<p>For anything not on this list, collect the service logs and the client's stdout and contact your Payout integration engineer.</p></div>
+  </main>
+</div>
+
+<footer><div>Generated from the OpenAPI specs and the existing guides. Preview build — the live site is unchanged.</div></footer>
+
+<dialog id="search">
+  <input type="search" id="q" placeholder="Search guides and endpoints…" autocomplete="off" spellcheck="false">
+  <ul id="results"></ul>
+</dialog>
+
+<script>
+(function () {
+  var root = document.documentElement;
+
+  // --- theme: auto -> light -> dark, persisted -------------------------
+  var tBtn = document.getElementById('theme-toggle');
+  var order = ['auto', 'light', 'dark'];
+  function applyTheme(v) {
+    if (v === 'auto') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', v);
+    tBtn.textContent = v;
+    try { localStorage.setItem('pd-theme', v); } catch (e) {}
+  }
+  var saved = null; try { saved = localStorage.getItem('pd-theme'); } catch (e) {}
+  applyTheme(order.indexOf(saved) > -1 ? saved : 'auto');
+  tBtn.addEventListener('click', function () {
+    applyTheme(order[(order.indexOf(tBtn.textContent) + 1) % order.length]);
+  });
+
+  // --- copy on prose code blocks ---------------------------------------
+  document.querySelectorAll('.cb-copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.closest('.cb').querySelector('pre');
+      if (!pre) return;
+      navigator.clipboard.writeText(pre.innerText).then(function () {
+        btn.textContent = 'copied';
+        setTimeout(function () { btn.textContent = 'copy'; }, 1200);
+      });
+    });
+  });
+
+  // --- per-client tabs --------------------------------------------------
+  document.querySelectorAll('[data-tabs]').forEach(function (group) {
+    var bar = group.querySelector('.tab-bar');
+    if (!bar) return;
+    bar.addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-tab]');
+      if (!btn) return;
+      var want = btn.dataset.tab;
+      bar.querySelectorAll('button[data-tab]').forEach(function (b) {
+        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+      });
+      group.querySelectorAll('.tab-pane').forEach(function (p) {
+        p.hidden = p.dataset.tab !== want;
+      });
+      try { localStorage.setItem('pd-client', want); } catch (err) {}
+    });
+  });
+  try {
+    var client = localStorage.getItem('pd-client');
+    if (client) {
+      var pref = document.querySelector('.tab-bar button[data-tab="' + client + '"]');
+      if (pref) pref.click();
+    }
+  } catch (err) {}
+
+  // --- copy buttons -----------------------------------------------------
+  document.querySelectorAll('pre').forEach(function (pre) {
+    var wrap = pre.closest('.cb');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.className = 'codeblock';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+    }
+    wrap.style.position = 'relative';
+    var b = document.createElement('button');
+    b.className = 'copy'; b.type = 'button'; b.textContent = 'copy';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.innerText).then(function () {
+        b.textContent = 'copied'; setTimeout(function () { b.textContent = 'copy'; }, 1200);
+      });
+    });
+    wrap.appendChild(b);
+  });
+
+  // --- language tabs ----------------------------------------------------
+  document.querySelectorAll('.cb .langs').forEach(function (group) {
+    var panel = group.closest('.cb');
+    group.addEventListener('click', function (e) {
+      var btn = e.target.closest('.lang');
+      if (!btn) return;
+      var want = btn.dataset.lang;
+      group.querySelectorAll('.lang').forEach(function (b) {
+        b.classList.toggle('on', b === btn);
+      });
+      panel.querySelectorAll('.lang-pane').forEach(function (p) {
+        p.hidden = p.dataset.lang !== want;
+      });
+      // Remember the choice across every panel on the page and future visits.
+      try { localStorage.setItem('pd-lang', want); } catch (err) {}
+      document.querySelectorAll('.cb').forEach(function (other) {
+        if (other === panel) return;
+        other.querySelectorAll('.lang').forEach(function (b) {
+          b.classList.toggle('on', b.dataset.lang === want);
+        });
+        other.querySelectorAll('.lang-pane').forEach(function (p) {
+          p.hidden = p.dataset.lang !== want;
+        });
+      });
+    });
+  });
+  try {
+    var pref = localStorage.getItem('pd-lang');
+    if (pref) {
+      document.querySelectorAll('.cb .lang[data-lang="' + pref + '"]').forEach(function (b) {
+        b.click();
+      });
+    }
+  } catch (err) {}
+
+  // --- copy a section as markdown, for pasting into an agent -------------
+  document.querySelectorAll('.copy-md').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var sec = btn.closest('[data-md]');
+      if (!sec) return;
+      navigator.clipboard.writeText(sec.dataset.md).then(function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy for LLM';
+          btn.classList.remove('done');
+        }, 1400);
+      });
+    });
+  });
+
+  // --- search -----------------------------------------------------------
+  var dlg = document.getElementById('search');
+  var q = document.getElementById('q');
+  var results = document.getElementById('results');
+  var index = null, cursor = 0;
+
+  function load() {
+    if (index) return Promise.resolve(index);
+    return fetch('../search-index.json')
+      .then(function (r) { return r.json(); })
+      .then(function (d) { index = d; return d; });
+  }
+  function open() {
+    load().then(function () { dlg.showModal(); q.value = ''; render([]); q.focus(); });
+  }
+  function render(rows) {
+    cursor = 0;
+    if (!rows.length) {
+      results.innerHTML = '<li class="empty">' + (q.value ? 'No matches.' : 'Type to search.') + '</li>';
+      return;
+    }
+    results.innerHTML = rows.map(function (r, i) {
+      return '<li><a class="' + (i === 0 ? 'on' : '') + '" href="../' + r.url + '">' +
+             '<span class="r-kind">' + r.kind + '</span> ' + r.title +
+             (r.ctx ? '<div class="r-ctx">' + r.ctx + '</div>' : '') + '</a></li>';
+    }).join('');
+  }
+  q && q.addEventListener('input', function () {
+    var s = q.value.toLowerCase().trim();
+    if (!s) return render([]);
+    render(index.filter(function (r) {
+      return (r.title + ' ' + r.ctx + ' ' + r.kind).toLowerCase().indexOf(s) > -1;
+    }).slice(0, 20));
+  });
+  q && q.addEventListener('keydown', function (e) {
+    var links = results.querySelectorAll('a');
+    if (!links.length) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      links[cursor].classList.remove('on');
+      cursor = (cursor + (e.key === 'ArrowDown' ? 1 : links.length - 1)) % links.length;
+      links[cursor].classList.add('on');
+      links[cursor].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault(); links[cursor].click();
+    }
+  });
+  document.getElementById('search-open').addEventListener('click', open);
+  document.addEventListener('keydown', function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); open(); }
+  });
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+})();
+</script>
+</body>
+</html>

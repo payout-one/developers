@@ -1,0 +1,1961 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Payout OpenBanking PSD2 API — Payout Developers</title>
+<meta name="description" content="Payout OpenBanking PSD2 API reference.">
+<meta name="theme-color" content="#3A1768">
+<link rel="alternate" type="text/markdown" href="../openapi/psd2.yaml">
+<style>
+  /* Palette from payout_merchant/assets/css:
+     #3A1768 primary · #330864 deep · #6430B2 bright · #795F95 muted
+     #CBB5D4 lavender · #3F9A57 success · #FFC107 warning            */
+  :root {
+    --brand:#3A1768; --brand-deep:#330864; --brand-bright:#6430B2;
+    --brand-muted:#795F95; --lavender:#CBB5D4;
+
+    --ground:#FFFFFF; --raised:#FFFFFF; --sunken:#F7F4FB;
+    --ink:#221B2C; --muted:#544C60; --faint:#867C93;
+    --rule:#EBE5F1; --rule-strong:#DCD2E6;
+    --accent:#6430B2; --accent-ink:#3A1768; --accent-soft:#F1EBF7;
+    --masthead:#3A1768; --masthead-ink:#FFFFFF; --masthead-dim:#CBB5D4;
+
+    --get:#3A1768; --post:#3F9A57; --put:#B8860B; --delete:#B0186A;
+    --danger:#B0186A; --warn:#8A6100;
+
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --bar: 3.25rem;
+  }
+
+  /* Dark: a purple-tinted near-black ground with lavender accents. The brand
+     purple is too saturated to sit behind body text, so it moves to the
+     masthead and the accents lighten instead of inverting. */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:#141019; --raised:#1B1622; --sunken:#1F1929;
+      --ink:#EDE8F3; --muted:#A79CB5; --faint:#7C7189;
+      --rule:#2C2438; --rule-strong:#3D3350;
+      --accent:#B08BE0; --accent-ink:#CBB5D4; --accent-soft:#271A3A;
+      --masthead:#241338; --masthead-ink:#F2EDF7; --masthead-dim:#A392B5;
+      --get:#B08BE0; --post:#5FBF7C; --put:#D3B064; --delete:#E06B9E;
+      --danger:#E06B9E; --warn:#D3B064;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#141019; --raised:#1B1622; --sunken:#1F1929;
+    --ink:#EDE8F3; --muted:#A79CB5; --faint:#7C7189;
+    --rule:#2C2438; --rule-strong:#3D3350;
+    --accent:#B08BE0; --accent-ink:#CBB5D4; --accent-soft:#271A3A;
+    --masthead:#241338; --masthead-ink:#F2EDF7; --masthead-dim:#A392B5;
+    --get:#B08BE0; --post:#5FBF7C; --put:#D3B064; --delete:#E06B9E;
+    --danger:#E06B9E; --warn:#D3B064;
+  }
+  :root[data-theme="light"] {
+    --ground:#FFFFFF; --raised:#FFFFFF; --sunken:#F7F4FB;
+    --ink:#221B2C; --muted:#544C60; --faint:#867C93;
+    --rule:#EBE5F1; --rule-strong:#DCD2E6;
+    --accent:#6430B2; --accent-ink:#3A1768; --accent-soft:#F1EBF7;
+    --masthead:#3A1768; --masthead-ink:#FFFFFF; --masthead-dim:#CBB5D4;
+    --get:#3A1768; --post:#3F9A57; --put:#B8860B; --delete:#B0186A;
+    --danger:#B0186A; --warn:#8A6100;
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--sans); font-size:0.9375rem; line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  a { color:var(--accent); text-underline-offset:2px; }
+  a:focus-visible, button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:3px; }
+
+  /* ---- masthead ---- */
+  .bar {
+    position:sticky; top:0; z-index:40; height:var(--bar);
+    background:var(--masthead); color:var(--masthead-ink);
+    display:flex; align-items:center; gap:1.25rem; padding:0 1.25rem;
+  }
+  .brand { font-weight:700; letter-spacing:-0.015em; color:var(--masthead-ink);
+           text-decoration:none; font-size:0.95rem; white-space:nowrap; }
+  .brand span { color:var(--lavender); font-weight:400; }
+  .bar nav { display:flex; gap:0.2rem; margin-right:auto; }
+  .bar nav a {
+    font-size:0.8rem; color:var(--masthead-dim); text-decoration:none;
+    padding:0.32rem 0.65rem; border-radius:5px;
+  }
+  .bar nav a:hover { color:var(--masthead-ink); background:rgba(255,255,255,.09); }
+  .bar nav a[aria-current="page"] { color:var(--masthead-ink); background:rgba(255,255,255,.14); }
+
+  .toolbtn {
+    font-size:0.74rem; background:rgba(255,255,255,.08); color:var(--masthead-dim);
+    border:1px solid rgba(255,255,255,.16); border-radius:5px;
+    padding:0.32rem 0.6rem; cursor:pointer; font-family:inherit;
+  }
+  .toolbtn:hover { color:var(--masthead-ink); background:rgba(255,255,255,.16); }
+  #search-open { min-width:9rem; display:flex; justify-content:space-between; gap:0.8rem; }
+  #search-open kbd { font-family:var(--mono); opacity:.75; }
+
+  /* ---- shell ---- */
+  .shell {
+    display:grid; grid-template-columns:17rem minmax(0,1fr);
+    align-items:start; gap:0;
+  }
+  .sidenav {
+    position:sticky; top:var(--bar); max-height:calc(100vh - var(--bar));
+    overflow-y:auto; padding:1.6rem 1rem 3rem 1.5rem;
+    border-right:1px solid var(--rule);
+  }
+  .sidenav h3 {
+    font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em;
+    color:var(--brand-muted); margin:1.5rem 0 0.45rem; font-weight:700;
+  }
+  :root[data-theme="dark"] .sidenav h3 { color:var(--faint); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sidenav h3 { color:var(--faint); } }
+  .sidenav h3:first-child { margin-top:0; }
+  .sidenav ul { list-style:none; margin:0; padding:0; }
+  .sidenav li a {
+    display:block; padding:0.26rem 0.6rem; margin-left:-0.6rem; border-radius:5px;
+    color:var(--muted); text-decoration:none; font-size:0.845rem;
+  }
+  .sidenav li a:hover { background:var(--sunken); color:var(--ink); }
+  .sidenav li a[aria-current="page"] { background:var(--accent-soft); color:var(--accent-ink); font-weight:600; }
+  .sidenav .sub { padding-left:0.8rem; border-left:1px solid var(--rule); margin-left:0.35rem; }
+  .sidenav .ops { margin:0.15rem 0 0.5rem 0.35rem; padding-left:0.8rem;
+                  border-left:1px solid var(--rule-strong); }
+  .sidenav .ops a { display:flex; gap:0.45rem; align-items:baseline; font-size:0.79rem; padding:0.2rem 0.5rem; }
+  .sidenav .ops .m { font-family:var(--mono); font-size:0.58rem; font-weight:700;
+                     letter-spacing:0.04em; min-width:2.1rem; color:var(--faint); }
+  .sidenav .ops a:hover .m { color:var(--accent); }
+
+  main { padding:0 0 6rem; min-width:0; }
+  /* Content is centred within the area right of the nav, with equal gutters.
+     Left-aligning it dumped every spare pixel on the right and read as
+     unbalanced next to Stripe. Section rules stay full-bleed. */
+  .inner { max-width:90rem; margin:0 auto; padding:0 2rem; }
+  .page-head { padding-top:2.25rem; padding-bottom:0.5rem; margin-bottom:0; }
+  .intro { padding:0 0 2.5rem; }
+  main > .prose { max-width:90rem; margin:0 auto; padding:0 2rem; }
+  .eyebrow { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.12em;
+             color:var(--brand-muted); font-weight:700; }
+  :root[data-theme="dark"] .eyebrow { color:var(--faint); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .eyebrow { color:var(--faint); } }
+  h1 { margin:0.35rem 0 0; font-size:1.8rem; font-weight:650;
+       letter-spacing:-0.025em; text-wrap:balance; color:var(--ink); }
+
+  /* ---- prose ---- */
+  .prose > *:first-child { margin-top:0; }
+  .prose p, .prose li { color:var(--muted); }
+  .prose p { margin:0 0 1rem; max-width:78ch; }
+  .prose h1,.prose h2,.prose h3,.prose h4 {
+    font-weight:650; color:var(--ink); letter-spacing:-0.018em;
+    margin:2rem 0 0.7rem; scroll-margin-top:calc(var(--bar) + 1rem);
+  }
+  .prose h1 { font-size:1.35rem; } .prose h2 { font-size:1.12rem; }
+  .prose h3 { font-size:0.98rem; } .prose h4 { font-size:0.9rem; }
+  .prose ul,.prose ol { margin:0 0 1rem; padding-left:1.25rem; }
+  .prose li { margin:0.25rem 0; }
+  .prose hr { border:0; border-top:1px solid var(--rule); margin:2rem 0; }
+  .prose blockquote {
+    margin:0 0 1rem; padding:0.6rem 0.9rem; border-left:3px solid var(--accent);
+    background:var(--accent-soft); border-radius:0 5px 5px 0; color:var(--muted);
+  }
+  .prose blockquote p:last-child { margin-bottom:0; }
+  .prose img { max-width:100%; height:auto; border-radius:6px; border:1px solid var(--rule); }
+  .prose table { border-collapse:collapse; width:100%; font-size:0.83rem; }
+  .prose th,.prose td { text-align:left; padding:0.55rem 0.9rem 0.55rem 0;
+                        border-bottom:1px solid var(--rule); vertical-align:top; color:var(--muted); }
+  .prose th { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.09em;
+              color:var(--brand-muted); font-weight:700; white-space:nowrap; }
+  .prose td:first-child { font-family:var(--mono); color:var(--ink); }
+  .table-scroll { overflow-x:auto; margin:0 0 1rem; }
+  .table-scroll table { min-width:38rem; }
+
+  code { font-family:var(--mono); font-size:0.86em; background:var(--sunken);
+         color:var(--accent-ink); padding:0.13em 0.38em; border-radius:4px; }
+  pre {
+    margin:0 0 1rem; background:var(--sunken); border:1px solid var(--rule);
+    border-radius:7px; padding:0.9rem 1rem;
+    font-family:var(--mono); font-size:0.79rem; line-height:1.6; color:var(--ink);
+    /* Wrap rather than scroll: bearer tokens and long JSON strings were being
+       clipped at the right edge with no indication anything was missing. */
+    white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;
+  }
+  pre code { background:none; padding:0; font-size:inherit; color:inherit; }
+  .codeblock { position:relative; }
+  .copy {
+    position:absolute; top:0.5rem; right:0.5rem; opacity:0; transition:opacity .12s;
+    font-size:0.66rem; letter-spacing:0.03em; font-family:inherit;
+    background:var(--raised); color:var(--muted); border:1px solid var(--rule-strong);
+    border-radius:4px; padding:0.22rem 0.5rem; cursor:pointer;
+  }
+  .codeblock:hover .copy, .copy:focus-visible { opacity:1; }
+
+  /* ---- API reference ---- */
+  .op { border-top:1px solid var(--rule); padding:3rem 0; margin:0;
+        scroll-margin-top:calc(var(--bar) + 1rem); }
+  .op-head { display:flex; align-items:baseline; gap:0.7rem; flex-wrap:wrap; margin-bottom:0.4rem; }
+  .op-head h2 { margin:0; font-size:1.15rem; font-weight:650; letter-spacing:-0.02em; }
+  .verb {
+    font-family:var(--mono); font-size:0.64rem; font-weight:700; letter-spacing:0.06em;
+    padding:0.17rem 0.42rem; border-radius:4px; color:#fff;
+  }
+  .verb.get{background:var(--get)} .verb.post{background:var(--post)}
+  .verb.put,.verb.patch{background:var(--put)} .verb.delete{background:var(--delete)}
+  :root[data-theme="dark"] .verb { color:#141019; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .verb { color:#141019; } }
+  .op-path { font-family:var(--mono); font-size:0.83rem; color:var(--accent-ink);
+             word-break:break-all; margin-bottom:0.9rem; }
+  .op-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:2rem; align-items:start; }
+  .op-grid.stacked { grid-template-columns:minmax(0,1fr); }
+  .panel { position:sticky; top:calc(var(--bar) + 1.5rem); }
+  .panel h4, .schema h4 {
+    font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em;
+    color:var(--brand-muted); font-weight:700; margin:0 0 0.45rem;
+  }
+  :root[data-theme="dark"] .panel h4, :root[data-theme="dark"] .schema h4 { color:var(--faint); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .panel h4,
+    :root:not([data-theme="light"]) .schema h4 { color:var(--faint); }
+  }
+  .schema { margin:1.3rem 0; }
+  .schema.nested {
+    margin:0.55rem 0 0.2rem; padding-left:0.9rem;
+    border-left:2px solid var(--rule-strong);
+  }
+  /* Identifier + flag + type on one line, description beneath at full width.
+     A three-column grid starved the description once anything nested. */
+  .prop { padding:0.6rem 0; border-bottom:1px solid var(--rule); }
+  .schema.nested .prop:last-child { border-bottom:0; padding-bottom:0.2rem; }
+  .prop-head { display:flex; align-items:baseline; gap:0.5rem; flex-wrap:wrap; }
+  .prop-name { font-family:var(--mono); font-size:0.83rem; color:var(--ink); font-weight:600; }
+  .prop-type { font-family:var(--mono); font-size:0.75rem; color:var(--accent); }
+  .prop-desc { color:var(--muted); font-size:0.83rem; margin-top:0.15rem; max-width:62ch; }
+  .prop-desc code { font-size:0.9em; }
+  .req { font-family:var(--mono); font-size:0.6rem; letter-spacing:0.06em;
+         color:var(--danger); text-transform:uppercase; font-weight:700; }
+  .tag { font-family:var(--mono); font-size:0.66rem; color:var(--faint); }
+  .op-md {
+    margin-left:auto; font-family:var(--mono); font-size:0.66rem; letter-spacing:0.05em;
+    color:var(--faint); text-decoration:none; border:1px solid var(--rule);
+    border-radius:4px; padding:0.15rem 0.42rem;
+  }
+  .op-md:hover { color:var(--accent); border-color:var(--accent); }
+
+  /* ---- code panels: dark in both themes, like Stripe ---- */
+  .cb { border-radius:8px; overflow:hidden; margin:0 0 0.9rem; border:1px solid #241A33; }
+  .cb-dark { background:#1C1428; }
+  .cb-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0.42rem 0.8rem; background:#160F20; border-bottom:1px solid #241A33;
+    font-family:var(--mono); font-size:0.63rem; text-transform:uppercase;
+    letter-spacing:0.11em; color:#9C8DB5;
+  }
+  .cb pre {
+    margin:0; background:transparent; border:0; border-radius:0;
+    padding:0.85rem 0.95rem; color:#E4DCF0; font-size:0.765rem; line-height:1.62;
+    white-space:pre-wrap; overflow-wrap:anywhere;
+  }
+  .cb .copy { background:#241A33; color:#B4A6C9; border-color:#33264a; }
+  .t-key  { color:#C4A6FF; }
+  .t-str  { color:#8FD9B6; }
+  .t-num  { color:#F2B880; }
+  .t-lit  { color:#F28FB0; }
+  .t-var  { color:#FFC107; }
+  .t-cmd  { color:#C4A6FF; font-weight:600; }
+  .t-flag { color:#8AA9D6; }
+  .t-url  { color:#8FD9B6; text-decoration:underline; text-decoration-color:#3d5a4d; }
+  .t-cm   { color:#7B6E90; font-style:italic; }
+
+  /* language tabs inside the code panel header */
+  .cb-head { gap:0.75rem; }
+  .langs { display:flex; gap:0.15rem; }
+  .lang {
+    font-family:var(--mono); font-size:0.62rem; letter-spacing:0.04em; cursor:pointer;
+    background:transparent; color:#8A7CA3; border:1px solid transparent;
+    border-radius:4px; padding:0.14rem 0.4rem; text-transform:none;
+  }
+  .lang:hover { color:#E4DCF0; }
+  .lang.on { background:#2C2140; color:#E4DCF0; border-color:#3B2D54; }
+  .lang-pane[hidden] { display:none; }
+
+  /* per-section toolbar: agent affordances */
+  .sec-tools { margin-left:auto; display:flex; gap:0.3rem; align-items:center; flex-wrap:wrap; }
+  .sec-btn {
+    font-size:0.68rem; letter-spacing:0.01em; font-family:inherit; cursor:pointer;
+    background:transparent; color:var(--faint); border:1px solid var(--rule);
+    border-radius:5px; padding:0.2rem 0.5rem; text-decoration:none; white-space:nowrap;
+  }
+  .sec-btn:hover { color:var(--accent); border-color:var(--accent); }
+  .sec-btn.done { color:var(--post); border-color:var(--post); }
+
+  /* ---- search ---- */
+  dialog#search {
+    border:1px solid var(--rule-strong); border-radius:11px; padding:0; width:min(38rem,92vw);
+    background:var(--raised); color:var(--ink); box-shadow:0 24px 60px rgba(58,23,104,.24);
+  }
+  dialog#search::backdrop { background:rgba(34,17,58,.45); }
+  #search input {
+    width:100%; border:0; border-bottom:1px solid var(--rule); background:transparent;
+    color:var(--ink); font-family:inherit; font-size:0.95rem; padding:0.95rem 1.05rem; outline:none;
+  }
+  #results { list-style:none; margin:0; padding:0.4rem; max-height:22rem; overflow-y:auto; }
+  #results li a { display:block; padding:0.5rem 0.65rem; border-radius:6px; text-decoration:none; color:var(--ink); }
+  #results li a:hover, #results li a.on { background:var(--accent-soft); }
+  #results .r-kind { font-family:var(--mono); font-size:0.62rem; text-transform:uppercase;
+                     letter-spacing:0.09em; color:var(--brand-muted); }
+  #results .r-ctx { color:var(--muted); font-size:0.78rem; }
+  #results .empty { padding:1rem; color:var(--faint); font-size:0.85rem; }
+
+
+  /* status badge, e.g. Beta */
+  .badge {
+    display:inline-block; font-family:var(--mono); font-size:0.64rem; font-weight:700;
+    letter-spacing:0.09em; text-transform:uppercase; padding:0.2rem 0.55rem;
+    border-radius:999px; vertical-align:middle;
+  }
+  .badge-beta { color:#8A6100; background:#FFF6D9; border:1px solid #F0D68A; }
+  :root[data-theme="dark"] .badge-beta { color:#F0C34B; background:#2A2313; border-color:#4A3D18; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .badge-beta { color:#F0C34B; background:#2A2313; border-color:#4A3D18; }
+  }
+  .prose p:has(> .badge:only-child) { margin-bottom:1.4rem; }
+
+  /* per-client tabs */
+  .tabs { margin:0 0 1.6rem; }
+  .tab-bar { display:flex; gap:0.1rem; flex-wrap:wrap; border-bottom:1px solid var(--rule); margin-bottom:1.2rem; }
+  .tab-bar button {
+    font-family:inherit; font-size:0.86rem; cursor:pointer; background:transparent;
+    color:var(--muted); border:0; border-bottom:2px solid transparent;
+    padding:0.55rem 0.9rem; margin-bottom:-1px; border-radius:0;
+  }
+  .tab-bar button:hover { color:var(--ink); }
+  .tab-bar button[aria-selected="true"] {
+    color:var(--accent-ink); border-bottom-color:var(--accent); font-weight:600;
+  }
+  .tab-pane[hidden] { display:none; }
+
+  /* Prose code blocks get the same dark treatment as the API panels, with a
+     labelled header -- a washed-out inline block reads as an afterthought next
+     to the reference pages. */
+  .prose .cb { margin:0 0 1.2rem; }
+  .cb-head .cb-lang { color:#9C8DB5; }
+  .cb-copy {
+    font-family:var(--mono); font-size:0.62rem; letter-spacing:0.05em; cursor:pointer;
+    background:transparent; color:#9C8DB5; border:1px solid #33264a;
+    border-radius:4px; padding:0.14rem 0.45rem;
+  }
+  .cb-copy:hover { color:#E4DCF0; border-color:#4B3A68; }
+
+  footer { border-top:1px solid var(--rule); margin-top:0; padding:1.75rem 0 3rem;
+           color:var(--faint); font-size:0.79rem; }
+  footer div { max-width:90rem; margin:0 auto; padding:0 2rem; }
+
+  @media (max-width:64rem) {
+    .shell { grid-template-columns:minmax(0,1fr); gap:0; }
+    .sidenav { position:static; max-height:none; padding:1.25rem 1.25rem;
+               border-right:0; border-bottom:1px solid var(--rule); }
+    main { padding:0 0 4rem; }
+    .inner, main > .prose, footer div { padding:0 1.25rem; }
+    .op { padding:2rem 0; }
+    .sidenav ul { display:grid; grid-template-columns:repeat(auto-fill,minmax(12rem,1fr)); }
+    .op-grid { grid-template-columns:minmax(0,1fr); }
+    .panel { position:static; }
+    .bar nav { display:none; }
+  }
+  @media (prefers-reduced-motion:reduce) { * { transition:none !important; scroll-behavior:auto !important; } }
+</style>
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="../index.html">payout <span>/ developers</span></a>
+  <nav><a href='../index.html'>Overview</a><a href='../api/payment.html'>API</a><a href='../mcp.html'>MCP</a></nav>
+  <button class="toolbtn" id="search-open" aria-label="Search"><span>Search</span><kbd>⌘K</kbd></button>
+  <button class="toolbtn" id="theme-toggle" title="Theme">auto</button>
+</header>
+
+<div class="shell">
+  <aside class="sidenav"><h3>API reference</h3><ul><li><a href="../api/banklink.html">Payout Banklink API</a></li><li><a href="../api/intel.html">Payout Intel API</a></li><li><a href="../api/payment.html">Payout Payment API</a></li><li><a href="../api/payout-id.html">PayoutID OAuth2</a></li><li><a href="../api/psd2.html" aria-current="page">Payout OpenBanking PSD2 API</a></li><li><div class="ops"><a href="#enrol"><span class="m">POST</span>enrol</a><a href="#list_accounts"><span class="m">GET</span>list accounts</a><a href="#account_info"><span class="m">POST</span>account info</a><a href="#list_transactions"><span class="m">POST</span>list transactions</a><a href="#standard_sba_payment"><span class="m">POST</span>standard sba payment</a><a href="#submit_payment"><span class="m">POST</span>submit payment</a><a href="#order_status"><span class="m">GET</span>order status</a><a href="#balance_check"><span class="m">POST</span>balance check</a></div></li></ul><h3>Agents</h3><ul><li><a href="../mcp.html">MCP server</a></li></ul><h3>Guides</h3><ul><li><a href="../guides/home.html">Home</a></li><li><a href="../guides/apis.html">API References</a></li><li><a href="../guides/services.html">Services</a></li><li><a href="../guides/payout-id.html">PayoutID (OIDC and Identity verification)</a></li><li class="sub"><a href="../guides/payout-id-oauth.html">OAuth2</a></li><li class="sub"><a href="../guides/payout-id-oauth-new.html">OAuth2 New</a></li><li class="sub"><a href="../guides/payout-id-banklink.html">Banklink</a></li><li class="sub"><a href="../guides/payout-id-identity-verification.html">Identity verification</a></li><li><a href="../guides/banklink.html">Banklink (OpenBanking Aggregator)</a></li><li><a href="../guides/psd2.html">OpenBanking PSD2 API</a></li><li><a href="../guides/certificates.html">Server-to-Server APIs (mTLS)</a></li><li class="sub"><a href="../guides/m2m.html">M2M Withdrawals</a></li><li class="sub"><a href="../guides/vop.html">Verification of Payee</a></li><li><a href="../guides/verification.html">IBAN Ownership Verification (Banklink)</a></li><li><a href="../guides/payment-gateway.html">Payment Gateway</a></li><li class="sub"><a href="../guides/payment-gateway-integrations.html">Integrations</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-simple-payment.html">Simple payment</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-refund.html">Refund</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-withdrawal.html">Withdrawal</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-store-card.html">Store card</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-recurrent-payment.html">Recurrent payment</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-apple-pay-js.html">Apple Pay JS</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-checkout-payment-methods.html">Checkout payment methods</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-capture.html">Capture &amp; Cancel</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-checkout-verification-webhook.html">Checkout Verification Webhook</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-payment-instructions.html">Payment instructions (manual bank transfer)</a></li><li><a href="../guides/fraudnet-fl-client.html">FraudNet Federated Learning</a></li></ul></aside>
+  <main>
+    <div class="page-head">
+      <div class="eyebrow">API reference</div>
+      <h1>Payout OpenBanking PSD2 API</h1>
+    </div>
+    <section class="intro"><div class="inner"><div class="prose"><p>PSD2 like API to interact with Payout account system.</p></div></div></section><section class="op" id="enrol" data-md="## enrol
+
+`POST /api/psd2/v1/enrol`
+
+Enrol new client. This call will return new client credentials, which will be disabled. Client TPP then will by contacted via first contact email and process will be finished manualy. This request must by done using PSD2 certificate.
+
+# Request
+|Name|Type|Description|
+|----|----|-----------|
+| licenseNumber | string | PSD2 license number of TPP |
+| clientName | string | Client name of TPP |
+| logoUri | string | URL to publicli accesible logo of TPP |
+| scopes | string[] | List of scopes which TPP will require |
+| contacts | string[] | List of emails which can by used to contact TPP, must be at least one |
+| redirectUris | string[] | Redirect URL&#x27;s which TPP will use |
+| certificate | string | Base64 encoded PSD2 certificate |
+
+# Response
+| Name | Type |
+| ---- | ---- |
+| licenseNumber | string |
+| clientId | string |
+| clientSecret | string |
+| clientName | string |
+| logoUri | string |
+| scopes | string[] |
+| contacts | string[] |
+| redirectUris | string[] |
+
+### Example
+
+```bash
+curl -X POST https://app.payout.one/api/psd2/v1/enrol \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{
+       &quot;licenseNumber&quot;: &quot;12345&quot;,
+       &quot;clientName&quot;: &quot;Testovic Postman, s.r.o&quot;,
+       &quot;certificate&quot;: &quot;MIIEkzCCA3ugAwIBAgIJAK0JKpzx6C9mMA0GCSqGSIb3DQEBCwUAMIGSMQswCQYDVQQGEwJTSzEPMA0GA1UECAwGWmlsaW5hMQ8wDQYDVQQHDAZaaWxpbmExFzAVBgNVBAoMDlBheW91dCwgcy5yLm8uMQswCQYDVQQLDAJJVDESMBAGA1UEAwwJbG9jYWxob3N0MScwJQYJKoZIhvcNAQkBFhhtYXJ0aW4uY2VybmFrQHBheW91dC5vbmUwHhcNMjAxMjE0MDYyNTE1WhcNMjIwNDI4MDYyNTE1WjCBkjELMAkGA1UEBhMCU0sxDzANBgNVBAgMBlppbGluYTEPMA0GA1UEBwwGWmlsaW5hMRcwFQYDVQQKDA5QYXlvdXQsIHMuci5vLjELMAkGA1UECwwCSVQxJzAlBgkqhkiG9w0BCQEWGG1hcnRpbi5jZXJuYWtAcGF5b3V0Lm9uZTESMBAGA1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzInaKn0XdvTSpSNYzbZI1A4gky0zoyBggz5Q7sGHokZyiriCRYxHw91jkSskp0RU7xV41zf651+z3FtB8U/vUmsNZfX1eJ/MaSPfnohATQVzC+GxLtO89gGlKLD+ihMfXMfQf+yt76eA/bslvGp36EYhW1ou2+DjRzae4eyoFEUTdGoAtXArLslrK01VJdR9yxUYRDtm5S+hhAboJzyNry/I5I15fZkf8t3jJeSzBNLwuW4IP4nu18DdwmOnw63yRlHUpgYQzqvv/+xgf3HcgqUkORq2HXbAHaEYe1S5P/6kvupZmz+vbHbx3Bvsbt9mkgg/OpYIU2WfJ9NLcLUT5wIDAQABo4HpMIHmMIGxBgNVHSMEgakwgaahgZikgZUwgZIxCzAJBgNVBAYTAlNLMQ8wDQYDVQQIDAZaaWxpbmExDzANBgNVBAcMBlppbGluYTEXMBUGA1UECgwOUGF5b3V0LCBzLnIuby4xCzAJBgNVBAsMAklUMRIwEAYDVQQDDAlsb2NhbGhvc3QxJzAlBgkqhkiG9w0BCQEWGG1hcnRpbi5jZXJuYWtAcGF5b3V0Lm9uZYIJAMidpY+XJANIMAkGA1UdEwQCMAAwCwYDVR0PBAQDAgTwMBgGA1UdEQQRMA+CDWNsaWVudC5wYXlvdXQwDQYJKoZIhvcNAQELBQADggEBAJwuqXE21bA5kkcZYRYw9rhXzo/EMhCqUxsprVEk990536X1YBIBUUJk4cI1TjReOZAi1cMG2qpk46Ex4vXKyx8jbcPXchf30B9shaxZETahJ2I8w8J1hBMnSY3gfv8mwooRrjmZJsd8+zIVf/5L+vdZgqHru53huOSEoQLJKkgAqX3qDczqoaFV7Rx5oVI77P9sXcIN39Rr2rlh5P87k0yxmEYecPq/Cd98NJBRTCE94aPOGyysfPvZ6gAcXPcui47PZLeTeIk+SsIBPHFhSe7RuFa4vAj6CY//t14XmCyzcHCW05W32+6Zn97CFKwEazQqdUuhalHkn3fyZhmy5IY=&quot;,
+       &quot;scopes&quot;: [
+         &quot;AISP&quot;
+       ],
+       &quot;contacts&quot;: [
+         &quot;test@example.com&quot;
+       ],
+       &quot;redirectUris&quot;: [
+         &quot;https://oauth.pstmn.io/v1/browser-callback&quot;
+       ]
+     }&#x27;
+```
+"><div class="inner"><div class="op-head"><span class="verb post">POST</span><h2>enrol</h2><div class="sec-tools"><button class="sec-btn copy-md" type="button" title="Copy this section as markdown">Copy for LLM</button><a class="sec-btn" href="../md/psd2.md">View as Markdown</a><a class="sec-btn" href="../openapi/psd2.yaml">Spec</a></div></div><div class="op-path">/api/psd2/v1/enrol</div><div class="op-grid"><div><div class="prose"><p>Enrol new client. This call will return new client credentials, which will be disabled. Client TPP then will by contacted via first contact email and process will be finished manualy. This request must by done using PSD2 certificate.</p>
+<h1 id="request">Request</h1>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>licenseNumber</td>
+<td>string</td>
+<td>PSD2 license number of TPP</td>
+</tr>
+<tr>
+<td>clientName</td>
+<td>string</td>
+<td>Client name of TPP</td>
+</tr>
+<tr>
+<td>logoUri</td>
+<td>string</td>
+<td>URL to publicli accesible logo of TPP</td>
+</tr>
+<tr>
+<td>scopes</td>
+<td>string[]</td>
+<td>List of scopes which TPP will require</td>
+</tr>
+<tr>
+<td>contacts</td>
+<td>string[]</td>
+<td>List of emails which can by used to contact TPP, must be at least one</td>
+</tr>
+<tr>
+<td>redirectUris</td>
+<td>string[]</td>
+<td>Redirect URL's which TPP will use</td>
+</tr>
+<tr>
+<td>certificate</td>
+<td>string</td>
+<td>Base64 encoded PSD2 certificate</td>
+</tr>
+</tbody>
+</table></div>
+<h1 id="response">Response</h1>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>licenseNumber</td>
+<td>string</td>
+</tr>
+<tr>
+<td>clientId</td>
+<td>string</td>
+</tr>
+<tr>
+<td>clientSecret</td>
+<td>string</td>
+</tr>
+<tr>
+<td>clientName</td>
+<td>string</td>
+</tr>
+<tr>
+<td>logoUri</td>
+<td>string</td>
+</tr>
+<tr>
+<td>scopes</td>
+<td>string[]</td>
+</tr>
+<tr>
+<td>contacts</td>
+<td>string[]</td>
+</tr>
+<tr>
+<td>redirectUris</td>
+<td>string[]</td>
+</tr>
+</tbody>
+</table></div></div></div><div class="panel"><div class="cb cb-dark"><div class="cb-head"><span>Request</span><div class="langs"><button class="lang on" data-lang="curl" type="button">cURL</button><button class="lang" data-lang="node" type="button">Node.js</button><button class="lang" data-lang="python" type="button">Python</button><button class="lang" data-lang="php" type="button">PHP</button></div></div><div class="lang-pane" data-lang="curl"><pre><code><span class="t-cmd">curl</span><span class="t-flag"> -X</span> POST <span class="t-url">https://app.payout.one/api/psd2/v1/enrol</span> \
+ <span class="t-flag"> -H</span> <span class="t-str">&quot;Authorization: Bearer $TOKEN&quot;</span> \
+ <span class="t-flag"> -H</span> <span class="t-str">&quot;Content-Type: application/json&quot;</span> \
+ <span class="t-flag"> -d</span> <span class="t-str">'</span>{
+       <span class="t-key">&quot;licenseNumber&quot;</span>: <span class="t-str">&quot;12345&quot;</span>,
+       <span class="t-key">&quot;clientName&quot;</span>: <span class="t-str">&quot;Testovic Postman, s.r.o&quot;</span>,
+       <span class="t-key">&quot;certificate&quot;</span>: <span class="t-str">&quot;MIIEkzCCA3ugAwIBAgIJAK0JKpzx6C9mMA0GCSqGSIb3DQEBCwUAMIGSMQswCQYDVQQGEwJTSzEPMA0GA1UECAwGWmlsaW5hMQ8wDQYDVQQHDAZaaWxpbmExFzAVBgNVBAoMDlBheW91dCwgcy5yLm8uMQswCQYDVQQLDAJJVDESMBAGA1UEAwwJbG9jYWxob3N0MScwJQYJKoZIhvcNAQkBFhhtYXJ0aW4uY2VybmFrQHBheW91dC5vbmUwHhcNMjAxMjE0MDYyNTE1WhcNMjIwNDI4MDYyNTE1WjCBkjELMAkGA1UEBhMCU0sxDzANBgNVBAgMBlppbGluYTEPMA0GA1UEBwwGWmlsaW5hMRcwFQYDVQQKDA5QYXlvdXQsIHMuci5vLjELMAkGA1UECwwCSVQxJzAlBgkqhkiG9w0BCQEWGG1hcnRpbi5jZXJuYWtAcGF5b3V0Lm9uZTESMBAGA1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzInaKn0XdvTSpSNYzbZI1A4gky0zoyBggz5Q7sGHokZyiriCRYxHw91jkSskp0RU7xV41zf651+z3FtB8U/vUmsNZfX1eJ/MaSPfnohATQVzC+GxLtO89gGlKLD+ihMfXMfQf+yt76eA/bslvGp36EYhW1ou2+DjRzae4eyoFEUTdGoAtXArLslrK01VJdR9yxUYRDtm5S+hhAboJzyNry/I5I15fZkf8t3jJeSzBNLwuW4IP4nu18DdwmOnw63yRlHUpgYQzqvv/+xgf3HcgqUkORq2HXbAHaEYe1S5P/6kvupZmz+vbHbx3Bvsbt9mkgg/OpYIU2WfJ9NLcLUT5wIDAQABo4HpMIHmMIGxBgNVHSMEgakwgaahgZikgZUwgZIxCzAJBgNVBAYTAlNLMQ8wDQYDVQQIDAZaaWxpbmExDzANBgNVBAcMBlppbGluYTEXMBUGA1UECgwOUGF5b3V0LCBzLnIuby4xCzAJBgNVBAsMAklUMRIwEAYDVQQDDAlsb2NhbGhvc3QxJzAlBgkqhkiG9w0BCQEWGG1hcnRpbi5jZXJuYWtAcGF5b3V0Lm9uZYIJAMidpY+XJANIMAkGA1UdEwQCMAAwCwYDVR0PBAQDAgTwMBgGA1UdEQQRMA+CDWNsaWVudC5wYXlvdXQwDQYJKoZIhvcNAQELBQADggEBAJwuqXE21bA5kkcZYRYw9rhXzo/EMhCqUxsprVEk990536X1YBIBUUJk4cI1TjReOZAi1cMG2qpk46Ex4vXKyx8jbcPXchf30B9shaxZETahJ2I8w8J1hBMnSY3gfv8mwooRrjmZJsd8+zIVf/5L+vdZgqHru53huOSEoQLJKkgAqX3qDczqoaFV7Rx5oVI77P9sXcIN39Rr2rlh5P87k0yxmEYecPq/Cd98NJBRTCE94aPOGyysfPvZ6gAcXPcui47PZLeTeIk+SsIBPHFhSe7RuFa4vAj6CY//t14XmCyzcHCW05W32+6Zn97CFKwEazQqdUuhalHkn3fyZhmy5IY=&quot;</span>,
+       <span class="t-key">&quot;scopes&quot;</span>: [
+         <span class="t-str">&quot;AISP&quot;</span>
+       ],
+       <span class="t-key">&quot;contacts&quot;</span>: [
+         <span class="t-str">&quot;test@example.com&quot;</span>
+       ],
+       <span class="t-key">&quot;redirectUris&quot;</span>: [
+         <span class="t-str">&quot;https://oauth.pstmn.io/v1/browser-callback&quot;</span>
+       ]
+     }<span class="t-str">'</span></code></pre></div><div class="lang-pane" data-lang="node" hidden><pre><code><span class="t-lit">const</span> res = <span class="t-lit">await</span> <span class="t-cmd">fetch</span>(<span class="t-str">&quot;https://app.payout.one/api/psd2/v1/enrol&quot;</span>, {
+  method: <span class="t-str">&quot;POST&quot;</span>,
+  headers: {
+    Authorization: <span class="t-str">`Bearer ${process.env.PAYOUT_TOKEN}`</span>,
+    <span class="t-str">&quot;Content-Type&quot;</span>: <span class="t-str">&quot;application/json&quot;</span>,
+  },
+  body: JSON.stringify({
+    <span class="t-str">&quot;licenseNumber&quot;</span>: <span class="t-str">&quot;12345&quot;</span>,
+    <span class="t-str">&quot;clientName&quot;</span>: <span class="t-str">&quot;Testovic Postman, s.r.o&quot;</span>,
+    <span class="t-str">&quot;certificate&quot;</span>: <span class="t-str">&quot;MIIEkzCCA3ugAwIBAgIJAK0JKpzx6C9mMA0GCSqGSIb3DQEBCwUAMIGSMQswCQYDVQQGEwJTSzEPMA0GA1UECAwGWmlsaW5hMQ8wDQYDVQQHDAZaaWxpbmExFzAVBgNVBAoMDlBheW91dCwgcy5yLm8uMQswCQYDVQQLDAJJVDESMBAGA1UEAwwJbG9jYWxob3N0MScwJQYJKoZIhvcNAQkBFhhtYXJ0aW4uY2VybmFrQHBheW91dC5vbmUwHhcNMjAxMjE0MDYyNTE1WhcNMjIwNDI4MDYyNTE1WjCBkjELMAkGA1UEBhMCU0sxDzANBgNVBAgMBlppbGluYTEPMA0GA1UEBwwGWmlsaW5hMRcwFQYDVQQKDA5QYXlvdXQsIHMuci5vLjELMAkGA1UECwwCSVQxJzAlBgkqhkiG9w0BCQEWGG1hcnRpbi5jZXJuYWtAcGF5b3V0Lm9uZTESMBAGA1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzInaKn0XdvTSpSNYzbZI1A4gky0zoyBggz5Q7sGHokZyiriCRYxHw91jkSskp0RU7xV41zf651+z3FtB8U/vUmsNZfX1eJ/MaSPfnohATQVzC+GxLtO89gGlKLD+ihMfXMfQf+yt76eA/bslvGp36EYhW1ou2+DjRzae4eyoFEUTdGoAtXArLslrK01VJdR9yxUYRDtm5S+hhAboJzyNry/I5I15fZkf8t3jJeSzBNLwuW4IP4nu18DdwmOnw63yRlHUpgYQzqvv/+xgf3HcgqUkORq2HXbAHaEYe1S5P/6kvupZmz+vbHbx3Bvsbt9mkgg/OpYIU2WfJ9NLcLUT5wIDAQABo4HpMIHmMIGxBgNVHSMEgakwgaahgZikgZUwgZIxCzAJBgNVBAYTAlNLMQ8wDQYDVQQIDAZaaWxpbmExDzANBgNVBAcMBlppbGluYTEXMBUGA1UECgwOUGF5b3V0LCBzLnIuby4xCzAJBgNVBAsMAklUMRIwEAYDVQQDDAlsb2NhbGhvc3QxJzAlBgkqhkiG9w0BCQEWGG1hcnRpbi5jZXJuYWtAcGF5b3V0Lm9uZYIJAMidpY+XJANIMAkGA1UdEwQCMAAwCwYDVR0PBAQDAgTwMBgGA1UdEQQRMA+CDWNsaWVudC5wYXlvdXQwDQYJKoZIhvcNAQELBQADggEBAJwuqXE21bA5kkcZYRYw9rhXzo/EMhCqUxsprVEk990536X1YBIBUUJk4cI1TjReOZAi1cMG2qpk46Ex4vXKyx8jbcPXchf30B9shaxZETahJ2I8w8J1hBMnSY3gfv8mwooRrjmZJsd8+zIVf/5L+vdZgqHru53huOSEoQLJKkgAqX3qDczqoaFV7Rx5oVI77P9sXcIN39Rr2rlh5P87k0yxmEYecPq/Cd98NJBRTCE94aPOGyysfPvZ6gAcXPcui47PZLeTeIk+SsIBPHFhSe7RuFa4vAj6CY//t14XmCyzcHCW05W32+6Zn97CFKwEazQqdUuhalHkn3fyZhmy5IY=&quot;</span>,
+    <span class="t-str">&quot;scopes&quot;</span>: [
+      <span class="t-str">&quot;AISP&quot;</span>
+    ],
+    <span class="t-str">&quot;contacts&quot;</span>: [
+      <span class="t-str">&quot;test@example.com&quot;</span>
+    ],
+    <span class="t-str">&quot;redirectUris&quot;</span>: [
+      <span class="t-str">&quot;https://oauth.pstmn.io/v1/browser-callback&quot;</span>
+    ]
+  }),
+});
+<span class="t-lit">const</span> data = <span class="t-lit">await</span> res.<span class="t-cmd">json</span>();</code></pre></div><div class="lang-pane" data-lang="python" hidden><pre><code><span class="t-lit">import</span> os, <span class="t-cmd">requests</span>
+
+res = <span class="t-cmd">requests</span>.post(
+    <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/enrol&quot;</span>,
+    headers={<span class="t-str">&quot;Authorization&quot;</span>: f<span class="t-str">&quot;Bearer {os.environ[&#x27;PAYOUT_TOKEN&#x27;]}&quot;</span>},
+    <span class="t-cmd">json</span>={
+        <span class="t-str">&quot;licenseNumber&quot;</span>: <span class="t-str">&quot;12345&quot;</span>,
+        <span class="t-str">&quot;clientName&quot;</span>: <span class="t-str">&quot;Testovic Postman, s.r.o&quot;</span>,
+        <span class="t-str">&quot;certificate&quot;</span>: <span class="t-str">&quot;MIIEkzCCA3ugAwIBAgIJAK0JKpzx6C9mMA0GCSqGSIb3DQEBCwUAMIGSMQswCQYDVQQGEwJTSzEPMA0GA1UECAwGWmlsaW5hMQ8wDQYDVQQHDAZaaWxpbmExFzAVBgNVBAoMDlBheW91dCwgcy5yLm8uMQswCQYDVQQLDAJJVDESMBAGA1UEAwwJbG9jYWxob3N0MScwJQYJKoZIhvcNAQkBFhhtYXJ0aW4uY2VybmFrQHBheW91dC5vbmUwHhcNMjAxMjE0MDYyNTE1WhcNMjIwNDI4MDYyNTE1WjCBkjELMAkGA1UEBhMCU0sxDzANBgNVBAgMBlppbGluYTEPMA0GA1UEBwwGWmlsaW5hMRcwFQYDVQQKDA5QYXlvdXQsIHMuci5vLjELMAkGA1UECwwCSVQxJzAlBgkqhkiG9w0BCQEWGG1hcnRpbi5jZXJuYWtAcGF5b3V0Lm9uZTESMBAGA1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzInaKn0XdvTSpSNYzbZI1A4gky0zoyBggz5Q7sGHokZyiriCRYxHw91jkSskp0RU7xV41zf651+z3FtB8U/vUmsNZfX1eJ/MaSPfnohATQVzC+GxLtO89gGlKLD+ihMfXMfQf+yt76eA/bslvGp36EYhW1ou2+DjRzae4eyoFEUTdGoAtXArLslrK01VJdR9yxUYRDtm5S+hhAboJzyNry/I5I15fZkf8t3jJeSzBNLwuW4IP4nu18DdwmOnw63yRlHUpgYQzqvv/+xgf3HcgqUkORq2HXbAHaEYe1S5P/6kvupZmz+vbHbx3Bvsbt9mkgg/OpYIU2WfJ9NLcLUT5wIDAQABo4HpMIHmMIGxBgNVHSMEgakwgaahgZikgZUwgZIxCzAJBgNVBAYTAlNLMQ8wDQYDVQQIDAZaaWxpbmExDzANBgNVBAcMBlppbGluYTEXMBUGA1UECgwOUGF5b3V0LCBzLnIuby4xCzAJBgNVBAsMAklUMRIwEAYDVQQDDAlsb2NhbGhvc3QxJzAlBgkqhkiG9w0BCQEWGG1hcnRpbi5jZXJuYWtAcGF5b3V0Lm9uZYIJAMidpY+XJANIMAkGA1UdEwQCMAAwCwYDVR0PBAQDAgTwMBgGA1UdEQQRMA+CDWNsaWVudC5wYXlvdXQwDQYJKoZIhvcNAQELBQADggEBAJwuqXE21bA5kkcZYRYw9rhXzo/EMhCqUxsprVEk990536X1YBIBUUJk4cI1TjReOZAi1cMG2qpk46Ex4vXKyx8jbcPXchf30B9shaxZETahJ2I8w8J1hBMnSY3gfv8mwooRrjmZJsd8+zIVf/5L+vdZgqHru53huOSEoQLJKkgAqX3qDczqoaFV7Rx5oVI77P9sXcIN39Rr2rlh5P87k0yxmEYecPq/Cd98NJBRTCE94aPOGyysfPvZ6gAcXPcui47PZLeTeIk+SsIBPHFhSe7RuFa4vAj6CY//t14XmCyzcHCW05W32+6Zn97CFKwEazQqdUuhalHkn3fyZhmy5IY=&quot;</span>,
+        <span class="t-str">&quot;scopes&quot;</span>: [
+            <span class="t-str">&quot;AISP&quot;</span>
+        ],
+        <span class="t-str">&quot;contacts&quot;</span>: [
+            <span class="t-str">&quot;test@example.com&quot;</span>
+        ],
+        <span class="t-str">&quot;redirectUris&quot;</span>: [
+            <span class="t-str">&quot;https://oauth.pstmn.io/v1/browser-callback&quot;</span>
+        ]
+    },
+)
+data = res.<span class="t-cmd">json</span>()</code></pre></div><div class="lang-pane" data-lang="php" hidden><pre><code>&lt;?php
+<span class="t-var">$ch</span> = <span class="t-cmd">curl_init</span>();
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_URL, <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/enrol&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_RETURNTRANSFER, <span class="t-lit">true</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_CUSTOMREQUEST, <span class="t-str">&quot;POST&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_POSTFIELDS, json_encode([
+  <span class="t-str">&quot;licenseNumber&quot;</span> =&gt; <span class="t-str">&quot;12345&quot;</span>,
+  <span class="t-str">&quot;clientName&quot;</span> =&gt; <span class="t-str">&quot;Testovic Postman, s.r.o&quot;</span>,
+  <span class="t-str">&quot;certificate&quot;</span> =&gt; <span class="t-str">&quot;MIIEkzCCA3ugAwIBAgIJAK0JKpzx6C9mMA0GCSqGSIb3DQEBCwUAMIGSMQswCQYDVQQGEwJTSzEPMA0GA1UECAwGWmlsaW5hMQ8wDQYDVQQHDAZaaWxpbmExFzAVBgNVBAoMDlBheW91dCwgcy5yLm8uMQswCQYDVQQLDAJJVDESMBAGA1UEAwwJbG9jYWxob3N0MScwJQYJKoZIhvcNAQkBFhhtYXJ0aW4uY2VybmFrQHBheW91dC5vbmUwHhcNMjAxMjE0MDYyNTE1WhcNMjIwNDI4MDYyNTE1WjCBkjELMAkGA1UEBhMCU0sxDzANBgNVBAgMBlppbGluYTEPMA0GA1UEBwwGWmlsaW5hMRcwFQYDVQQKDA5QYXlvdXQsIHMuci5vLjELMAkGA1UECwwCSVQxJzAlBgkqhkiG9w0BCQEWGG1hcnRpbi5jZXJuYWtAcGF5b3V0Lm9uZTESMBAGA1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzInaKn0XdvTSpSNYzbZI1A4gky0zoyBggz5Q7sGHokZyiriCRYxHw91jkSskp0RU7xV41zf651+z3FtB8U/vUmsNZfX1eJ/MaSPfnohATQVzC+GxLtO89gGlKLD+ihMfXMfQf+yt76eA/bslvGp36EYhW1ou2+DjRzae4eyoFEUTdGoAtXArLslrK01VJdR9yxUYRDtm5S+hhAboJzyNry/I5I15fZkf8t3jJeSzBNLwuW4IP4nu18DdwmOnw63yRlHUpgYQzqvv/+xgf3HcgqUkORq2HXbAHaEYe1S5P/6kvupZmz+vbHbx3Bvsbt9mkgg/OpYIU2WfJ9NLcLUT5wIDAQABo4HpMIHmMIGxBgNVHSMEgakwgaahgZikgZUwgZIxCzAJBgNVBAYTAlNLMQ8wDQYDVQQIDAZaaWxpbmExDzANBgNVBAcMBlppbGluYTEXMBUGA1UECgwOUGF5b3V0LCBzLnIuby4xCzAJBgNVBAsMAklUMRIwEAYDVQQDDAlsb2NhbGhvc3QxJzAlBgkqhkiG9w0BCQEWGG1hcnRpbi5jZXJuYWtAcGF5b3V0Lm9uZYIJAMidpY+XJANIMAkGA1UdEwQCMAAwCwYDVR0PBAQDAgTwMBgGA1UdEQQRMA+CDWNsaWVudC5wYXlvdXQwDQYJKoZIhvcNAQELBQADggEBAJwuqXE21bA5kkcZYRYw9rhXzo/EMhCqUxsprVEk990536X1YBIBUUJk4cI1TjReOZAi1cMG2qpk46Ex4vXKyx8jbcPXchf30B9shaxZETahJ2I8w8J1hBMnSY3gfv8mwooRrjmZJsd8+zIVf/5L+vdZgqHru53huOSEoQLJKkgAqX3qDczqoaFV7Rx5oVI77P9sXcIN39Rr2rlh5P87k0yxmEYecPq/Cd98NJBRTCE94aPOGyysfPvZ6gAcXPcui47PZLeTeIk+SsIBPHFhSe7RuFa4vAj6CY//t14XmCyzcHCW05W32+6Zn97CFKwEazQqdUuhalHkn3fyZhmy5IY=&quot;</span>,
+  <span class="t-str">&quot;scopes&quot;</span> =&gt; [
+    <span class="t-str">&quot;AISP&quot;</span>
+  ],
+  <span class="t-str">&quot;contacts&quot;</span> =&gt; [
+    <span class="t-str">&quot;test@example.com&quot;</span>
+  ],
+  <span class="t-str">&quot;redirectUris&quot;</span> =&gt; [
+    <span class="t-str">&quot;https://oauth.pstmn.io/v1/browser-callback&quot;</span>
+  ]
+]));
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_HTTPHEADER, [<span class="t-str">&quot;Authorization: Bearer &quot;</span> . <span class="t-cmd">getenv</span>(<span class="t-str">&quot;PAYOUT_TOKEN&quot;</span>), <span class="t-str">&quot;Content-Type: application/json&quot;</span>]);
+<span class="t-var">$data</span> = json_decode(<span class="t-cmd">curl_exec</span>(<span class="t-var">$ch</span>), <span class="t-lit">true</span>);
+curl_close(<span class="t-var">$ch</span>);</code></pre></div></div></div></div></div></section><section class="op" id="list_accounts" data-md="## list accounts
+
+`GET /api/psd2/v1/accounts`
+
+List all accounts of current user
+
+# Response
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| identification | Identification | | 
+| name | string | Name of account |
+| productName | string | Name of product which is represented by this account |
+| type | string | Type of account, staticalli &quot;CACC&quot; |
+| baseCurrency| string | Currency code of account according to ISO 4217 - 3 capital letters, statically &quot;EUR&quot; |
+| servicer |  string | Name of service responsible for this account |
+| consent | string | Scopes acquired for this account |
+
+## Identification
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| identifier | string | Unique identification |
+
+### Example
+
+```bash
+curl -X GET https://app.payout.one/api/psd2/v1/accounts \
+  -H &quot;Authorization: Bearer $TOKEN&quot;
+```
+"><div class="inner"><div class="op-head"><span class="verb get">GET</span><h2>list accounts</h2><div class="sec-tools"><button class="sec-btn copy-md" type="button" title="Copy this section as markdown">Copy for LLM</button><a class="sec-btn" href="../md/psd2.md">View as Markdown</a><a class="sec-btn" href="../openapi/psd2.yaml">Spec</a></div></div><div class="op-path">/api/psd2/v1/accounts</div><div class="op-grid"><div><div class="prose"><p>List all accounts of current user</p>
+<h1 id="response">Response</h1>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>identification</td>
+<td>Identification</td>
+<td></td>
+</tr>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>Name of account</td>
+</tr>
+<tr>
+<td>productName</td>
+<td>string</td>
+<td>Name of product which is represented by this account</td>
+</tr>
+<tr>
+<td>type</td>
+<td>string</td>
+<td>Type of account, staticalli "CACC"</td>
+</tr>
+<tr>
+<td>baseCurrency</td>
+<td>string</td>
+<td>Currency code of account according to ISO 4217 - 3 capital letters, statically "EUR"</td>
+</tr>
+<tr>
+<td>servicer</td>
+<td>string</td>
+<td>Name of service responsible for this account</td>
+</tr>
+<tr>
+<td>consent</td>
+<td>string</td>
+<td>Scopes acquired for this account</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="identification">Identification</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>identifier</td>
+<td>string</td>
+<td>Unique identification</td>
+</tr>
+</tbody>
+</table></div></div></div><div class="panel"><div class="cb cb-dark"><div class="cb-head"><span>Request</span><div class="langs"><button class="lang on" data-lang="curl" type="button">cURL</button><button class="lang" data-lang="node" type="button">Node.js</button><button class="lang" data-lang="python" type="button">Python</button><button class="lang" data-lang="php" type="button">PHP</button></div></div><div class="lang-pane" data-lang="curl"><pre><code><span class="t-cmd">curl</span><span class="t-flag"> -X</span> GET <span class="t-url">https://app.payout.one/api/psd2/v1/accounts</span> \
+ <span class="t-flag"> -H</span> <span class="t-str">&quot;Authorization: Bearer $TOKEN&quot;</span></code></pre></div><div class="lang-pane" data-lang="node" hidden><pre><code><span class="t-lit">const</span> res = <span class="t-lit">await</span> <span class="t-cmd">fetch</span>(<span class="t-str">&quot;https://app.payout.one/api/psd2/v1/accounts&quot;</span>, {
+  method: <span class="t-str">&quot;GET&quot;</span>,
+  headers: {
+    Authorization: <span class="t-str">`Bearer ${process.env.PAYOUT_TOKEN}`</span>,
+  },
+});
+<span class="t-lit">const</span> data = <span class="t-lit">await</span> res.<span class="t-cmd">json</span>();</code></pre></div><div class="lang-pane" data-lang="python" hidden><pre><code><span class="t-lit">import</span> os, <span class="t-cmd">requests</span>
+
+res = <span class="t-cmd">requests</span>.get(
+    <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/accounts&quot;</span>,
+    headers={<span class="t-str">&quot;Authorization&quot;</span>: f<span class="t-str">&quot;Bearer {os.environ[&#x27;PAYOUT_TOKEN&#x27;]}&quot;</span>},
+)
+data = res.<span class="t-cmd">json</span>()</code></pre></div><div class="lang-pane" data-lang="php" hidden><pre><code>&lt;?php
+<span class="t-var">$ch</span> = <span class="t-cmd">curl_init</span>();
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_URL, <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/accounts&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_RETURNTRANSFER, <span class="t-lit">true</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_CUSTOMREQUEST, <span class="t-str">&quot;GET&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_HTTPHEADER, [<span class="t-str">&quot;Authorization: Bearer &quot;</span> . <span class="t-cmd">getenv</span>(<span class="t-str">&quot;PAYOUT_TOKEN&quot;</span>)]);
+<span class="t-var">$data</span> = json_decode(<span class="t-cmd">curl_exec</span>(<span class="t-var">$ch</span>), <span class="t-lit">true</span>);
+curl_close(<span class="t-var">$ch</span>);</code></pre></div></div></div></div></div></section><section class="op" id="account_info" data-md="## account info
+
+`POST /api/psd2/v1/accounts/information`
+
+Retrieve detailed info about user account
+
+# Request
+| Name | Type | Description | Example |
+| ---- | ---- | ----------- | ------- |
+| identifier | string | Identificator of account | &quot;xHiZzdwcxMOu&quot; |
+
+# Response
+| Name | Type |
+| ---- | ---- |
+| account | Account |
+| balances | Balance[] |
+
+## Account
+| Name | Type | Description |
+| ---- | ---- | ----------- | 
+| name | string | Name of account |
+| productName | Name of product of which instance is this account |
+| baseCurrency | string | Basic currency of thsi account in ISO 4217 |
+| type | string | ISO 20022 - Cash Account Type Code |
+
+## Balance 
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| name | string | Name of account | 
+| typeCodeOrProprietary | string | Staticali &quot;ITAV&quot; |
+| amount | Amount | |
+| creditDebitIndicator | CreditDebitIndicator | |
+
+### Example
+
+```bash
+curl -X POST https://app.payout.one/api/psd2/v1/accounts/information \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{
+       &quot;identifier&quot;: &quot;xHiZzdwcxMOu&quot;
+     }&#x27;
+```
+"><div class="inner"><div class="op-head"><span class="verb post">POST</span><h2>account info</h2><div class="sec-tools"><button class="sec-btn copy-md" type="button" title="Copy this section as markdown">Copy for LLM</button><a class="sec-btn" href="../md/psd2.md">View as Markdown</a><a class="sec-btn" href="../openapi/psd2.yaml">Spec</a></div></div><div class="op-path">/api/psd2/v1/accounts/information</div><div class="op-grid"><div><div class="prose"><p>Retrieve detailed info about user account</p>
+<h1 id="request">Request</h1>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>identifier</td>
+<td>string</td>
+<td>Identificator of account</td>
+<td>"xHiZzdwcxMOu"</td>
+</tr>
+</tbody>
+</table></div>
+<h1 id="response">Response</h1>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>account</td>
+<td>Account</td>
+</tr>
+<tr>
+<td>balances</td>
+<td>Balance[]</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="account">Account</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>Name of account</td>
+</tr>
+<tr>
+<td>productName</td>
+<td>Name of product of which instance is this account</td>
+<td></td>
+</tr>
+<tr>
+<td>baseCurrency</td>
+<td>string</td>
+<td>Basic currency of thsi account in ISO 4217</td>
+</tr>
+<tr>
+<td>type</td>
+<td>string</td>
+<td>ISO 20022 - Cash Account Type Code</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="balance">Balance</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>Name of account</td>
+</tr>
+<tr>
+<td>typeCodeOrProprietary</td>
+<td>string</td>
+<td>Staticali "ITAV"</td>
+</tr>
+<tr>
+<td>amount</td>
+<td>Amount</td>
+<td></td>
+</tr>
+<tr>
+<td>creditDebitIndicator</td>
+<td>CreditDebitIndicator</td>
+<td></td>
+</tr>
+</tbody>
+</table></div></div></div><div class="panel"><div class="cb cb-dark"><div class="cb-head"><span>Request</span><div class="langs"><button class="lang on" data-lang="curl" type="button">cURL</button><button class="lang" data-lang="node" type="button">Node.js</button><button class="lang" data-lang="python" type="button">Python</button><button class="lang" data-lang="php" type="button">PHP</button></div></div><div class="lang-pane" data-lang="curl"><pre><code><span class="t-cmd">curl</span><span class="t-flag"> -X</span> POST <span class="t-url">https://app.payout.one/api/psd2/v1/accounts/information</span> \
+ <span class="t-flag"> -H</span> <span class="t-str">&quot;Authorization: Bearer $TOKEN&quot;</span> \
+ <span class="t-flag"> -H</span> <span class="t-str">&quot;Content-Type: application/json&quot;</span> \
+ <span class="t-flag"> -d</span> <span class="t-str">'</span>{
+       <span class="t-key">&quot;identifier&quot;</span>: <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>
+     }<span class="t-str">'</span></code></pre></div><div class="lang-pane" data-lang="node" hidden><pre><code><span class="t-lit">const</span> res = <span class="t-lit">await</span> <span class="t-cmd">fetch</span>(<span class="t-str">&quot;https://app.payout.one/api/psd2/v1/accounts/information&quot;</span>, {
+  method: <span class="t-str">&quot;POST&quot;</span>,
+  headers: {
+    Authorization: <span class="t-str">`Bearer ${process.env.PAYOUT_TOKEN}`</span>,
+    <span class="t-str">&quot;Content-Type&quot;</span>: <span class="t-str">&quot;application/json&quot;</span>,
+  },
+  body: JSON.stringify({
+    <span class="t-str">&quot;identifier&quot;</span>: <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>
+  }),
+});
+<span class="t-lit">const</span> data = <span class="t-lit">await</span> res.<span class="t-cmd">json</span>();</code></pre></div><div class="lang-pane" data-lang="python" hidden><pre><code><span class="t-lit">import</span> os, <span class="t-cmd">requests</span>
+
+res = <span class="t-cmd">requests</span>.post(
+    <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/accounts/information&quot;</span>,
+    headers={<span class="t-str">&quot;Authorization&quot;</span>: f<span class="t-str">&quot;Bearer {os.environ[&#x27;PAYOUT_TOKEN&#x27;]}&quot;</span>},
+    <span class="t-cmd">json</span>={
+        <span class="t-str">&quot;identifier&quot;</span>: <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>
+    },
+)
+data = res.<span class="t-cmd">json</span>()</code></pre></div><div class="lang-pane" data-lang="php" hidden><pre><code>&lt;?php
+<span class="t-var">$ch</span> = <span class="t-cmd">curl_init</span>();
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_URL, <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/accounts/information&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_RETURNTRANSFER, <span class="t-lit">true</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_CUSTOMREQUEST, <span class="t-str">&quot;POST&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_POSTFIELDS, json_encode([
+  <span class="t-str">&quot;identifier&quot;</span> =&gt; <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>
+]));
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_HTTPHEADER, [<span class="t-str">&quot;Authorization: Bearer &quot;</span> . <span class="t-cmd">getenv</span>(<span class="t-str">&quot;PAYOUT_TOKEN&quot;</span>), <span class="t-str">&quot;Content-Type: application/json&quot;</span>]);
+<span class="t-var">$data</span> = json_decode(<span class="t-cmd">curl_exec</span>(<span class="t-var">$ch</span>), <span class="t-lit">true</span>);
+curl_close(<span class="t-var">$ch</span>);</code></pre></div></div></div></div></div></section><section class="op" id="list_transactions" data-md="## list transactions
+
+`POST /api/psd2/v1/accounts/transactions`
+
+List all transactions for user or account
+
+## Transaction
+| Name | Type | Description | Example |
+| ---- | ---- | ----------- | ------- |
+| amount | Amount | Value of transaction | |
+| creditDebitIndicator | &quot;CRDT&quot; \| &quot;DBIT&quot; | Indicates if this transaction is credit or debit transaction | &quot;CRDT&quot; |
+| reversalIndicator | boolean | Indicates if this transaction is rollback of some previous transaction | true |
+| status | &quot;INFO&quot; \| &quot;BOOKED&quot; | Indicates whatever transaction was executed (&quot;INFO&quot;) or is pending (&quot;BOOKED&quot;) | &quot;INFO&quot; |
+| bookingDate | string | | &quot;2008-03-20&quot; |
+| valueDate | stirng | | &quot;2008-03-20&quot; |
+| bankTransactionCode | enum | `TODO` | |
+| transactionDetails | TransactionDetails | | |
+| additionalTransactionInformation | string | Aditional technical information about transaction | |
+
+## Amount
+Represent value with currency
+
+| Name | Type | Description | Example |
+| ---- | ---- | ----------- | ------- |
+| value | number | Number rounded to 2 decimals representing amount of money | 0.12 |
+| currency | string | Currency code according to ISO 4217 - 3 capital letters | &quot;EUR&quot; |
+
+## TransactionDetails
+| Name | Type | Description | Example |
+| ---- | ---- | ----------- | ------- |
+| references | References | Attribute that identify transaction | |
+| relatedParties | RelatedParties | Parties between which transaction is executed | | 
+| relatedDates | RelatedDates | Important dates from transaction processing | |
+
+## References
+| Name | Type | Description | Example |
+| ---- | ---- | ----------- | ------- |
+| accountServicerReference | string | Internal service provider transaction reference | | 
+| endToEndIdentification | string | Client assigned transaction reference | |
+
+## RelatedParties
+| Name | Type | Description | Example |
+| ---- | ---- | ----------- | ------- |
+| debtor | Party | | | 
+| debtorAccount | PartyIdentification | |
+| creditor | Party | | |
+| creditorAccount | PartyIdentification | |
+
+## Party
+| Name | Type | Description |
+| ---- | ---- | ------- |
+| name | string | Name of the party |
+
+## PartyAccount 
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| identification | string | Globaly identifies party, can by internal identificator, IBAN, etc. |
+
+### Request body
+
+- `identifier` — string · Identifier of account for which to return transactions · e.g. Wh_qu9uJ0XoN
+- `dateFrom` — string · Limit results to by never that specified date · e.g. 2020-12-20
+- `dateTo` — string · Limit results to by older than specified date · e.g. 2020-08-21
+- `status` — string · false
+- `pageSize` — number · Number of results to return · e.g. 20.0
+- `page` — number · Current page in pagination · e.g. 4.0
+
+### Response
+
+- `pageCount` — number · Total number of pages after filtering · e.g. 3.0
+- `transactions` — string · List of returned transactions
+
+### Example
+
+```bash
+curl -X POST https://app.payout.one/api/psd2/v1/accounts/transactions \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{
+       &quot;page&quot;: 2,
+       &quot;identifier&quot;: &quot;xHiZzdwcxMOu&quot;
+     }&#x27;
+```
+"><div class="inner"><div class="op-head"><span class="verb post">POST</span><h2>list transactions</h2><div class="sec-tools"><button class="sec-btn copy-md" type="button" title="Copy this section as markdown">Copy for LLM</button><a class="sec-btn" href="../md/psd2.md">View as Markdown</a><a class="sec-btn" href="../openapi/psd2.yaml">Spec</a></div></div><div class="op-path">/api/psd2/v1/accounts/transactions</div><div class="op-grid"><div><div class="prose"><p>List all transactions for user or account</p>
+<h2 id="transaction">Transaction</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>amount</td>
+<td>Amount</td>
+<td>Value of transaction</td>
+<td></td>
+</tr>
+<tr>
+<td>creditDebitIndicator</td>
+<td>"CRDT" | "DBIT"</td>
+<td>Indicates if this transaction is credit or debit transaction</td>
+<td>"CRDT"</td>
+</tr>
+<tr>
+<td>reversalIndicator</td>
+<td>boolean</td>
+<td>Indicates if this transaction is rollback of some previous transaction</td>
+<td>true</td>
+</tr>
+<tr>
+<td>status</td>
+<td>"INFO" | "BOOKED"</td>
+<td>Indicates whatever transaction was executed ("INFO") or is pending ("BOOKED")</td>
+<td>"INFO"</td>
+</tr>
+<tr>
+<td>bookingDate</td>
+<td>string</td>
+<td></td>
+<td>"2008-03-20"</td>
+</tr>
+<tr>
+<td>valueDate</td>
+<td>stirng</td>
+<td></td>
+<td>"2008-03-20"</td>
+</tr>
+<tr>
+<td>bankTransactionCode</td>
+<td>enum</td>
+<td><code>TODO</code></td>
+<td></td>
+</tr>
+<tr>
+<td>transactionDetails</td>
+<td>TransactionDetails</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>additionalTransactionInformation</td>
+<td>string</td>
+<td>Aditional technical information about transaction</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="amount">Amount</h2>
+<p>Represent value with currency</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>value</td>
+<td>number</td>
+<td>Number rounded to 2 decimals representing amount of money</td>
+<td>0.12</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>string</td>
+<td>Currency code according to ISO 4217 - 3 capital letters</td>
+<td>"EUR"</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="transactiondetails">TransactionDetails</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>references</td>
+<td>References</td>
+<td>Attribute that identify transaction</td>
+<td></td>
+</tr>
+<tr>
+<td>relatedParties</td>
+<td>RelatedParties</td>
+<td>Parties between which transaction is executed</td>
+<td></td>
+</tr>
+<tr>
+<td>relatedDates</td>
+<td>RelatedDates</td>
+<td>Important dates from transaction processing</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="references">References</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>accountServicerReference</td>
+<td>string</td>
+<td>Internal service provider transaction reference</td>
+<td></td>
+</tr>
+<tr>
+<td>endToEndIdentification</td>
+<td>string</td>
+<td>Client assigned transaction reference</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="relatedparties">RelatedParties</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>debtor</td>
+<td>Party</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>debtorAccount</td>
+<td>PartyIdentification</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>creditor</td>
+<td>Party</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>creditorAccount</td>
+<td>PartyIdentification</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="party">Party</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>Name of the party</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="partyaccount">PartyAccount</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>identification</td>
+<td>string</td>
+<td>Globaly identifies party, can by internal identificator, IBAN, etc.</td>
+</tr>
+</tbody>
+</table></div></div><div class="schema"><h4>Request body</h4><div class="prop"><div class="prop-head"><span class="prop-name">identifier</span><span class="prop-type">string</span></div><div class="prop-desc">Identifier of account for which to return transactions · e.g. <code>Wh_qu9uJ0XoN</code></div></div><div class="prop"><div class="prop-head"><span class="prop-name">dateFrom</span><span class="prop-type">string</span></div><div class="prop-desc">Limit results to by never that specified date · e.g. <code>2020-12-20</code></div></div><div class="prop"><div class="prop-head"><span class="prop-name">dateTo</span><span class="prop-type">string</span></div><div class="prop-desc">Limit results to by older than specified date · e.g. <code>2020-08-21</code></div></div><div class="prop"><div class="prop-head"><span class="prop-name">status</span><span class="prop-type">string</span></div><div class="prop-desc">false</div></div><div class="prop"><div class="prop-head"><span class="prop-name">pageSize</span><span class="prop-type">number</span></div><div class="prop-desc">Number of results to return · e.g. <code>20.0</code></div></div><div class="prop"><div class="prop-head"><span class="prop-name">page</span><span class="prop-type">number</span></div><div class="prop-desc">Current page in pagination · e.g. <code>4.0</code></div></div></div><div class="schema"><h4>Response</h4><div class="prop"><div class="prop-head"><span class="prop-name">pageCount</span><span class="prop-type">number</span></div><div class="prop-desc">Total number of pages after filtering · e.g. <code>3.0</code></div></div><div class="prop"><div class="prop-head"><span class="prop-name">transactions</span><span class="prop-type">string</span></div><div class="prop-desc">List of returned transactions</div></div></div></div><div class="panel"><div class="cb cb-dark"><div class="cb-head"><span>Request</span><div class="langs"><button class="lang on" data-lang="curl" type="button">cURL</button><button class="lang" data-lang="node" type="button">Node.js</button><button class="lang" data-lang="python" type="button">Python</button><button class="lang" data-lang="php" type="button">PHP</button></div></div><div class="lang-pane" data-lang="curl"><pre><code><span class="t-cmd">curl</span><span class="t-flag"> -X</span> POST <span class="t-url">https://app.payout.one/api/psd2/v1/accounts/transactions</span> \
+ <span class="t-flag"> -H</span> <span class="t-str">&quot;Authorization: Bearer $TOKEN&quot;</span> \
+ <span class="t-flag"> -H</span> <span class="t-str">&quot;Content-Type: application/json&quot;</span> \
+ <span class="t-flag"> -d</span> <span class="t-str">'</span>{
+       <span class="t-key">&quot;page&quot;</span>: <span class="t-num">2</span>,
+       <span class="t-key">&quot;identifier&quot;</span>: <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>
+     }<span class="t-str">'</span></code></pre></div><div class="lang-pane" data-lang="node" hidden><pre><code><span class="t-lit">const</span> res = <span class="t-lit">await</span> <span class="t-cmd">fetch</span>(<span class="t-str">&quot;https://app.payout.one/api/psd2/v1/accounts/transactions&quot;</span>, {
+  method: <span class="t-str">&quot;POST&quot;</span>,
+  headers: {
+    Authorization: <span class="t-str">`Bearer ${process.env.PAYOUT_TOKEN}`</span>,
+    <span class="t-str">&quot;Content-Type&quot;</span>: <span class="t-str">&quot;application/json&quot;</span>,
+  },
+  body: JSON.stringify({
+    <span class="t-str">&quot;page&quot;</span>: <span class="t-num">2</span>,
+    <span class="t-str">&quot;identifier&quot;</span>: <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>
+  }),
+});
+<span class="t-lit">const</span> data = <span class="t-lit">await</span> res.<span class="t-cmd">json</span>();</code></pre></div><div class="lang-pane" data-lang="python" hidden><pre><code><span class="t-lit">import</span> os, <span class="t-cmd">requests</span>
+
+res = <span class="t-cmd">requests</span>.post(
+    <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/accounts/transactions&quot;</span>,
+    headers={<span class="t-str">&quot;Authorization&quot;</span>: f<span class="t-str">&quot;Bearer {os.environ[&#x27;PAYOUT_TOKEN&#x27;]}&quot;</span>},
+    <span class="t-cmd">json</span>={
+        <span class="t-str">&quot;page&quot;</span>: <span class="t-num">2</span>,
+        <span class="t-str">&quot;identifier&quot;</span>: <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>
+    },
+)
+data = res.<span class="t-cmd">json</span>()</code></pre></div><div class="lang-pane" data-lang="php" hidden><pre><code>&lt;?php
+<span class="t-var">$ch</span> = <span class="t-cmd">curl_init</span>();
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_URL, <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/accounts/transactions&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_RETURNTRANSFER, <span class="t-lit">true</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_CUSTOMREQUEST, <span class="t-str">&quot;POST&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_POSTFIELDS, json_encode([
+  <span class="t-str">&quot;page&quot;</span> =&gt; <span class="t-num">2</span>,
+  <span class="t-str">&quot;identifier&quot;</span> =&gt; <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>
+]));
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_HTTPHEADER, [<span class="t-str">&quot;Authorization: Bearer &quot;</span> . <span class="t-cmd">getenv</span>(<span class="t-str">&quot;PAYOUT_TOKEN&quot;</span>), <span class="t-str">&quot;Content-Type: application/json&quot;</span>]);
+<span class="t-var">$data</span> = json_decode(<span class="t-cmd">curl_exec</span>(<span class="t-var">$ch</span>), <span class="t-lit">true</span>);
+curl_close(<span class="t-var">$ch</span>);</code></pre></div></div><div class="cb cb-dark"><div class="cb-head"><span>Response</span></div><pre><code>{
+  <span class="t-key">&quot;pageCount&quot;</span>: <span class="t-num">3.0</span>
+}</code></pre></div></div></div></div></section><section class="op" id="standard_sba_payment" data-md="## standard sba payment
+
+`POST /api/psd2/v1/payments/standard/sba`
+
+Initialize payment using json format
+
+# Request
+| Name | Type | Required | Description | Example |
+| ---- | ---- | -------- | ----------- | ------- |
+| instructionIdentification | string | true | Client assigned instruction identification | &quot;aff52ratg5ageh53&quot; |
+| debtor | Debtor | true | | |
+| creditor | Creditor | true | | | 
+| instructedAmount | Amount | true | | | 
+| endToEndIdentification | string | false | | | 
+| remittanceInformation | string | false | | |
+
+## Debtor
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| identifier | string | Debtor identifier, mostil account identifier |
+
+## Creditor
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| name | string | Full name or company name of creditor |
+| iban | string | |
+| email | string | |
+
+## Amount 
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| value | number | Number with two decimals representing money amount |
+| currency | string | Currency code according to ISO 4217 |
+
+# Response
+| Name | Type | Description | Example |
+| ---- | ---- | ----------- | ------- |
+| orderId | string | | |
+| status | string | | |
+| statusDatetime | string | Date and time when status was read | &quot;2020-12-09 23:27:30.697662Z&quot;|
+
+### Example
+
+```bash
+curl -X POST https://app.payout.one/api/psd2/v1/payments/standard/sba \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{
+       &quot;instructionIdentification&quot;: &quot;some-random-string&quot;,
+       &quot;debtor&quot;: {
+         &quot;identifier&quot;: &quot;xHiZzdwcxMOu&quot;
+       },
+       &quot;creditor&quot;: {
+         &quot;name&quot;: &quot;Jozko Mrkvicka&quot;,
+         &quot;iban&quot;: &quot;creditor_iban&quot;,
+         &quot;email&quot;: &quot;jozko.mrkvicka@pompo.po&quot;
+       },
+       &quot;instructedAmount&quot;: {
+         &quot;value&quot;: 1.0,
+         &quot;currency&quot;: &quot;EUR&quot;
+       }
+     }&#x27;
+```
+"><div class="inner"><div class="op-head"><span class="verb post">POST</span><h2>standard sba payment</h2><div class="sec-tools"><button class="sec-btn copy-md" type="button" title="Copy this section as markdown">Copy for LLM</button><a class="sec-btn" href="../md/psd2.md">View as Markdown</a><a class="sec-btn" href="../openapi/psd2.yaml">Spec</a></div></div><div class="op-path">/api/psd2/v1/payments/standard/sba</div><div class="op-grid"><div><div class="prose"><p>Initialize payment using json format</p>
+<h1 id="request">Request</h1>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>instructionIdentification</td>
+<td>string</td>
+<td>true</td>
+<td>Client assigned instruction identification</td>
+<td>"aff52ratg5ageh53"</td>
+</tr>
+<tr>
+<td>debtor</td>
+<td>Debtor</td>
+<td>true</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>creditor</td>
+<td>Creditor</td>
+<td>true</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>instructedAmount</td>
+<td>Amount</td>
+<td>true</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>endToEndIdentification</td>
+<td>string</td>
+<td>false</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>remittanceInformation</td>
+<td>string</td>
+<td>false</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="debtor">Debtor</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>identifier</td>
+<td>string</td>
+<td>Debtor identifier, mostil account identifier</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="creditor">Creditor</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>Full name or company name of creditor</td>
+</tr>
+<tr>
+<td>iban</td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td>email</td>
+<td>string</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="amount">Amount</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>value</td>
+<td>number</td>
+<td>Number with two decimals representing money amount</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>string</td>
+<td>Currency code according to ISO 4217</td>
+</tr>
+</tbody>
+</table></div>
+<h1 id="response">Response</h1>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>orderId</td>
+<td>string</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>status</td>
+<td>string</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>statusDatetime</td>
+<td>string</td>
+<td>Date and time when status was read</td>
+<td>"2020-12-09 23:27:30.697662Z"</td>
+</tr>
+</tbody>
+</table></div></div></div><div class="panel"><div class="cb cb-dark"><div class="cb-head"><span>Request</span><div class="langs"><button class="lang on" data-lang="curl" type="button">cURL</button><button class="lang" data-lang="node" type="button">Node.js</button><button class="lang" data-lang="python" type="button">Python</button><button class="lang" data-lang="php" type="button">PHP</button></div></div><div class="lang-pane" data-lang="curl"><pre><code><span class="t-cmd">curl</span><span class="t-flag"> -X</span> POST <span class="t-url">https://app.payout.one/api/psd2/v1/payments/standard/sba</span> \
+ <span class="t-flag"> -H</span> <span class="t-str">&quot;Authorization: Bearer $TOKEN&quot;</span> \
+ <span class="t-flag"> -H</span> <span class="t-str">&quot;Content-Type: application/json&quot;</span> \
+ <span class="t-flag"> -d</span> <span class="t-str">'</span>{
+       <span class="t-key">&quot;instructionIdentification&quot;</span>: <span class="t-str">&quot;some-random-string&quot;</span>,
+       <span class="t-key">&quot;debtor&quot;</span>: {
+         <span class="t-key">&quot;identifier&quot;</span>: <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>
+       },
+       <span class="t-key">&quot;creditor&quot;</span>: {
+         <span class="t-key">&quot;name&quot;</span>: <span class="t-str">&quot;Jozko Mrkvicka&quot;</span>,
+         <span class="t-key">&quot;iban&quot;</span>: <span class="t-str">&quot;creditor_iban&quot;</span>,
+         <span class="t-key">&quot;email&quot;</span>: <span class="t-str">&quot;jozko.mrkvicka@pompo.po&quot;</span>
+       },
+       <span class="t-key">&quot;instructedAmount&quot;</span>: {
+         <span class="t-key">&quot;value&quot;</span>: <span class="t-num">1.0</span>,
+         <span class="t-key">&quot;currency&quot;</span>: <span class="t-str">&quot;EUR&quot;</span>
+       }
+     }<span class="t-str">'</span></code></pre></div><div class="lang-pane" data-lang="node" hidden><pre><code><span class="t-lit">const</span> res = <span class="t-lit">await</span> <span class="t-cmd">fetch</span>(<span class="t-str">&quot;https://app.payout.one/api/psd2/v1/payments/standard/sba&quot;</span>, {
+  method: <span class="t-str">&quot;POST&quot;</span>,
+  headers: {
+    Authorization: <span class="t-str">`Bearer ${process.env.PAYOUT_TOKEN}`</span>,
+    <span class="t-str">&quot;Content-Type&quot;</span>: <span class="t-str">&quot;application/json&quot;</span>,
+  },
+  body: JSON.stringify({
+    <span class="t-str">&quot;instructionIdentification&quot;</span>: <span class="t-str">&quot;some-random-string&quot;</span>,
+    <span class="t-str">&quot;debtor&quot;</span>: {
+      <span class="t-str">&quot;identifier&quot;</span>: <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>
+    },
+    <span class="t-str">&quot;creditor&quot;</span>: {
+      <span class="t-str">&quot;name&quot;</span>: <span class="t-str">&quot;Jozko Mrkvicka&quot;</span>,
+      <span class="t-str">&quot;iban&quot;</span>: <span class="t-str">&quot;creditor_iban&quot;</span>,
+      <span class="t-str">&quot;email&quot;</span>: <span class="t-str">&quot;jozko.mrkvicka@pompo.po&quot;</span>
+    },
+    <span class="t-str">&quot;instructedAmount&quot;</span>: {
+      <span class="t-str">&quot;value&quot;</span>: <span class="t-num">1</span>.<span class="t-num">0</span>,
+      <span class="t-str">&quot;currency&quot;</span>: <span class="t-str">&quot;EUR&quot;</span>
+    }
+  }),
+});
+<span class="t-lit">const</span> data = <span class="t-lit">await</span> res.<span class="t-cmd">json</span>();</code></pre></div><div class="lang-pane" data-lang="python" hidden><pre><code><span class="t-lit">import</span> os, <span class="t-cmd">requests</span>
+
+res = <span class="t-cmd">requests</span>.post(
+    <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/payments/standard/sba&quot;</span>,
+    headers={<span class="t-str">&quot;Authorization&quot;</span>: f<span class="t-str">&quot;Bearer {os.environ[&#x27;PAYOUT_TOKEN&#x27;]}&quot;</span>},
+    <span class="t-cmd">json</span>={
+        <span class="t-str">&quot;instructionIdentification&quot;</span>: <span class="t-str">&quot;some-random-string&quot;</span>,
+        <span class="t-str">&quot;debtor&quot;</span>: {
+            <span class="t-str">&quot;identifier&quot;</span>: <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>
+        },
+        <span class="t-str">&quot;creditor&quot;</span>: {
+            <span class="t-str">&quot;name&quot;</span>: <span class="t-str">&quot;Jozko Mrkvicka&quot;</span>,
+            <span class="t-str">&quot;iban&quot;</span>: <span class="t-str">&quot;creditor_iban&quot;</span>,
+            <span class="t-str">&quot;email&quot;</span>: <span class="t-str">&quot;jozko.mrkvicka@pompo.po&quot;</span>
+        },
+        <span class="t-str">&quot;instructedAmount&quot;</span>: {
+            <span class="t-str">&quot;value&quot;</span>: <span class="t-num">1</span>.<span class="t-num">0</span>,
+            <span class="t-str">&quot;currency&quot;</span>: <span class="t-str">&quot;EUR&quot;</span>
+        }
+    },
+)
+data = res.<span class="t-cmd">json</span>()</code></pre></div><div class="lang-pane" data-lang="php" hidden><pre><code>&lt;?php
+<span class="t-var">$ch</span> = <span class="t-cmd">curl_init</span>();
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_URL, <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/payments/standard/sba&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_RETURNTRANSFER, <span class="t-lit">true</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_CUSTOMREQUEST, <span class="t-str">&quot;POST&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_POSTFIELDS, json_encode([
+  <span class="t-str">&quot;instructionIdentification&quot;</span> =&gt; <span class="t-str">&quot;some-random-string&quot;</span>,
+  <span class="t-str">&quot;debtor&quot;</span> =&gt; [
+    <span class="t-str">&quot;identifier&quot;</span> =&gt; <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>
+  ],
+  <span class="t-str">&quot;creditor&quot;</span> =&gt; [
+    <span class="t-str">&quot;name&quot;</span> =&gt; <span class="t-str">&quot;Jozko Mrkvicka&quot;</span>,
+    <span class="t-str">&quot;iban&quot;</span> =&gt; <span class="t-str">&quot;creditor_iban&quot;</span>,
+    <span class="t-str">&quot;email&quot;</span> =&gt; <span class="t-str">&quot;jozko.mrkvicka@pompo.po&quot;</span>
+  ],
+  <span class="t-str">&quot;instructedAmount&quot;</span> =&gt; [
+    <span class="t-str">&quot;value&quot;</span> =&gt; <span class="t-num">1</span>.<span class="t-num">0</span>,
+    <span class="t-str">&quot;currency&quot;</span> =&gt; <span class="t-str">&quot;EUR&quot;</span>
+  ]
+]));
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_HTTPHEADER, [<span class="t-str">&quot;Authorization: Bearer &quot;</span> . <span class="t-cmd">getenv</span>(<span class="t-str">&quot;PAYOUT_TOKEN&quot;</span>), <span class="t-str">&quot;Content-Type: application/json&quot;</span>]);
+<span class="t-var">$data</span> = json_decode(<span class="t-cmd">curl_exec</span>(<span class="t-var">$ch</span>), <span class="t-lit">true</span>);
+curl_close(<span class="t-var">$ch</span>);</code></pre></div></div></div></div></div></section><section class="op" id="submit_payment" data-md="## submit payment
+
+`POST /api/psd2/v1/payments/submission`
+
+Submit initialized payment for processing. This request is done only access token that can be retrieved using `authorization_code` oauth2 mathod to special endpoint xxxx/:order_id and requires scope `PISPSUBMIT`.
+
+### Example
+
+```bash
+curl -X POST https://app.payout.one/api/psd2/v1/payments/submission \
+  -H &quot;Authorization: Bearer $TOKEN&quot;
+```
+"><div class="inner"><div class="op-head"><span class="verb post">POST</span><h2>submit payment</h2><div class="sec-tools"><button class="sec-btn copy-md" type="button" title="Copy this section as markdown">Copy for LLM</button><a class="sec-btn" href="../md/psd2.md">View as Markdown</a><a class="sec-btn" href="../openapi/psd2.yaml">Spec</a></div></div><div class="op-path">/api/psd2/v1/payments/submission</div><div class="op-grid"><div><div class="prose"><p>Submit initialized payment for processing. This request is done only access token that can be retrieved using <code>authorization_code</code> oauth2 mathod to special endpoint xxxx/:order_id and requires scope <code>PISPSUBMIT</code>.</p></div></div><div class="panel"><div class="cb cb-dark"><div class="cb-head"><span>Request</span><div class="langs"><button class="lang on" data-lang="curl" type="button">cURL</button><button class="lang" data-lang="node" type="button">Node.js</button><button class="lang" data-lang="python" type="button">Python</button><button class="lang" data-lang="php" type="button">PHP</button></div></div><div class="lang-pane" data-lang="curl"><pre><code><span class="t-cmd">curl</span><span class="t-flag"> -X</span> POST <span class="t-url">https://app.payout.one/api/psd2/v1/payments/submission</span> \
+ <span class="t-flag"> -H</span> <span class="t-str">&quot;Authorization: Bearer $TOKEN&quot;</span></code></pre></div><div class="lang-pane" data-lang="node" hidden><pre><code><span class="t-lit">const</span> res = <span class="t-lit">await</span> <span class="t-cmd">fetch</span>(<span class="t-str">&quot;https://app.payout.one/api/psd2/v1/payments/submission&quot;</span>, {
+  method: <span class="t-str">&quot;POST&quot;</span>,
+  headers: {
+    Authorization: <span class="t-str">`Bearer ${process.env.PAYOUT_TOKEN}`</span>,
+  },
+});
+<span class="t-lit">const</span> data = <span class="t-lit">await</span> res.<span class="t-cmd">json</span>();</code></pre></div><div class="lang-pane" data-lang="python" hidden><pre><code><span class="t-lit">import</span> os, <span class="t-cmd">requests</span>
+
+res = <span class="t-cmd">requests</span>.post(
+    <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/payments/submission&quot;</span>,
+    headers={<span class="t-str">&quot;Authorization&quot;</span>: f<span class="t-str">&quot;Bearer {os.environ[&#x27;PAYOUT_TOKEN&#x27;]}&quot;</span>},
+)
+data = res.<span class="t-cmd">json</span>()</code></pre></div><div class="lang-pane" data-lang="php" hidden><pre><code>&lt;?php
+<span class="t-var">$ch</span> = <span class="t-cmd">curl_init</span>();
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_URL, <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/payments/submission&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_RETURNTRANSFER, <span class="t-lit">true</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_CUSTOMREQUEST, <span class="t-str">&quot;POST&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_HTTPHEADER, [<span class="t-str">&quot;Authorization: Bearer &quot;</span> . <span class="t-cmd">getenv</span>(<span class="t-str">&quot;PAYOUT_TOKEN&quot;</span>)]);
+<span class="t-var">$data</span> = json_decode(<span class="t-cmd">curl_exec</span>(<span class="t-var">$ch</span>), <span class="t-lit">true</span>);
+curl_close(<span class="t-var">$ch</span>);</code></pre></div></div></div></div></div></section><section class="op" id="order_status" data-md="## order status
+
+`GET /api/psd2/v1/payments/{ORDER_ID}/status`
+
+Return actual status of the order
+
+### Example
+
+```bash
+curl -X GET https://app.payout.one/api/psd2/v1/payments/{ORDER_ID}/status \
+  -H &quot;Authorization: Bearer $TOKEN&quot;
+```
+"><div class="inner"><div class="op-head"><span class="verb get">GET</span><h2>order status</h2><div class="sec-tools"><button class="sec-btn copy-md" type="button" title="Copy this section as markdown">Copy for LLM</button><a class="sec-btn" href="../md/psd2.md">View as Markdown</a><a class="sec-btn" href="../openapi/psd2.yaml">Spec</a></div></div><div class="op-path">/api/psd2/v1/payments/{ORDER_ID}/status</div><div class="op-grid"><div><div class="prose"><p>Return actual status of the order</p></div><div class="schema"><h4>Parameters</h4><div class="prop"><span class="prop-name">ORDER_ID <span class="req">required</span></span><span class="prop-type">path</span><span class="prop-meta"></span></div></div></div><div class="panel"><div class="cb cb-dark"><div class="cb-head"><span>Request</span><div class="langs"><button class="lang on" data-lang="curl" type="button">cURL</button><button class="lang" data-lang="node" type="button">Node.js</button><button class="lang" data-lang="python" type="button">Python</button><button class="lang" data-lang="php" type="button">PHP</button></div></div><div class="lang-pane" data-lang="curl"><pre><code><span class="t-cmd">curl</span><span class="t-flag"> -X</span> GET <span class="t-url">https://app.payout.one/api/psd2/v1/payments/{ORDER_ID}/status</span> \
+ <span class="t-flag"> -H</span> <span class="t-str">&quot;Authorization: Bearer $TOKEN&quot;</span></code></pre></div><div class="lang-pane" data-lang="node" hidden><pre><code><span class="t-lit">const</span> res = <span class="t-lit">await</span> <span class="t-cmd">fetch</span>(<span class="t-str">&quot;https://app.payout.one/api/psd2/v1/payments/{ORDER_ID}/status&quot;</span>, {
+  method: <span class="t-str">&quot;GET&quot;</span>,
+  headers: {
+    Authorization: <span class="t-str">`Bearer ${process.env.PAYOUT_TOKEN}`</span>,
+  },
+});
+<span class="t-lit">const</span> data = <span class="t-lit">await</span> res.<span class="t-cmd">json</span>();</code></pre></div><div class="lang-pane" data-lang="python" hidden><pre><code><span class="t-lit">import</span> os, <span class="t-cmd">requests</span>
+
+res = <span class="t-cmd">requests</span>.get(
+    <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/payments/{ORDER_ID}/status&quot;</span>,
+    headers={<span class="t-str">&quot;Authorization&quot;</span>: f<span class="t-str">&quot;Bearer {os.environ[&#x27;PAYOUT_TOKEN&#x27;]}&quot;</span>},
+)
+data = res.<span class="t-cmd">json</span>()</code></pre></div><div class="lang-pane" data-lang="php" hidden><pre><code>&lt;?php
+<span class="t-var">$ch</span> = <span class="t-cmd">curl_init</span>();
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_URL, <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/payments/{ORDER_ID}/status&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_RETURNTRANSFER, <span class="t-lit">true</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_CUSTOMREQUEST, <span class="t-str">&quot;GET&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_HTTPHEADER, [<span class="t-str">&quot;Authorization: Bearer &quot;</span> . <span class="t-cmd">getenv</span>(<span class="t-str">&quot;PAYOUT_TOKEN&quot;</span>)]);
+<span class="t-var">$data</span> = json_decode(<span class="t-cmd">curl_exec</span>(<span class="t-var">$ch</span>), <span class="t-lit">true</span>);
+curl_close(<span class="t-var">$ch</span>);</code></pre></div></div></div></div></div></section><section class="op" id="balance_check" data-md="## balance check
+
+`POST /api/psd2/v1/accounts/balanceCheck`
+
+Check if account has enought resources to fullfill specified request
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| instructionIdentification | string | Technial payment identificator generated by PIISP |
+| creationDateTime | string | The date and time in RFC3339 format at which a particular action has been requested or executed. |
+| identifier | string | Payout account unique identificator |
+| amount | Amount | |
+
+## Amount
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| amount | number | Numeric value of the amount as a fractional number. |
+| currency | string | Alphabetic codes from ISO 4712. |
+
+# Response 
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| response | string | Either &quot;APPR&quot; or &quot;DECL&quot; |
+| dateTime | string | The date and time in RFC3339 format at which a particular action has been requested or executed. |
+
+### Example
+
+```bash
+curl -X POST https://app.payout.one/api/psd2/v1/accounts/balanceCheck \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{
+       &quot;instructionIdentification&quot;: &quot;What-Ever&quot;,
+       &quot;identifier&quot;: &quot;xHiZzdwcxMOu&quot;,
+       &quot;amount&quot;: {
+         &quot;amount&quot;: 6000,
+         &quot;currency&quot;: &quot;EUR&quot;
+       }
+     }&#x27;
+```
+"><div class="inner"><div class="op-head"><span class="verb post">POST</span><h2>balance check</h2><div class="sec-tools"><button class="sec-btn copy-md" type="button" title="Copy this section as markdown">Copy for LLM</button><a class="sec-btn" href="../md/psd2.md">View as Markdown</a><a class="sec-btn" href="../openapi/psd2.yaml">Spec</a></div></div><div class="op-path">/api/psd2/v1/accounts/balanceCheck</div><div class="op-grid"><div><div class="prose"><p>Check if account has enought resources to fullfill specified request</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>instructionIdentification</td>
+<td>string</td>
+<td>Technial payment identificator generated by PIISP</td>
+</tr>
+<tr>
+<td>creationDateTime</td>
+<td>string</td>
+<td>The date and time in RFC3339 format at which a particular action has been requested or executed.</td>
+</tr>
+<tr>
+<td>identifier</td>
+<td>string</td>
+<td>Payout account unique identificator</td>
+</tr>
+<tr>
+<td>amount</td>
+<td>Amount</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="amount">Amount</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>amount</td>
+<td>number</td>
+<td>Numeric value of the amount as a fractional number.</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>string</td>
+<td>Alphabetic codes from ISO 4712.</td>
+</tr>
+</tbody>
+</table></div>
+<h1 id="response">Response</h1>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>response</td>
+<td>string</td>
+<td>Either "APPR" or "DECL"</td>
+</tr>
+<tr>
+<td>dateTime</td>
+<td>string</td>
+<td>The date and time in RFC3339 format at which a particular action has been requested or executed.</td>
+</tr>
+</tbody>
+</table></div></div></div><div class="panel"><div class="cb cb-dark"><div class="cb-head"><span>Request</span><div class="langs"><button class="lang on" data-lang="curl" type="button">cURL</button><button class="lang" data-lang="node" type="button">Node.js</button><button class="lang" data-lang="python" type="button">Python</button><button class="lang" data-lang="php" type="button">PHP</button></div></div><div class="lang-pane" data-lang="curl"><pre><code><span class="t-cmd">curl</span><span class="t-flag"> -X</span> POST <span class="t-url">https://app.payout.one/api/psd2/v1/accounts/balanceCheck</span> \
+ <span class="t-flag"> -H</span> <span class="t-str">&quot;Authorization: Bearer $TOKEN&quot;</span> \
+ <span class="t-flag"> -H</span> <span class="t-str">&quot;Content-Type: application/json&quot;</span> \
+ <span class="t-flag"> -d</span> <span class="t-str">'</span>{
+       <span class="t-key">&quot;instructionIdentification&quot;</span>: <span class="t-str">&quot;What-Ever&quot;</span>,
+       <span class="t-key">&quot;identifier&quot;</span>: <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>,
+       <span class="t-key">&quot;amount&quot;</span>: {
+         <span class="t-key">&quot;amount&quot;</span>: <span class="t-num">6000</span>,
+         <span class="t-key">&quot;currency&quot;</span>: <span class="t-str">&quot;EUR&quot;</span>
+       }
+     }<span class="t-str">'</span></code></pre></div><div class="lang-pane" data-lang="node" hidden><pre><code><span class="t-lit">const</span> res = <span class="t-lit">await</span> <span class="t-cmd">fetch</span>(<span class="t-str">&quot;https://app.payout.one/api/psd2/v1/accounts/balanceCheck&quot;</span>, {
+  method: <span class="t-str">&quot;POST&quot;</span>,
+  headers: {
+    Authorization: <span class="t-str">`Bearer ${process.env.PAYOUT_TOKEN}`</span>,
+    <span class="t-str">&quot;Content-Type&quot;</span>: <span class="t-str">&quot;application/json&quot;</span>,
+  },
+  body: JSON.stringify({
+    <span class="t-str">&quot;instructionIdentification&quot;</span>: <span class="t-str">&quot;What-Ever&quot;</span>,
+    <span class="t-str">&quot;identifier&quot;</span>: <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>,
+    <span class="t-str">&quot;amount&quot;</span>: {
+      <span class="t-str">&quot;amount&quot;</span>: <span class="t-num">6000</span>,
+      <span class="t-str">&quot;currency&quot;</span>: <span class="t-str">&quot;EUR&quot;</span>
+    }
+  }),
+});
+<span class="t-lit">const</span> data = <span class="t-lit">await</span> res.<span class="t-cmd">json</span>();</code></pre></div><div class="lang-pane" data-lang="python" hidden><pre><code><span class="t-lit">import</span> os, <span class="t-cmd">requests</span>
+
+res = <span class="t-cmd">requests</span>.post(
+    <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/accounts/balanceCheck&quot;</span>,
+    headers={<span class="t-str">&quot;Authorization&quot;</span>: f<span class="t-str">&quot;Bearer {os.environ[&#x27;PAYOUT_TOKEN&#x27;]}&quot;</span>},
+    <span class="t-cmd">json</span>={
+        <span class="t-str">&quot;instructionIdentification&quot;</span>: <span class="t-str">&quot;What-Ever&quot;</span>,
+        <span class="t-str">&quot;identifier&quot;</span>: <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>,
+        <span class="t-str">&quot;amount&quot;</span>: {
+            <span class="t-str">&quot;amount&quot;</span>: <span class="t-num">6000</span>,
+            <span class="t-str">&quot;currency&quot;</span>: <span class="t-str">&quot;EUR&quot;</span>
+        }
+    },
+)
+data = res.<span class="t-cmd">json</span>()</code></pre></div><div class="lang-pane" data-lang="php" hidden><pre><code>&lt;?php
+<span class="t-var">$ch</span> = <span class="t-cmd">curl_init</span>();
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_URL, <span class="t-str">&quot;https://app.payout.one/api/psd2/v1/accounts/balanceCheck&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_RETURNTRANSFER, <span class="t-lit">true</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_CUSTOMREQUEST, <span class="t-str">&quot;POST&quot;</span>);
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_POSTFIELDS, json_encode([
+  <span class="t-str">&quot;instructionIdentification&quot;</span> =&gt; <span class="t-str">&quot;What-Ever&quot;</span>,
+  <span class="t-str">&quot;identifier&quot;</span> =&gt; <span class="t-str">&quot;xHiZzdwcxMOu&quot;</span>,
+  <span class="t-str">&quot;amount&quot;</span> =&gt; [
+    <span class="t-str">&quot;amount&quot;</span> =&gt; <span class="t-num">6000</span>,
+    <span class="t-str">&quot;currency&quot;</span> =&gt; <span class="t-str">&quot;EUR&quot;</span>
+  ]
+]));
+<span class="t-cmd">curl_setopt</span>(<span class="t-var">$ch</span>, CURLOPT_HTTPHEADER, [<span class="t-str">&quot;Authorization: Bearer &quot;</span> . <span class="t-cmd">getenv</span>(<span class="t-str">&quot;PAYOUT_TOKEN&quot;</span>), <span class="t-str">&quot;Content-Type: application/json&quot;</span>]);
+<span class="t-var">$data</span> = json_decode(<span class="t-cmd">curl_exec</span>(<span class="t-var">$ch</span>), <span class="t-lit">true</span>);
+curl_close(<span class="t-var">$ch</span>);</code></pre></div></div></div></div></div></section>
+  </main>
+</div>
+
+<footer><div>Generated from the OpenAPI specs and the existing guides. Preview build — the live site is unchanged.</div></footer>
+
+<dialog id="search">
+  <input type="search" id="q" placeholder="Search guides and endpoints…" autocomplete="off" spellcheck="false">
+  <ul id="results"></ul>
+</dialog>
+
+<script>
+(function () {
+  var root = document.documentElement;
+
+  // --- theme: auto -> light -> dark, persisted -------------------------
+  var tBtn = document.getElementById('theme-toggle');
+  var order = ['auto', 'light', 'dark'];
+  function applyTheme(v) {
+    if (v === 'auto') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', v);
+    tBtn.textContent = v;
+    try { localStorage.setItem('pd-theme', v); } catch (e) {}
+  }
+  var saved = null; try { saved = localStorage.getItem('pd-theme'); } catch (e) {}
+  applyTheme(order.indexOf(saved) > -1 ? saved : 'auto');
+  tBtn.addEventListener('click', function () {
+    applyTheme(order[(order.indexOf(tBtn.textContent) + 1) % order.length]);
+  });
+
+  // --- copy on prose code blocks ---------------------------------------
+  document.querySelectorAll('.cb-copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.closest('.cb').querySelector('pre');
+      if (!pre) return;
+      navigator.clipboard.writeText(pre.innerText).then(function () {
+        btn.textContent = 'copied';
+        setTimeout(function () { btn.textContent = 'copy'; }, 1200);
+      });
+    });
+  });
+
+  // --- per-client tabs --------------------------------------------------
+  document.querySelectorAll('[data-tabs]').forEach(function (group) {
+    var bar = group.querySelector('.tab-bar');
+    if (!bar) return;
+    bar.addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-tab]');
+      if (!btn) return;
+      var want = btn.dataset.tab;
+      bar.querySelectorAll('button[data-tab]').forEach(function (b) {
+        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+      });
+      group.querySelectorAll('.tab-pane').forEach(function (p) {
+        p.hidden = p.dataset.tab !== want;
+      });
+      try { localStorage.setItem('pd-client', want); } catch (err) {}
+    });
+  });
+  try {
+    var client = localStorage.getItem('pd-client');
+    if (client) {
+      var pref = document.querySelector('.tab-bar button[data-tab="' + client + '"]');
+      if (pref) pref.click();
+    }
+  } catch (err) {}
+
+  // --- copy buttons -----------------------------------------------------
+  document.querySelectorAll('pre').forEach(function (pre) {
+    var wrap = pre.closest('.cb');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.className = 'codeblock';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+    }
+    wrap.style.position = 'relative';
+    var b = document.createElement('button');
+    b.className = 'copy'; b.type = 'button'; b.textContent = 'copy';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.innerText).then(function () {
+        b.textContent = 'copied'; setTimeout(function () { b.textContent = 'copy'; }, 1200);
+      });
+    });
+    wrap.appendChild(b);
+  });
+
+  // --- language tabs ----------------------------------------------------
+  document.querySelectorAll('.cb .langs').forEach(function (group) {
+    var panel = group.closest('.cb');
+    group.addEventListener('click', function (e) {
+      var btn = e.target.closest('.lang');
+      if (!btn) return;
+      var want = btn.dataset.lang;
+      group.querySelectorAll('.lang').forEach(function (b) {
+        b.classList.toggle('on', b === btn);
+      });
+      panel.querySelectorAll('.lang-pane').forEach(function (p) {
+        p.hidden = p.dataset.lang !== want;
+      });
+      // Remember the choice across every panel on the page and future visits.
+      try { localStorage.setItem('pd-lang', want); } catch (err) {}
+      document.querySelectorAll('.cb').forEach(function (other) {
+        if (other === panel) return;
+        other.querySelectorAll('.lang').forEach(function (b) {
+          b.classList.toggle('on', b.dataset.lang === want);
+        });
+        other.querySelectorAll('.lang-pane').forEach(function (p) {
+          p.hidden = p.dataset.lang !== want;
+        });
+      });
+    });
+  });
+  try {
+    var pref = localStorage.getItem('pd-lang');
+    if (pref) {
+      document.querySelectorAll('.cb .lang[data-lang="' + pref + '"]').forEach(function (b) {
+        b.click();
+      });
+    }
+  } catch (err) {}
+
+  // --- copy a section as markdown, for pasting into an agent -------------
+  document.querySelectorAll('.copy-md').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var sec = btn.closest('[data-md]');
+      if (!sec) return;
+      navigator.clipboard.writeText(sec.dataset.md).then(function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy for LLM';
+          btn.classList.remove('done');
+        }, 1400);
+      });
+    });
+  });
+
+  // --- search -----------------------------------------------------------
+  var dlg = document.getElementById('search');
+  var q = document.getElementById('q');
+  var results = document.getElementById('results');
+  var index = null, cursor = 0;
+
+  function load() {
+    if (index) return Promise.resolve(index);
+    return fetch('../search-index.json')
+      .then(function (r) { return r.json(); })
+      .then(function (d) { index = d; return d; });
+  }
+  function open() {
+    load().then(function () { dlg.showModal(); q.value = ''; render([]); q.focus(); });
+  }
+  function render(rows) {
+    cursor = 0;
+    if (!rows.length) {
+      results.innerHTML = '<li class="empty">' + (q.value ? 'No matches.' : 'Type to search.') + '</li>';
+      return;
+    }
+    results.innerHTML = rows.map(function (r, i) {
+      return '<li><a class="' + (i === 0 ? 'on' : '') + '" href="../' + r.url + '">' +
+             '<span class="r-kind">' + r.kind + '</span> ' + r.title +
+             (r.ctx ? '<div class="r-ctx">' + r.ctx + '</div>' : '') + '</a></li>';
+    }).join('');
+  }
+  q && q.addEventListener('input', function () {
+    var s = q.value.toLowerCase().trim();
+    if (!s) return render([]);
+    render(index.filter(function (r) {
+      return (r.title + ' ' + r.ctx + ' ' + r.kind).toLowerCase().indexOf(s) > -1;
+    }).slice(0, 20));
+  });
+  q && q.addEventListener('keydown', function (e) {
+    var links = results.querySelectorAll('a');
+    if (!links.length) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      links[cursor].classList.remove('on');
+      cursor = (cursor + (e.key === 'ArrowDown' ? 1 : links.length - 1)) % links.length;
+      links[cursor].classList.add('on');
+      links[cursor].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault(); links[cursor].click();
+    }
+  });
+  document.getElementById('search-open').addEventListener('click', open);
+  document.addEventListener('keydown', function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); open(); }
+  });
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+})();
+</script>
+</body>
+</html>

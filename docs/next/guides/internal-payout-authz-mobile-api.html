@@ -1,0 +1,1554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Payout Authz — Mobile API — Payout Developers</title>
+<meta name="description" content="Payout Authz — Mobile API — Payout developer guide.">
+<meta name="theme-color" content="#3A1768">
+<link rel="alternate" type="text/markdown" href="../md/internal-payout-authz-mobile-api.md">
+<style>
+  /* Palette from payout_merchant/assets/css:
+     #3A1768 primary · #330864 deep · #6430B2 bright · #795F95 muted
+     #CBB5D4 lavender · #3F9A57 success · #FFC107 warning            */
+  :root {
+    --brand:#3A1768; --brand-deep:#330864; --brand-bright:#6430B2;
+    --brand-muted:#795F95; --lavender:#CBB5D4;
+
+    --ground:#FFFFFF; --raised:#FFFFFF; --sunken:#F7F4FB;
+    --ink:#221B2C; --muted:#544C60; --faint:#867C93;
+    --rule:#EBE5F1; --rule-strong:#DCD2E6;
+    --accent:#6430B2; --accent-ink:#3A1768; --accent-soft:#F1EBF7;
+    --masthead:#3A1768; --masthead-ink:#FFFFFF; --masthead-dim:#CBB5D4;
+
+    --get:#3A1768; --post:#3F9A57; --put:#B8860B; --delete:#B0186A;
+    --danger:#B0186A; --warn:#8A6100;
+
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --bar: 3.25rem;
+  }
+
+  /* Dark: a purple-tinted near-black ground with lavender accents. The brand
+     purple is too saturated to sit behind body text, so it moves to the
+     masthead and the accents lighten instead of inverting. */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:#141019; --raised:#1B1622; --sunken:#1F1929;
+      --ink:#EDE8F3; --muted:#A79CB5; --faint:#7C7189;
+      --rule:#2C2438; --rule-strong:#3D3350;
+      --accent:#B08BE0; --accent-ink:#CBB5D4; --accent-soft:#271A3A;
+      --masthead:#241338; --masthead-ink:#F2EDF7; --masthead-dim:#A392B5;
+      --get:#B08BE0; --post:#5FBF7C; --put:#D3B064; --delete:#E06B9E;
+      --danger:#E06B9E; --warn:#D3B064;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#141019; --raised:#1B1622; --sunken:#1F1929;
+    --ink:#EDE8F3; --muted:#A79CB5; --faint:#7C7189;
+    --rule:#2C2438; --rule-strong:#3D3350;
+    --accent:#B08BE0; --accent-ink:#CBB5D4; --accent-soft:#271A3A;
+    --masthead:#241338; --masthead-ink:#F2EDF7; --masthead-dim:#A392B5;
+    --get:#B08BE0; --post:#5FBF7C; --put:#D3B064; --delete:#E06B9E;
+    --danger:#E06B9E; --warn:#D3B064;
+  }
+  :root[data-theme="light"] {
+    --ground:#FFFFFF; --raised:#FFFFFF; --sunken:#F7F4FB;
+    --ink:#221B2C; --muted:#544C60; --faint:#867C93;
+    --rule:#EBE5F1; --rule-strong:#DCD2E6;
+    --accent:#6430B2; --accent-ink:#3A1768; --accent-soft:#F1EBF7;
+    --masthead:#3A1768; --masthead-ink:#FFFFFF; --masthead-dim:#CBB5D4;
+    --get:#3A1768; --post:#3F9A57; --put:#B8860B; --delete:#B0186A;
+    --danger:#B0186A; --warn:#8A6100;
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--sans); font-size:0.9375rem; line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  a { color:var(--accent); text-underline-offset:2px; }
+  a:focus-visible, button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:3px; }
+
+  /* ---- masthead ---- */
+  .bar {
+    position:sticky; top:0; z-index:40; height:var(--bar);
+    background:var(--masthead); color:var(--masthead-ink);
+    display:flex; align-items:center; gap:1.25rem; padding:0 1.25rem;
+  }
+  .brand { font-weight:700; letter-spacing:-0.015em; color:var(--masthead-ink);
+           text-decoration:none; font-size:0.95rem; white-space:nowrap; }
+  .brand span { color:var(--lavender); font-weight:400; }
+  .bar nav { display:flex; gap:0.2rem; margin-right:auto; }
+  .bar nav a {
+    font-size:0.8rem; color:var(--masthead-dim); text-decoration:none;
+    padding:0.32rem 0.65rem; border-radius:5px;
+  }
+  .bar nav a:hover { color:var(--masthead-ink); background:rgba(255,255,255,.09); }
+  .bar nav a[aria-current="page"] { color:var(--masthead-ink); background:rgba(255,255,255,.14); }
+
+  .toolbtn {
+    font-size:0.74rem; background:rgba(255,255,255,.08); color:var(--masthead-dim);
+    border:1px solid rgba(255,255,255,.16); border-radius:5px;
+    padding:0.32rem 0.6rem; cursor:pointer; font-family:inherit;
+  }
+  .toolbtn:hover { color:var(--masthead-ink); background:rgba(255,255,255,.16); }
+  #search-open { min-width:9rem; display:flex; justify-content:space-between; gap:0.8rem; }
+  #search-open kbd { font-family:var(--mono); opacity:.75; }
+
+  /* ---- shell ---- */
+  .shell {
+    display:grid; grid-template-columns:17rem minmax(0,1fr);
+    align-items:start; gap:0;
+  }
+  .sidenav {
+    position:sticky; top:var(--bar); max-height:calc(100vh - var(--bar));
+    overflow-y:auto; padding:1.6rem 1rem 3rem 1.5rem;
+    border-right:1px solid var(--rule);
+  }
+  .sidenav h3 {
+    font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em;
+    color:var(--brand-muted); margin:1.5rem 0 0.45rem; font-weight:700;
+  }
+  :root[data-theme="dark"] .sidenav h3 { color:var(--faint); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sidenav h3 { color:var(--faint); } }
+  .sidenav h3:first-child { margin-top:0; }
+  .sidenav ul { list-style:none; margin:0; padding:0; }
+  .sidenav li a {
+    display:block; padding:0.26rem 0.6rem; margin-left:-0.6rem; border-radius:5px;
+    color:var(--muted); text-decoration:none; font-size:0.845rem;
+  }
+  .sidenav li a:hover { background:var(--sunken); color:var(--ink); }
+  .sidenav li a[aria-current="page"] { background:var(--accent-soft); color:var(--accent-ink); font-weight:600; }
+  .sidenav .sub { padding-left:0.8rem; border-left:1px solid var(--rule); margin-left:0.35rem; }
+  .sidenav .ops { margin:0.15rem 0 0.5rem 0.35rem; padding-left:0.8rem;
+                  border-left:1px solid var(--rule-strong); }
+  .sidenav .ops a { display:flex; gap:0.45rem; align-items:baseline; font-size:0.79rem; padding:0.2rem 0.5rem; }
+  .sidenav .ops .m { font-family:var(--mono); font-size:0.58rem; font-weight:700;
+                     letter-spacing:0.04em; min-width:2.1rem; color:var(--faint); }
+  .sidenav .ops a:hover .m { color:var(--accent); }
+
+  main { padding:0 0 6rem; min-width:0; }
+  /* Content is centred within the area right of the nav, with equal gutters.
+     Left-aligning it dumped every spare pixel on the right and read as
+     unbalanced next to Stripe. Section rules stay full-bleed. */
+  .inner { max-width:90rem; margin:0 auto; padding:0 2rem; }
+  .page-head { padding-top:2.25rem; padding-bottom:0.5rem; margin-bottom:0; }
+  .intro { padding:0 0 2.5rem; }
+  main > .prose { max-width:90rem; margin:0 auto; padding:0 2rem; }
+  .eyebrow { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.12em;
+             color:var(--brand-muted); font-weight:700; }
+  :root[data-theme="dark"] .eyebrow { color:var(--faint); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .eyebrow { color:var(--faint); } }
+  h1 { margin:0.35rem 0 0; font-size:1.8rem; font-weight:650;
+       letter-spacing:-0.025em; text-wrap:balance; color:var(--ink); }
+
+  /* ---- prose ---- */
+  .prose > *:first-child { margin-top:0; }
+  .prose p, .prose li { color:var(--muted); }
+  .prose p { margin:0 0 1rem; max-width:78ch; }
+  .prose h1,.prose h2,.prose h3,.prose h4 {
+    font-weight:650; color:var(--ink); letter-spacing:-0.018em;
+    margin:2rem 0 0.7rem; scroll-margin-top:calc(var(--bar) + 1rem);
+  }
+  .prose h1 { font-size:1.35rem; } .prose h2 { font-size:1.12rem; }
+  .prose h3 { font-size:0.98rem; } .prose h4 { font-size:0.9rem; }
+  .prose ul,.prose ol { margin:0 0 1rem; padding-left:1.25rem; }
+  .prose li { margin:0.25rem 0; }
+  .prose hr { border:0; border-top:1px solid var(--rule); margin:2rem 0; }
+  .prose blockquote {
+    margin:0 0 1rem; padding:0.6rem 0.9rem; border-left:3px solid var(--accent);
+    background:var(--accent-soft); border-radius:0 5px 5px 0; color:var(--muted);
+  }
+  .prose blockquote p:last-child { margin-bottom:0; }
+  .prose img { max-width:100%; height:auto; border-radius:6px; border:1px solid var(--rule); }
+  .prose table { border-collapse:collapse; width:100%; font-size:0.83rem; }
+  .prose th,.prose td { text-align:left; padding:0.55rem 0.9rem 0.55rem 0;
+                        border-bottom:1px solid var(--rule); vertical-align:top; color:var(--muted); }
+  .prose th { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.09em;
+              color:var(--brand-muted); font-weight:700; white-space:nowrap; }
+  .prose td:first-child { font-family:var(--mono); color:var(--ink); }
+  .table-scroll { overflow-x:auto; margin:0 0 1rem; }
+  .table-scroll table { min-width:38rem; }
+
+  code { font-family:var(--mono); font-size:0.86em; background:var(--sunken);
+         color:var(--accent-ink); padding:0.13em 0.38em; border-radius:4px; }
+  pre {
+    margin:0 0 1rem; background:var(--sunken); border:1px solid var(--rule);
+    border-radius:7px; padding:0.9rem 1rem;
+    font-family:var(--mono); font-size:0.79rem; line-height:1.6; color:var(--ink);
+    /* Wrap rather than scroll: bearer tokens and long JSON strings were being
+       clipped at the right edge with no indication anything was missing. */
+    white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;
+  }
+  pre code { background:none; padding:0; font-size:inherit; color:inherit; }
+  .codeblock { position:relative; }
+  .copy {
+    position:absolute; top:0.5rem; right:0.5rem; opacity:0; transition:opacity .12s;
+    font-size:0.66rem; letter-spacing:0.03em; font-family:inherit;
+    background:var(--raised); color:var(--muted); border:1px solid var(--rule-strong);
+    border-radius:4px; padding:0.22rem 0.5rem; cursor:pointer;
+  }
+  .codeblock:hover .copy, .copy:focus-visible { opacity:1; }
+
+  /* ---- API reference ---- */
+  .op { border-top:1px solid var(--rule); padding:3rem 0; margin:0;
+        scroll-margin-top:calc(var(--bar) + 1rem); }
+  .op-head { display:flex; align-items:baseline; gap:0.7rem; flex-wrap:wrap; margin-bottom:0.4rem; }
+  .op-head h2 { margin:0; font-size:1.15rem; font-weight:650; letter-spacing:-0.02em; }
+  .verb {
+    font-family:var(--mono); font-size:0.64rem; font-weight:700; letter-spacing:0.06em;
+    padding:0.17rem 0.42rem; border-radius:4px; color:#fff;
+  }
+  .verb.get{background:var(--get)} .verb.post{background:var(--post)}
+  .verb.put,.verb.patch{background:var(--put)} .verb.delete{background:var(--delete)}
+  :root[data-theme="dark"] .verb { color:#141019; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .verb { color:#141019; } }
+  .op-path { font-family:var(--mono); font-size:0.83rem; color:var(--accent-ink);
+             word-break:break-all; margin-bottom:0.9rem; }
+  .op-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:2rem; align-items:start; }
+  .op-grid.stacked { grid-template-columns:minmax(0,1fr); }
+  .panel { position:sticky; top:calc(var(--bar) + 1.5rem); }
+  .panel h4, .schema h4 {
+    font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em;
+    color:var(--brand-muted); font-weight:700; margin:0 0 0.45rem;
+  }
+  :root[data-theme="dark"] .panel h4, :root[data-theme="dark"] .schema h4 { color:var(--faint); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .panel h4,
+    :root:not([data-theme="light"]) .schema h4 { color:var(--faint); }
+  }
+  .schema { margin:1.3rem 0; }
+  .schema.nested {
+    margin:0.55rem 0 0.2rem; padding-left:0.9rem;
+    border-left:2px solid var(--rule-strong);
+  }
+  /* Identifier + flag + type on one line, description beneath at full width.
+     A three-column grid starved the description once anything nested. */
+  .prop { padding:0.6rem 0; border-bottom:1px solid var(--rule); }
+  .schema.nested .prop:last-child { border-bottom:0; padding-bottom:0.2rem; }
+  .prop-head { display:flex; align-items:baseline; gap:0.5rem; flex-wrap:wrap; }
+  .prop-name { font-family:var(--mono); font-size:0.83rem; color:var(--ink); font-weight:600; }
+  .prop-type { font-family:var(--mono); font-size:0.75rem; color:var(--accent); }
+  .prop-desc { color:var(--muted); font-size:0.83rem; margin-top:0.15rem; max-width:62ch; }
+  .prop-desc code { font-size:0.9em; }
+  .req { font-family:var(--mono); font-size:0.6rem; letter-spacing:0.06em;
+         color:var(--danger); text-transform:uppercase; font-weight:700; }
+  .tag { font-family:var(--mono); font-size:0.66rem; color:var(--faint); }
+  .op-md {
+    margin-left:auto; font-family:var(--mono); font-size:0.66rem; letter-spacing:0.05em;
+    color:var(--faint); text-decoration:none; border:1px solid var(--rule);
+    border-radius:4px; padding:0.15rem 0.42rem;
+  }
+  .op-md:hover { color:var(--accent); border-color:var(--accent); }
+
+  /* ---- code panels: dark in both themes, like Stripe ---- */
+  .cb { border-radius:8px; overflow:hidden; margin:0 0 0.9rem; border:1px solid #241A33; }
+  .cb-dark { background:#1C1428; }
+  .cb-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0.42rem 0.8rem; background:#160F20; border-bottom:1px solid #241A33;
+    font-family:var(--mono); font-size:0.63rem; text-transform:uppercase;
+    letter-spacing:0.11em; color:#9C8DB5;
+  }
+  .cb pre {
+    margin:0; background:transparent; border:0; border-radius:0;
+    padding:0.85rem 0.95rem; color:#E4DCF0; font-size:0.765rem; line-height:1.62;
+    white-space:pre-wrap; overflow-wrap:anywhere;
+  }
+  .cb .copy { background:#241A33; color:#B4A6C9; border-color:#33264a; }
+  .t-key  { color:#C4A6FF; }
+  .t-str  { color:#8FD9B6; }
+  .t-num  { color:#F2B880; }
+  .t-lit  { color:#F28FB0; }
+  .t-var  { color:#FFC107; }
+  .t-cmd  { color:#C4A6FF; font-weight:600; }
+  .t-flag { color:#8AA9D6; }
+  .t-url  { color:#8FD9B6; text-decoration:underline; text-decoration-color:#3d5a4d; }
+  .t-cm   { color:#7B6E90; font-style:italic; }
+
+  /* language tabs inside the code panel header */
+  .cb-head { gap:0.75rem; }
+  .langs { display:flex; gap:0.15rem; }
+  .lang {
+    font-family:var(--mono); font-size:0.62rem; letter-spacing:0.04em; cursor:pointer;
+    background:transparent; color:#8A7CA3; border:1px solid transparent;
+    border-radius:4px; padding:0.14rem 0.4rem; text-transform:none;
+  }
+  .lang:hover { color:#E4DCF0; }
+  .lang.on { background:#2C2140; color:#E4DCF0; border-color:#3B2D54; }
+  .lang-pane[hidden] { display:none; }
+
+  /* per-section toolbar: agent affordances */
+  .sec-tools { margin-left:auto; display:flex; gap:0.3rem; align-items:center; flex-wrap:wrap; }
+  .sec-btn {
+    font-size:0.68rem; letter-spacing:0.01em; font-family:inherit; cursor:pointer;
+    background:transparent; color:var(--faint); border:1px solid var(--rule);
+    border-radius:5px; padding:0.2rem 0.5rem; text-decoration:none; white-space:nowrap;
+  }
+  .sec-btn:hover { color:var(--accent); border-color:var(--accent); }
+  .sec-btn.done { color:var(--post); border-color:var(--post); }
+
+  /* ---- search ---- */
+  dialog#search {
+    border:1px solid var(--rule-strong); border-radius:11px; padding:0; width:min(38rem,92vw);
+    background:var(--raised); color:var(--ink); box-shadow:0 24px 60px rgba(58,23,104,.24);
+  }
+  dialog#search::backdrop { background:rgba(34,17,58,.45); }
+  #search input {
+    width:100%; border:0; border-bottom:1px solid var(--rule); background:transparent;
+    color:var(--ink); font-family:inherit; font-size:0.95rem; padding:0.95rem 1.05rem; outline:none;
+  }
+  #results { list-style:none; margin:0; padding:0.4rem; max-height:22rem; overflow-y:auto; }
+  #results li a { display:block; padding:0.5rem 0.65rem; border-radius:6px; text-decoration:none; color:var(--ink); }
+  #results li a:hover, #results li a.on { background:var(--accent-soft); }
+  #results .r-kind { font-family:var(--mono); font-size:0.62rem; text-transform:uppercase;
+                     letter-spacing:0.09em; color:var(--brand-muted); }
+  #results .r-ctx { color:var(--muted); font-size:0.78rem; }
+  #results .empty { padding:1rem; color:var(--faint); font-size:0.85rem; }
+
+
+  /* status badge, e.g. Beta */
+  .badge {
+    display:inline-block; font-family:var(--mono); font-size:0.64rem; font-weight:700;
+    letter-spacing:0.09em; text-transform:uppercase; padding:0.2rem 0.55rem;
+    border-radius:999px; vertical-align:middle;
+  }
+  .badge-beta { color:#8A6100; background:#FFF6D9; border:1px solid #F0D68A; }
+  :root[data-theme="dark"] .badge-beta { color:#F0C34B; background:#2A2313; border-color:#4A3D18; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .badge-beta { color:#F0C34B; background:#2A2313; border-color:#4A3D18; }
+  }
+  .prose p:has(> .badge:only-child) { margin-bottom:1.4rem; }
+
+  /* per-client tabs */
+  .tabs { margin:0 0 1.6rem; }
+  .tab-bar { display:flex; gap:0.1rem; flex-wrap:wrap; border-bottom:1px solid var(--rule); margin-bottom:1.2rem; }
+  .tab-bar button {
+    font-family:inherit; font-size:0.86rem; cursor:pointer; background:transparent;
+    color:var(--muted); border:0; border-bottom:2px solid transparent;
+    padding:0.55rem 0.9rem; margin-bottom:-1px; border-radius:0;
+  }
+  .tab-bar button:hover { color:var(--ink); }
+  .tab-bar button[aria-selected="true"] {
+    color:var(--accent-ink); border-bottom-color:var(--accent); font-weight:600;
+  }
+  .tab-pane[hidden] { display:none; }
+
+  /* Prose code blocks get the same dark treatment as the API panels, with a
+     labelled header -- a washed-out inline block reads as an afterthought next
+     to the reference pages. */
+  .prose .cb { margin:0 0 1.2rem; }
+  .cb-head .cb-lang { color:#9C8DB5; }
+  .cb-copy {
+    font-family:var(--mono); font-size:0.62rem; letter-spacing:0.05em; cursor:pointer;
+    background:transparent; color:#9C8DB5; border:1px solid #33264a;
+    border-radius:4px; padding:0.14rem 0.45rem;
+  }
+  .cb-copy:hover { color:#E4DCF0; border-color:#4B3A68; }
+
+  footer { border-top:1px solid var(--rule); margin-top:0; padding:1.75rem 0 3rem;
+           color:var(--faint); font-size:0.79rem; }
+  footer div { max-width:90rem; margin:0 auto; padding:0 2rem; }
+
+  @media (max-width:64rem) {
+    .shell { grid-template-columns:minmax(0,1fr); gap:0; }
+    .sidenav { position:static; max-height:none; padding:1.25rem 1.25rem;
+               border-right:0; border-bottom:1px solid var(--rule); }
+    main { padding:0 0 4rem; }
+    .inner, main > .prose, footer div { padding:0 1.25rem; }
+    .op { padding:2rem 0; }
+    .sidenav ul { display:grid; grid-template-columns:repeat(auto-fill,minmax(12rem,1fr)); }
+    .op-grid { grid-template-columns:minmax(0,1fr); }
+    .panel { position:static; }
+    .bar nav { display:none; }
+  }
+  @media (prefers-reduced-motion:reduce) { * { transition:none !important; scroll-behavior:auto !important; } }
+</style>
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="../index.html">payout <span>/ developers</span></a>
+  <nav><a href='../index.html'>Overview</a><a href='../api/payment.html'>API</a><a href='../mcp.html'>MCP</a></nav>
+  <button class="toolbtn" id="search-open" aria-label="Search"><span>Search</span><kbd>⌘K</kbd></button>
+  <button class="toolbtn" id="theme-toggle" title="Theme">auto</button>
+</header>
+
+<div class="shell">
+  <aside class="sidenav"><h3>API reference</h3><ul><li><a href="../api/banklink.html">Payout Banklink API</a></li><li><a href="../api/intel.html">Payout Intel API</a></li><li><a href="../api/payment.html">Payout Payment API</a></li><li><a href="../api/payout-id.html">PayoutID OAuth2</a></li><li><a href="../api/psd2.html">Payout OpenBanking PSD2 API</a></li></ul><h3>Agents</h3><ul><li><a href="../mcp.html">MCP server</a></li></ul><h3>Guides</h3><ul><li><a href="../guides/home.html">Home</a></li><li><a href="../guides/apis.html">API References</a></li><li><a href="../guides/services.html">Services</a></li><li><a href="../guides/payout-id.html">PayoutID (OIDC and Identity verification)</a></li><li class="sub"><a href="../guides/payout-id-oauth.html">OAuth2</a></li><li class="sub"><a href="../guides/payout-id-oauth-new.html">OAuth2 New</a></li><li class="sub"><a href="../guides/payout-id-banklink.html">Banklink</a></li><li class="sub"><a href="../guides/payout-id-identity-verification.html">Identity verification</a></li><li><a href="../guides/banklink.html">Banklink (OpenBanking Aggregator)</a></li><li><a href="../guides/psd2.html">OpenBanking PSD2 API</a></li><li><a href="../guides/certificates.html">Server-to-Server APIs (mTLS)</a></li><li class="sub"><a href="../guides/m2m.html">M2M Withdrawals</a></li><li class="sub"><a href="../guides/vop.html">Verification of Payee</a></li><li><a href="../guides/verification.html">IBAN Ownership Verification (Banklink)</a></li><li><a href="../guides/payment-gateway.html">Payment Gateway</a></li><li class="sub"><a href="../guides/payment-gateway-integrations.html">Integrations</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-simple-payment.html">Simple payment</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-refund.html">Refund</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-withdrawal.html">Withdrawal</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-store-card.html">Store card</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-recurrent-payment.html">Recurrent payment</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-apple-pay-js.html">Apple Pay JS</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-checkout-payment-methods.html">Checkout payment methods</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-capture.html">Capture &amp; Cancel</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-checkout-verification-webhook.html">Checkout Verification Webhook</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-payment-instructions.html">Payment instructions (manual bank transfer)</a></li><li><a href="../guides/fraudnet-fl-client.html">FraudNet Federated Learning</a></li></ul></aside>
+  <main>
+    <div class="page-head">
+      <div class="eyebrow">Guide</div>
+      <h1>Payout Authz — Mobile API</h1>
+    </div>
+    <div class="prose"><h1 id="payout-authz-mobile-api">Payout Authz — Mobile API</h1>
+<p><code>payout-authz</code> is the transaction-authorization service. It enrolls a user's
+mobile device, issues challenges (login / withdrawal / batch withdrawal), pushes
+them to the device, and verifies the device's <strong>ES256 signature</strong> when the user
+approves. This page documents the HTTP API consumed by the <strong>payout-authz-mobile</strong>
+Flutter app; the backend-facing endpoints (challenge creation, device listing) are
+summarized at the end.</p>
+<p>The machine-readable source of truth is the OpenAPI 3.1 spec in the
+<code>payout-one/payout-authz-contracts</code> repository (<code>openapi/payout-authz.yaml</code>); this
+page is its human-readable companion, and a Dart client can be generated from it
+(<code>configs/dart.yaml</code>). When they disagree, the spec and the deployed service win.</p>
+<h2 id="base-url">Base URL</h2>
+<p>Every path below is relative to the environment base URL, which already includes
+the <code>/api</code> prefix.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Environment</th>
+<th>Base URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Production</td>
+<td><code>https://authz.payout.one/api</code></td>
+</tr>
+<tr>
+<td>Test</td>
+<td><code>https://authz-test.payout.one/api</code></td>
+</tr>
+<tr>
+<td>Sandbox</td>
+<td><code>https://authz-sandbox.payout.one/api</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>All requests and responses are <code>application/json</code>.</p>
+<h2 id="authentication">Authentication</h2>
+<p>There is <strong>no <code>Authorization</code> / bearer header</strong> on any mobile-facing endpoint.
+Authentication is contextual, and the app enrolls and uses <strong>two separate ES256
+keypairs</strong> for two separate purposes:</p>
+<ul>
+<li><strong>Approval key</strong> (<code>public_key_pem</code>) — gated behind biometrics or a device
+  credential. Signs <code>POST /approvals</code> (a body signature over the approval set —
+  see <a href="#signing-an-approval-set">Signing an approval set</a>).</li>
+<li><strong>Device / proof-of-possession (PoP) key</strong> (<code>pop_public_key_pem</code>) — <strong>not</strong>
+  gated behind biometrics or a device credential. Signs the <code>DevicePoP</code> request
+  headers (<code>X-Device-Id</code>, <code>X-Timestamp</code>, <code>X-Nonce</code>, <code>X-Signature-Alg</code>,
+  <code>X-Signature</code>) required by <code>GET /challenges</code>, self-service
+  <code>POST /devices/{id}/revoke</code>, and <code>POST /devices/{id}/integrity</code> — see
+  <a href="#device-proof-of-possession-pop-headers">Device proof-of-possession (PoP) headers</a>.</li>
+</ul>
+<p>Both keys are required at enrollment; there is no fallback from one to the
+other, and a PoP signature never authenticates an approval submission (or vice
+versa). Separating the keys means polling for pending challenges — or a device
+revoking itself — never triggers a biometric or device-credential prompt,
+while every money-moving or consent decision still requires one.</p>
+<p>Per endpoint:</p>
+<ul>
+<li><strong>Enrollment</strong> — the app proves the user's identity by sending the OAuth 2.0
+  access token (a JWT issued by PayoutID) in the request <strong>body</strong> as
+  <code>access_token</code>. The service validates it against the PayoutID JWKS and derives
+  <code>user_id</code> from it; the app never sends <code>user_id</code> at enrollment.</li>
+<li><strong><code>GET /challenges</code>, self-service <code>POST /devices/{id}/revoke</code>,
+  <code>POST /devices/{id}/integrity</code></strong> — <code>DevicePoP</code>: the app signs the request with
+  the device/PoP key. No bearer token is issued or sent.</li>
+<li><strong><code>POST /approvals</code></strong> — no header at all. Integrity is guaranteed by an
+  <strong>ES256 signature</strong> (<code>signature_der</code>) over the canonical approval set,
+  produced with the device's <strong>approval key</strong>.</li>
+<li><strong>Backend-facing endpoints</strong> (challenge creation, device listing, and
+  <code>POST /devices/{id}/revoke</code> when a backend service revokes on a user's
+  behalf) — a bearer <strong>ServiceToken</strong>: an OAuth 2.0 client-credentials access
+  token issued by <code>payout_id</code>, scoped <code>authz:challenge:write</code>. These are called
+  server-to-server by <code>payout_merchant</code> / <code>payout_id</code>, never by the mobile app;
+  see <a href="#backend-facing-endpoints-reference">Backend-facing endpoints</a>.</li>
+</ul>
+<blockquote>
+<p>[!TIP]
+Neither private key ever leaves the device. Both are generated on-device
+during enrollment; only the public keys (PEM) are uploaded. Approvals and
+PoP headers are signed locally.</p>
+</blockquote>
+<h2 id="enrollment">Enrollment</h2>
+<p>Enrollment is a two-step flow. Only <strong>one device may be enrolled per user</strong> at a
+time — completing a new enrollment revokes the previously enrolled device (push +
+<code>device.revoked</code> event), and the app on the old device force-clears its local
+enrollment.</p>
+<ol>
+<li><strong>Obtain an access token from PayoutID</strong> via the OAuth 2.0 Authorization Code
+   flow with PKCE. See <a href="../guides/payout-id-oauth-new.html">PayoutID OAuth2</a>. The app scans a
+   QR code that carries the <code>authorize_url</code>, completes the browser flow, and
+   exchanges the <code>authorization_code</code> for an <code>access_token</code>.</li>
+<li><strong>Complete enrollment</strong> by posting the device's two public keys and push
+   token.</li>
+</ol>
+<h3 id="post-authnenrollcomplete"><code>POST /authn/enroll/complete</code></h3>
+<p>Registers the device and stores its <strong>two</strong> ES256 public keys — a deliberate
+two-key split, generated and held separately on-device, never the same key
+used for both purposes:</p>
+<ul>
+<li><code>public_key_pem</code> — the <strong>approval key</strong>, gated behind biometrics or a
+  device credential. Verifies <code>POST /approvals</code> signatures.</li>
+<li><code>pop_public_key_pem</code> — the <strong>device proof-of-possession key</strong>, not gated
+  behind biometrics or a device credential. Verifies the <code>DevicePoP</code>
+  (<code>X-Signature</code>) header on <code>GET /challenges</code>, self-service
+  <code>POST /devices/{id}/revoke</code>, and <code>POST /devices/{id}/integrity</code>.</li>
+</ul>
+<p>Both are required; the server does not accept a single shared key, and there
+is no fallback from one to the other — a device enrolled without
+<code>pop_public_key_pem</code> fails <code>DevicePoP</code> verification with <code>missing_pop_key</code>.</p>
+<p><strong>Request body</strong></p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>access_token</code></td>
+<td>string</td>
+<td>✅</td>
+<td>OAuth access token (JWT) from PayoutID. Identifies the user.</td>
+</tr>
+<tr>
+<td><code>public_key_pem</code></td>
+<td>string</td>
+<td>✅</td>
+<td>Device ES256 (P-256) <strong>approval</strong> public key, PEM format. Biometric-/device-credential-gated; signs approval sets.</td>
+</tr>
+<tr>
+<td><code>pop_public_key_pem</code></td>
+<td>string</td>
+<td>✅</td>
+<td>Device ES256 (P-256) <strong>proof-of-possession</strong> public key, PEM format. Not gated behind biometrics or a device credential; signs the <code>DevicePoP</code> header. A separate keypair from <code>public_key_pem</code> — never reuse it.</td>
+</tr>
+<tr>
+<td><code>push_token</code></td>
+<td>string</td>
+<td>✅</td>
+<td>APNs token or FCM registration token.</td>
+</tr>
+<tr>
+<td><code>platform</code></td>
+<td>string</td>
+<td>✅</td>
+<td><code>ios</code> or <code>android</code>.</td>
+</tr>
+<tr>
+<td><code>biometrics_enabled</code></td>
+<td>boolean</td>
+<td>✅</td>
+<td>Whether the approval key unlocks with biometrics. The app has no PIN of its own: when this is <code>false</code>, the OS device credential (passcode/PIN) is the fallback gate on the approval key, not an app-level PIN.</td>
+</tr>
+<tr>
+<td><code>device_name</code></td>
+<td>string</td>
+<td>➖</td>
+<td>Shown in device lists.</td>
+</tr>
+<tr>
+<td><code>attestation_json</code></td>
+<td>object</td>
+<td>➖</td>
+<td>Optional device attestation data.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;access_token&quot;</span>: <span class="t-str">&quot;eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...&quot;</span>,
+  <span class="t-key">&quot;public_key_pem&quot;</span>: <span class="t-str">&quot;-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...\n-----END PUBLIC KEY-----&quot;</span>,
+  <span class="t-key">&quot;pop_public_key_pem&quot;</span>: <span class="t-str">&quot;-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgBF...\n-----END PUBLIC KEY-----&quot;</span>,
+  <span class="t-key">&quot;push_token&quot;</span>: <span class="t-str">&quot;fcm:dZx8vN3kQ2m...&quot;</span>,
+  <span class="t-key">&quot;platform&quot;</span>: <span class="t-str">&quot;ios&quot;</span>,
+  <span class="t-key">&quot;biometrics_enabled&quot;</span>: <span class="t-lit">true</span>,
+  <span class="t-key">&quot;device_name&quot;</span>: <span class="t-str">&quot;iPhone 15 Pro&quot;</span>
+}
+</code></pre></div>
+<p><strong>Response <code>201 Created</code></strong></p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;device_id&quot;</span>: <span class="t-str">&quot;550e8400-e29b-41d4-a716-446655440000&quot;</span>,
+  <span class="t-key">&quot;user_id&quot;</span>: <span class="t-str">&quot;7c9e6679-7425-40de-944b-e07fc1f90ae7&quot;</span>
+}
+</code></pre></div>
+<p>Persist <code>device_id</code> on the device — it identifies the device on every subsequent
+call.</p>
+<p><strong>Errors</strong></p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>HTTP</th>
+<th><code>code</code></th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td><code>invalid_request</code></td>
+<td>Missing <code>access_token</code>.</td>
+</tr>
+<tr>
+<td>400</td>
+<td><code>validation_error</code> / <code>enrollment_error</code></td>
+<td>Invalid or incomplete device fields.</td>
+</tr>
+<tr>
+<td>401</td>
+<td><code>invalid_token</code></td>
+<td>Missing, invalid, or expired <code>access_token</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="challenge-lifecycle">Challenge lifecycle</h2>
+<p>A challenge is created <code>pending</code>, is pushed to the enrolled device, and lives for a
+<strong>3-minute TTL</strong> with <strong>2 approval attempts</strong>. It ends in a terminal state:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pending</code></td>
+<td>Awaiting the user's decision.</td>
+</tr>
+<tr>
+<td><code>approved</code></td>
+<td>User approved (signature verified).</td>
+</tr>
+<tr>
+<td><code>rejected</code></td>
+<td>User rejected.</td>
+</tr>
+<tr>
+<td><code>expired</code></td>
+<td>TTL (3 minutes) elapsed.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Each failed approval attempt (e.g. a signature mismatch) decrements
+<code>attempts_left</code>. When it reaches 0, further attempts are refused.</p>
+<h3 id="challenge-object">Challenge object</h3>
+<p>Returned by the list and get endpoints and echoed on creation.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>uuid</td>
+<td>Challenge id.</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>string</td>
+<td><code>login</code>, <code>withdrawal</code>, or <code>withdrawal_batch</code>.</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>string</td>
+<td>See table above.</td>
+</tr>
+<tr>
+<td><code>expires_at</code></td>
+<td>date-time</td>
+<td>ISO 8601, 3 minutes after creation.</td>
+</tr>
+<tr>
+<td><code>attempts_left</code></td>
+<td>integer</td>
+<td>Starts at 2.</td>
+</tr>
+<tr>
+<td><code>payload_hash</code></td>
+<td>string</td>
+<td>Lowercase hex SHA-256 of the challenge's canonical authorization view (<code>{ payload, items }</code> — see <a href="#signing-an-approval-set">Signing an approval set</a>). The app should independently <strong>recompute</strong> this from the <code>payload</code>/<code>items</code> it renders to the user rather than trust-copy this field, since it's what binds the approval signature to what the user actually saw.</td>
+</tr>
+<tr>
+<td><code>payload</code></td>
+<td>object</td>
+<td>Type-specific details (see below).</td>
+</tr>
+<tr>
+<td><code>reference</code></td>
+<td>string</td>
+<td>Human-readable code shown to the user (<code>txn_id</code>, <code>batch_id</code>, or a generated <code>LOGIN-XXXXXXXX</code>).</td>
+</tr>
+<tr>
+<td><code>items_count</code></td>
+<td>integer</td>
+<td>Present only for <code>withdrawal_batch</code>.</td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>array</td>
+<td>Present only for <code>withdrawal_batch</code>: the line items, <code>{ amount, currency, iban }</code> each, already sorted the same way <code>payload_hash</code> requires (ascending by each item's own canonical-bytes string) — see <a href="#signing-an-approval-set">Signing an approval set</a>.</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td>object</td>
+<td>Present only for <code>withdrawal_batch</code>: <code>{ batch_id, amount, currency }</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>payload</code> contents by type:</p>
+<ul>
+<li><strong>login</strong> — <code>{ type, reference, requested_at }</code> plus any caller metadata.</li>
+<li><strong>withdrawal</strong> — <code>{ type, reference, amount, currency, iban, name?, requested_at }</code>.</li>
+<li><strong>withdrawal_batch</strong> — <code>{ type, reference, batch_id, total_amount, currency, items_count, requested_at }</code>.</li>
+</ul>
+<h2 id="mobile-endpoints">Mobile endpoints</h2>
+<h3 id="get-challenges"><code>GET /challenges</code></h3>
+<p>Requires <strong><code>DevicePoP</code></strong> — see
+<a href="#device-proof-of-possession-pop-headers">Device proof-of-possession (PoP) headers</a>.
+Lists the <strong>pending</strong> challenges for the caller's authenticated device;
+identity comes from the PoP signature, not from a query/body param (the
+signature does not cover the query string). Use it to reconcile state on app
+foreground or after a missed push. Expired challenges are transitioned to
+<code>expired</code> server-side and are not returned.</p>
+<p>An optional <code>device_id</code> query param is accepted only as a same-device sanity
+check: if present it must equal the authenticated device's id, otherwise the
+request is rejected with <code>403 device_mismatch</code> — a caller can't use its own
+valid PoP signature to ask for another device's challenges by tampering with
+the query string.</p>
+<p><strong>Response <code>200 OK</code></strong></p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;challenges&quot;</span>: [
+    {
+      <span class="t-key">&quot;id&quot;</span>: <span class="t-str">&quot;d290f1ee-6c54-4b01-90e6-d701748f0851&quot;</span>,
+      <span class="t-key">&quot;type&quot;</span>: <span class="t-str">&quot;withdrawal&quot;</span>,
+      <span class="t-key">&quot;status&quot;</span>: <span class="t-str">&quot;pending&quot;</span>,
+      <span class="t-key">&quot;expires_at&quot;</span>: <span class="t-str">&quot;2026-07-02T14:35:00Z&quot;</span>,
+      <span class="t-key">&quot;attempts_left&quot;</span>: <span class="t-num">2</span>,
+      <span class="t-key">&quot;payload_hash&quot;</span>: <span class="t-str">&quot;a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e&quot;</span>,
+      <span class="t-key">&quot;reference&quot;</span>: <span class="t-str">&quot;TXN-2025-001234&quot;</span>,
+      <span class="t-key">&quot;payload&quot;</span>: {
+        <span class="t-key">&quot;type&quot;</span>: <span class="t-str">&quot;withdrawal&quot;</span>,
+        <span class="t-key">&quot;reference&quot;</span>: <span class="t-str">&quot;TXN-2025-001234&quot;</span>,
+        <span class="t-key">&quot;amount&quot;</span>: <span class="t-str">&quot;150.00&quot;</span>,
+        <span class="t-key">&quot;currency&quot;</span>: <span class="t-str">&quot;EUR&quot;</span>,
+        <span class="t-key">&quot;iban&quot;</span>: <span class="t-str">&quot;SK8975000000000012345671&quot;</span>,
+        <span class="t-key">&quot;requested_at&quot;</span>: <span class="t-str">&quot;2026-07-02T14:32:00Z&quot;</span>
+      }
+    }
+  ]
+}
+</code></pre></div>
+<p><strong>Errors</strong></p>
+<p>Auth failures use the <code>{"error": "&lt;reason&gt;"}</code> shape, not <code>{"code", "message"}</code>
+— see <a href="#device-proof-of-possession-pop-headers">Device proof-of-possession (PoP) headers</a>.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>HTTP</th>
+<th><code>error</code></th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>401</td>
+<td><code>missing_pop_headers</code></td>
+<td>One or more <code>X-Device-Id</code> / <code>X-Timestamp</code> / <code>X-Nonce</code> / <code>X-Signature-Alg</code> / <code>X-Signature</code> headers is missing or malformed.</td>
+</tr>
+<tr>
+<td>401</td>
+<td><code>unsupported_signature_algorithm</code></td>
+<td><code>X-Signature-Alg</code> is not <code>ES256</code>.</td>
+</tr>
+<tr>
+<td>401</td>
+<td><code>stale_timestamp</code></td>
+<td><code>X-Timestamp</code> is outside the freshness window.</td>
+</tr>
+<tr>
+<td>401</td>
+<td><code>replayed</code></td>
+<td><code>X-Nonce</code> was already used within the replay window.</td>
+</tr>
+<tr>
+<td>401</td>
+<td><code>invalid_device</code></td>
+<td>Unknown or revoked device id.</td>
+</tr>
+<tr>
+<td>401</td>
+<td><code>missing_pop_key</code></td>
+<td>The device has no <code>pop_public_key_pem</code> on record (legacy enrollment predating the two-key split).</td>
+</tr>
+<tr>
+<td>401</td>
+<td><code>invalid_signature</code></td>
+<td>ES256 verification against the device's PoP key failed.</td>
+</tr>
+<tr>
+<td>403</td>
+<td><code>device_mismatch</code></td>
+<td>The <code>device_id</code> query param doesn't match the authenticated device.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="post-approvals"><code>POST /approvals</code></h3>
+<p>Approves and/or rejects one or more challenges in a single <strong>ES256-signed</strong>
+request. See <a href="#signing-an-approval-set">Signing an approval set</a> for how the
+signature is built.</p>
+<blockquote>
+<p>[!WARNING]
+<strong>Breaking (v2.0.0).</strong> The signed set now binds each decision to the exact
+transaction payload the user was shown (<code>payload_hash</code>) and adds a
+whole-set <code>timestamp</code> + <code>nonce</code>. Signatures built against the old 3-key
+object (<code>challenge_id</code>/<code>decision</code>/<code>user_id</code> only) no longer reproduce the
+server's canonical bytes and are rejected with <code>401 invalid_signature</code>.
+<code>payout-authz</code> and <code>payout-authz-mobile</code> must deploy this together.</p>
+</blockquote>
+<p><strong>Request body</strong></p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>device_id</code></td>
+<td>uuid</td>
+<td>The enrolled device.</td>
+</tr>
+<tr>
+<td><code>approvals</code></td>
+<td>array</td>
+<td>1–50 items. Each: <code>{ challenge_id, decision, payload_hash }</code> where <code>decision</code> is <code>approve</code> or <code>reject</code> and <code>payload_hash</code> is the SHA-256 hex digest computed per <a href="#signing-an-approval-set">Signing an approval set</a>.</td>
+</tr>
+<tr>
+<td><code>signature_alg</code></td>
+<td>string</td>
+<td>Must be <code>ES256</code>.</td>
+</tr>
+<tr>
+<td><code>signature_der</code></td>
+<td>string</td>
+<td>Base64-encoded DER ECDSA signature over the canonical <strong>signed set</strong> (<code>{ approvals, timestamp, nonce }</code>, each approval including <code>payload_hash</code>).</td>
+</tr>
+<tr>
+<td><code>timestamp</code></td>
+<td>integer</td>
+<td>Unix seconds when the set was signed. Signed as a JSON <strong>integer</strong>, not a string. Must be within the server's freshness window (120s by default, plus 5s of allowed clock skew) or the whole set is rejected.</td>
+</tr>
+<tr>
+<td><code>nonce</code></td>
+<td>string</td>
+<td>Client-generated single-use value. A repeat within the replay window rejects the whole set.</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>[!NOTE]
+<code>challenge_id</code>, <code>decision</code>, and <code>payload_hash</code> are read from each item.
+<code>payload_hash</code> is recomputed server-side from the <strong>stored</strong> challenge and
+verified; a mismatch fails only that item (<code>payload_mismatch</code>), reported in
+<code>errors</code> below — it does not by itself invalidate the rest of the set's
+signature. Any other field an item includes (e.g. <code>user_id</code>) is ignored —
+the <code>user_id</code> in the signed message is always the enrolled owner's id,
+injected server-side. See the signing section for the full algorithm.</p>
+</blockquote>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;device_id&quot;</span>: <span class="t-str">&quot;550e8400-e29b-41d4-a716-446655440000&quot;</span>,
+  <span class="t-key">&quot;approvals&quot;</span>: [
+    {
+      <span class="t-key">&quot;challenge_id&quot;</span>: <span class="t-str">&quot;00000000-0000-0000-0000-000000000002&quot;</span>,
+      <span class="t-key">&quot;decision&quot;</span>: <span class="t-str">&quot;approve&quot;</span>,
+      <span class="t-key">&quot;payload_hash&quot;</span>: <span class="t-str">&quot;772bdcf2b507bc072c0f7a27e6733a163df5f908b906ff3611c57139a0625981&quot;</span>
+    },
+    {
+      <span class="t-key">&quot;challenge_id&quot;</span>: <span class="t-str">&quot;00000000-0000-0000-0000-000000000001&quot;</span>,
+      <span class="t-key">&quot;decision&quot;</span>: <span class="t-str">&quot;reject&quot;</span>,
+      <span class="t-key">&quot;payload_hash&quot;</span>: <span class="t-str">&quot;4ba67e21b1e9486465170eece00474686d15542855d28ba38fd68e6cbc938a42&quot;</span>
+    }
+  ],
+  <span class="t-key">&quot;signature_alg&quot;</span>: <span class="t-str">&quot;ES256&quot;</span>,
+  <span class="t-key">&quot;signature_der&quot;</span>: <span class="t-str">&quot;MEUCIQD6bU4B78zNE+q7KQpLlHkYeFBZ4/+K2ljjms7kDGGPxgIgMZRU4lVTNy7x6bJr/6v6/nawD2dc2B1suOObJO4gIO8=&quot;</span>,
+  <span class="t-key">&quot;timestamp&quot;</span>: <span class="t-num">1770000000</span>,
+  <span class="t-key">&quot;nonce&quot;</span>: <span class="t-str">&quot;vector-nonce-001&quot;</span>
+}
+</code></pre></div>
+<p><strong>Response <code>200 OK</code></strong></p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;approved_ids&quot;</span>: [<span class="t-str">&quot;00000000-0000-0000-0000-000000000002&quot;</span>],
+  <span class="t-key">&quot;rejected_ids&quot;</span>: [<span class="t-str">&quot;00000000-0000-0000-0000-000000000001&quot;</span>],
+  <span class="t-key">&quot;errors&quot;</span>: []
+}
+</code></pre></div>
+<blockquote>
+<p>[!NOTE]
+Per-challenge failures (e.g. one expired challenge in the set) are reported in
+<code>errors</code> <strong>with HTTP 200</strong> — inspect the body, not just the status. A non-200
+status means the whole set was rejected. Each <code>errors</code> item is
+<code>{ challenge_id, code, message }</code>, where <code>code</code> is one of <code>not_found</code>,
+<code>expired</code>, <code>attempts_exhausted</code>, <code>invalid_state</code>, <code>unauthorized</code>,
+<code>invalid_decision</code>, or <code>payload_mismatch</code> (the signed <code>payload_hash</code> didn't
+match the server-recomputed value for the stored challenge).</p>
+</blockquote>
+<p><strong>Errors (whole set rejected)</strong></p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>HTTP</th>
+<th><code>code</code></th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td><code>invalid_approval_set</code></td>
+<td>Malformed set (including a missing/malformed <code>payload_hash</code>, <code>timestamp</code>, or <code>nonce</code>).</td>
+</tr>
+<tr>
+<td>400</td>
+<td><code>unsupported_signature_algorithm</code></td>
+<td><code>signature_alg</code> is not <code>ES256</code>.</td>
+</tr>
+<tr>
+<td>401</td>
+<td><code>invalid_signature</code></td>
+<td>ES256 verification failed.</td>
+</tr>
+<tr>
+<td>401</td>
+<td><code>device_revoked</code></td>
+<td>The device has been revoked.</td>
+</tr>
+<tr>
+<td>401</td>
+<td><code>stale_timestamp</code></td>
+<td><code>timestamp</code> is outside the freshness window (120s, +5s clock skew).</td>
+</tr>
+<tr>
+<td>401</td>
+<td><code>replayed</code></td>
+<td><code>nonce</code> was already used within the replay window.</td>
+</tr>
+<tr>
+<td>404</td>
+<td><code>not_found</code></td>
+<td>Unknown <code>device_id</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="post-devicesidrevoke"><code>POST /devices/{id}/revoke</code></h3>
+<p>Revokes the device so it can no longer approve challenges. Sends a push that forces
+the app to clear local enrollment and publishes a <code>device.revoked</code> event
+(downstream services fall back to TOTP). The app calls this during un-enroll. The
+request body is empty.</p>
+<p>Requires <strong><code>DevicePoP</code></strong> (self-revoke — see
+<a href="#device-proof-of-possession-pop-headers">Device proof-of-possession (PoP) headers</a>)
+<strong>or</strong> a backend-facing <code>ServiceToken</code>. A <code>DevicePoP</code> caller may only revoke its
+own device: the path <code>{id}</code> must equal the authenticated device's id, otherwise
+the request is rejected with <code>403 forbidden</code> — a device can't use its own valid
+PoP signature to revoke a different device.</p>
+<p><strong>Response <code>200 OK</code></strong></p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;id&quot;</span>: <span class="t-str">&quot;550e8400-e29b-41d4-a716-446655440000&quot;</span>,
+  <span class="t-key">&quot;revoked_at&quot;</span>: <span class="t-str">&quot;2026-07-02T14:40:00Z&quot;</span>,
+  <span class="t-key">&quot;message&quot;</span>: <span class="t-str">&quot;Device revoked successfully&quot;</span>
+}
+</code></pre></div>
+<p><strong>Errors</strong></p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>HTTP</th>
+<th><code>code</code> / <code>error</code></th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td><code>already_revoked</code></td>
+<td>Device is already revoked.</td>
+</tr>
+<tr>
+<td>401</td>
+<td><em>(DevicePoP failure reasons — see <a href="#device-proof-of-possession-pop-headers">Device proof-of-possession (PoP) headers</a>)</em></td>
+<td>Missing/malformed PoP headers, bad signature, stale timestamp, replayed nonce, or an unknown/revoked PoP device — when using <code>DevicePoP</code>.</td>
+</tr>
+<tr>
+<td>403</td>
+<td><code>forbidden</code></td>
+<td>A <code>DevicePoP</code>-authenticated device attempted to revoke a different device id.</td>
+</tr>
+<tr>
+<td>404</td>
+<td><code>not_found</code></td>
+<td>Unknown device.</td>
+</tr>
+<tr>
+<td>500</td>
+<td><code>revocation_failed</code></td>
+<td>Update failed.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="post-devicesidintegrity"><code>POST /devices/{id}/integrity</code></h3>
+<p>Requires <strong><code>DevicePoP</code></strong> — see
+<a href="#device-proof-of-possession-pop-headers">Device proof-of-possession (PoP) headers</a>.
+Because this request carries a body, the PoP signature's <code>body_sha256</code> covers
+the raw JSON request body.</p>
+<p>The app self-reports a runtime-integrity verdict (root/jailbreak/hook/emulator/
+tamper detection — e.g. from freerasp) for the device identified by <code>{id}</code>,
+which must equal the authenticated device's id (otherwise <code>403
+device_mismatch</code>).</p>
+<blockquote>
+<p>[!NOTE]
+<strong>Warn-not-block.</strong> A compromised verdict is never rejected — the server
+always records the report (caching the latest verdict on the device record,
+and writing an audit-log entry keyed by device + user when the compromised
+state changes) and responds <code>200</code>. This endpoint does not gate any
+operation; it exists purely to give operators visibility into which
+enrolled devices are running on compromised hardware/OS.</p>
+</blockquote>
+<p><strong>Request body</strong></p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>platform</code></td>
+<td>string</td>
+<td>✅</td>
+<td><code>ios</code> or <code>android</code>. Compared against the device's enrolled platform as a data-quality signal; a mismatch is recorded, never rejected.</td>
+</tr>
+<tr>
+<td><code>threats</code></td>
+<td>array of string</td>
+<td>✅</td>
+<td>Threat identifiers detected on-device (e.g. freerasp threat names); <code>[]</code> when clean. Non-string entries are dropped and the list is capped server-side — never rejected for being too long or malformed.</td>
+</tr>
+<tr>
+<td><code>compromised</code></td>
+<td>boolean</td>
+<td>✅</td>
+<td>Overall compromised verdict for this report.</td>
+</tr>
+<tr>
+<td><code>attestation</code></td>
+<td>object | null</td>
+<td>➖</td>
+<td>Optional opaque platform-attestation blob (Play Integrity / App Attest). Accepted and verified server-side on receipt; only the verification outcome is recorded — the raw blob is never persisted.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;platform&quot;</span>: <span class="t-str">&quot;android&quot;</span>,
+  <span class="t-key">&quot;threats&quot;</span>: [<span class="t-str">&quot;privilegedAccess&quot;</span>, <span class="t-str">&quot;hooks&quot;</span>],
+  <span class="t-key">&quot;compromised&quot;</span>: <span class="t-lit">true</span>,
+  <span class="t-key">&quot;attestation&quot;</span>: <span class="t-lit">null</span>
+}
+</code></pre></div>
+<p><strong>Response <code>200 OK</code></strong></p>
+<p>Always returned on success — this endpoint never blocks a compromised report.</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;recorded&quot;</span>: <span class="t-lit">true</span>,
+  <span class="t-key">&quot;compromised&quot;</span>: <span class="t-lit">true</span>
+}
+</code></pre></div>
+<p><strong>Errors</strong></p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>HTTP</th>
+<th><code>code</code> / <code>error</code></th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td><code>invalid_request</code></td>
+<td>Missing or invalid <code>platform</code> / <code>compromised</code> / <code>threats</code>.</td>
+</tr>
+<tr>
+<td>401</td>
+<td><em>(DevicePoP failure reasons)</em></td>
+<td>Missing/malformed PoP headers, bad signature, stale timestamp, replayed nonce, or an unknown/revoked PoP device.</td>
+</tr>
+<tr>
+<td>403</td>
+<td><code>device_mismatch</code></td>
+<td>A <code>DevicePoP</code>-authenticated device attempted to report integrity for a different device id.</td>
+</tr>
+<tr>
+<td>500</td>
+<td><code>record_failed</code></td>
+<td>Update failed.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="signing-an-approval-set">Signing an approval set</h2>
+<blockquote>
+<p>[!WARNING]
+<strong>Breaking (v2.0.0).</strong> The signed set now includes a per-item <code>payload_hash</code>
+and a top-level <code>timestamp</code>/<code>nonce</code>. This is a byte-for-byte cross-language
+contract, pinned by <code>apps/core/test/fixtures/approval_vectors.json</code> in the
+<code>payout-authz</code> repo — copy that fixture into the mobile repo and assert
+against it in a Dart test. A single differing byte (key order, whitespace,
+number formatting, an un-normalized amount string) produces a different
+hash/signature and the server rejects it with <code>401 invalid_signature</code> (or,
+for a per-item <code>payload_hash</code> mismatch alone, <code>payload_mismatch</code> on that
+item).</p>
+</blockquote>
+<p>The <code>signature_der</code> in <code>POST /approvals</code> is an <strong>ES256 (ECDSA / P-256 / SHA-256)</strong>
+signature over the <strong>canonical JSON</strong> of the signed set, produced with the
+device's <strong>approval</strong> private key (never the PoP key — see
+<a href="#authentication">Authentication</a>). Build it exactly as the server does:</p>
+<h3 id="1-compute-payload_hash-for-every-challenge-being-decided">1. Compute <code>payload_hash</code> for every challenge being decided</h3>
+<p><code>payload_hash</code> is the lowercase hex SHA-256 digest of the canonical bytes of
+the challenge's <strong>authorization view</strong>:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Code</span><button class="cb-copy" type="button">copy</button></div><pre><code>{ &quot;payload&quot;: &lt;the challenge&#x27;s `payload` object, exactly as returned by
+               GET /challenges / the challenge object&gt;,
+  &quot;items&quot;:   &lt;line items, see below&gt; }
+</code></pre></div>
+<ul>
+<li><strong><code>login</code> and <code>withdrawal</code> challenges</strong>: <code>items</code> is always <code>[]</code>.</li>
+<li><strong><code>withdrawal_batch</code> challenges</strong>: <code>items</code> is the array of
+  <code>{ "amount", "currency", "iban" }</code> objects from the challenge's <code>items</code>
+  field (see <a href="#challenge-object">Challenge object</a>), <strong>sorted ascending by
+  each item's own canonical-bytes string</strong> — i.e. by the UTF-8 bytes of that
+  single item's <code>{"amount":...,"currency":...,"iban":...}</code> canonical JSON,
+  compared byte-by-byte (NOT by array/DB order, and NOT a numeric sort on
+  <code>amount</code>). The <code>GET /challenges</code> response already returns <code>items</code> in this
+  sorted order, but don't rely on that — re-derive the sort independently;
+  this is the single biggest cross-language determinism risk.</li>
+<li><strong>Amounts are decimal-valued strings, hashed verbatim.</strong> <code>payload.amount</code>,
+  <code>payload.total_amount</code>, and each batch item's <code>amount</code> are canonical
+  decimal strings as stored/returned by the server (e.g. <code>"10.50"</code>, never
+  <code>"10.5"</code> or scientific notation). Hash the <strong>exact string</strong> the API
+  returned — never re-parse it into a number, reformat it, round it, or
+  strip/add trailing zeros. A client-side reformat is the most likely source
+  of a byte-parity break.</li>
+</ul>
+<p>Canonicalize with the same rule used everywhere in this doc: JSON with <strong>all
+object keys sorted lexicographically, recursively</strong>, and <strong>no insignificant
+whitespace</strong>.</p>
+<p>Worked examples (from the fixture — reproduce these exactly):</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Code</span><button class="cb-copy" type="button">copy</button></div><pre><code># login challenge, no items
+{&quot;items&quot;:[],&quot;payload&quot;:{&quot;reference&quot;:&quot;LOGIN-VEC001&quot;,&quot;requested_at&quot;:&quot;2026-07-10T12:00:00Z&quot;,&quot;type&quot;:&quot;login&quot;}}
+→ payload_hash = 4ba67e21b1e9486465170eece00474686d15542855d28ba38fd68e6cbc938a42
+
+# single withdrawal, no items
+{&quot;items&quot;:[],&quot;payload&quot;:{&quot;amount&quot;:&quot;10.50&quot;,&quot;currency&quot;:&quot;EUR&quot;,&quot;iban&quot;:&quot;DE89370400440532013000&quot;,&quot;name&quot;:&quot;Jane Doe&quot;,&quot;reference&quot;:&quot;WD-VEC001&quot;,&quot;requested_at&quot;:&quot;2026-07-10T12:05:00Z&quot;,&quot;type&quot;:&quot;withdrawal&quot;}}
+→ payload_hash = 772bdcf2b507bc072c0f7a27e6733a163df5f908b906ff3611c57139a0625981
+
+# withdrawal_batch, 2 items — note items are sorted 30.00 before 70.00
+# (&quot;3&quot; &lt; &quot;7&quot; in each item&#x27;s own canonical-bytes string), NOT input order
+{&quot;items&quot;:[{&quot;amount&quot;:&quot;30.00&quot;,&quot;currency&quot;:&quot;EUR&quot;,&quot;iban&quot;:&quot;SK8975000000000012345671&quot;},{&quot;amount&quot;:&quot;70.00&quot;,&quot;currency&quot;:&quot;EUR&quot;,&quot;iban&quot;:&quot;SK3112000000198742637541&quot;}],&quot;payload&quot;:{&quot;batch_id&quot;:&quot;BATCH-VEC001&quot;,&quot;currency&quot;:&quot;EUR&quot;,&quot;items_count&quot;:2,&quot;reference&quot;:&quot;BATCH-VEC001&quot;,&quot;requested_at&quot;:&quot;2026-07-10T12:10:00Z&quot;,&quot;total_amount&quot;:&quot;100.00&quot;,&quot;type&quot;:&quot;withdrawal_batch&quot;}}
+→ payload_hash = b638bf41ebdbe32b07c6b2682aa9ac3a2caf3008c1b5ed532ae19f9cdd0d7d8e
+</code></pre></div>
+<h3 id="2-build-and-sign-the-approvals-wrapper">2. Build and sign the approvals wrapper</h3>
+<ol>
+<li>For each decision, build the object
+   <code>{ "challenge_id": &lt;id&gt;, "decision": &lt;approve|reject&gt;, "payload_hash": &lt;from step 1&gt;, "user_id": &lt;userId&gt; }</code>,
+   where <code>user_id</code> is the enrolled user's id (returned at enrollment).</li>
+<li>Sort the objects <strong>ascending by <code>challenge_id</code></strong>.</li>
+<li>Wrap them with the whole-set fields:
+   <code>{ "approvals": [ ...sorted objects... ], "timestamp": &lt;unix seconds, integer&gt;, "nonce": &lt;string&gt; }</code>.
+   <code>timestamp</code> MUST be a JSON <strong>integer</strong> in the signed bytes (not a numeric
+   string). <code>nonce</code> is a client-generated single-use string.</li>
+<li>Canonicalize: serialize to JSON with all object keys sorted
+   lexicographically, recursively, and no insignificant whitespace.</li>
+<li>Sign the UTF-8 bytes of that string with ES256. Base64-encode the DER
+   signature into <code>signature_der</code>.</li>
+</ol>
+<p>For the request-body example above (user <code>00000000-0000-0000-0000-0000000000aa</code>,
+<code>timestamp</code> <code>1770000000</code>, <code>nonce</code> <code>vector-nonce-001</code>), the exact string that
+gets signed — byte-for-byte identical to <code>signed_set_vector.canonical_bytes</code>
+and <code>verify_vector.signing_input</code> in the fixture — is:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{<span class="t-key">&quot;approvals&quot;</span>:[{<span class="t-key">&quot;challenge_id&quot;</span>:<span class="t-str">&quot;00000000-0000-0000-0000-000000000001&quot;</span>,<span class="t-key">&quot;decision&quot;</span>:<span class="t-str">&quot;reject&quot;</span>,<span class="t-key">&quot;payload_hash&quot;</span>:<span class="t-str">&quot;4ba67e21b1e9486465170eece00474686d15542855d28ba38fd68e6cbc938a42&quot;</span>,<span class="t-key">&quot;user_id&quot;</span>:<span class="t-str">&quot;00000000-0000-0000-0000-0000000000aa&quot;</span>},{<span class="t-key">&quot;challenge_id&quot;</span>:<span class="t-str">&quot;00000000-0000-0000-0000-000000000002&quot;</span>,<span class="t-key">&quot;decision&quot;</span>:<span class="t-str">&quot;approve&quot;</span>,<span class="t-key">&quot;payload_hash&quot;</span>:<span class="t-str">&quot;772bdcf2b507bc072c0f7a27e6733a163df5f908b906ff3611c57139a0625981&quot;</span>,<span class="t-key">&quot;user_id&quot;</span>:<span class="t-str">&quot;00000000-0000-0000-0000-0000000000aa&quot;</span>}],<span class="t-key">&quot;nonce&quot;</span>:<span class="t-str">&quot;vector-nonce-001&quot;</span>,<span class="t-key">&quot;timestamp&quot;</span>:<span class="t-num">1770000000</span>}
+</code></pre></div>
+<p>The <code>signature_der</code> in the request-body example above is a real, verifiable
+ES256 signature over this exact string (the fixture's <code>verify_vector</code>
+includes the matching test-only private/public keypair, so a Dart
+implementation can both re-sign this input and verify the committed
+signature against it).</p>
+<blockquote>
+<p>[!WARNING]
+The server recomputes this string — including recomputing every
+<code>payload_hash</code> <strong>from the stored challenge</strong>, never from the client's value
+— and <strong>injects <code>user_id</code> from the device record</strong>. If your local
+canonicalization differs (key order, whitespace, a different <code>user_id</code>, or
+a mis-derived <code>payload_hash</code>), verification fails with <code>401
+invalid_signature</code>, or, for a <code>payload_hash</code>-only mismatch on one item,
+that item fails with <code>payload_mismatch</code> while the rest of the set is still
+processed. Match the canonical form byte-for-byte.</p>
+</blockquote>
+<h3 id="3-freshness-and-replay">3. Freshness and replay</h3>
+<ul>
+<li><code>timestamp</code> must be within <strong>120 seconds</strong> of the server's clock (plus 5s
+  of allowed clock skew into the future) or the whole set is rejected with
+  <code>401 stale_timestamp</code>, checked before any challenge is touched.</li>
+<li>A <code>nonce</code> already seen within twice that window is rejected with <code>401
+  replayed</code>.</li>
+<li>An exact byte-identical resubmission (same approvals, <code>payload_hash</code>es,
+  <code>timestamp</code>, and <code>nonce</code> as a previously recorded approval) is treated as
+  an idempotent retry — it returns the original cached result and skips the
+  nonce-replay check, so a legitimate retry after a dropped response doesn't
+  fail as a replay.</li>
+</ul>
+<h2 id="device-proof-of-possession-pop-headers">Device proof-of-possession (PoP) headers</h2>
+<p><code>GET /challenges</code>, self-service <code>POST /devices/{id}/revoke</code>, and
+<code>POST /devices/{id}/integrity</code> require <strong><code>DevicePoP</code></strong>: the app signs the
+request with its enrolled <strong>device/PoP key</strong> (<code>pop_public_key_pem</code> — never the
+approval key <code>public_key_pem</code>; a PoP signature never authenticates
+<code>POST /approvals</code>, and an approval signature never satisfies <code>DevicePoP</code>). No
+bearer token is issued or sent — the app doesn't hold anything long-lived to
+present; it signs each request fresh.</p>
+<p>OpenAPI has no way to express a multi-header signature scheme, so all five of
+the following headers must be present together:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Header</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>X-Device-Id</code></td>
+<td>The enrolled device id.</td>
+</tr>
+<tr>
+<td><code>X-Timestamp</code></td>
+<td>Integer unix seconds. Rejected with <code>401 stale_timestamp</code> if outside a small freshness window (server-configured; default <strong>60s</strong>, plus 5s of allowed clock skew into the future).</td>
+</tr>
+<tr>
+<td><code>X-Nonce</code></td>
+<td>Client-generated single-use value. A repeat within the freshness window is rejected with <code>401 replayed</code>.</td>
+</tr>
+<tr>
+<td><code>X-Signature-Alg</code></td>
+<td>Must be the literal string <code>ES256</code>.</td>
+</tr>
+<tr>
+<td><code>X-Signature</code></td>
+<td>Base64-encoded DER ECDSA signature (the same encoding <code>POST /approvals</code>' <code>signature_der</code> uses).</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="signing-input">Signing input</h3>
+<p>The signature covers the <strong>canonical JSON</strong> (object keys sorted
+lexicographically, recursively, no insignificant whitespace — the same rule
+used in <a href="#signing-an-approval-set">Signing an approval set</a>) of:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Code</span><button class="cb-copy" type="button">copy</button></div><pre><code>{&quot;method&quot;: &quot;&lt;HTTP method, uppercase&gt;&quot;,
+ &quot;path&quot;: &quot;&lt;request path, no query string, including the `/api` prefix — i.e. what the server sees as `conn.request_path`&gt;&quot;,
+ &quot;device_id&quot;: &quot;&lt;X-Device-Id&gt;&quot;,
+ &quot;timestamp&quot;: &lt;X-Timestamp, as an integer&gt;,
+ &quot;nonce&quot;: &quot;&lt;X-Nonce&gt;&quot;,
+ &quot;body_sha256&quot;: &quot;&lt;lowercase hex SHA-256 of the raw request body&gt;&quot;}
+</code></pre></div>
+<ul>
+<li><code>method</code> is upper-cased (<code>GET</code>, <code>POST</code>).</li>
+<li><code>path</code> excludes the query string. It includes the <code>/api</code> prefix — e.g.
+  <code>/api/challenges</code>, <code>/api/devices/550e8400-e29b-41d4-a716-446655440000/revoke</code>,
+  <code>/api/devices/550e8400-e29b-41d4-a716-446655440000/integrity</code> — not just the
+  path relative to this document's <a href="#base-url">Base URL</a> table.</li>
+<li><code>body_sha256</code> is the lowercase hex SHA-256 digest of the <strong>raw</strong> request
+  body bytes. For a body-less request (<code>GET /challenges</code>, self-service
+  <code>POST /devices/{id}/revoke</code>, whose body is empty) this is the SHA-256 of the
+  empty string. For <code>POST /devices/{id}/integrity</code>, it's the hash of the raw
+  JSON body bytes actually sent — hash before any re-serialization, since a
+  different byte sequence produces a different hash and the signature won't
+  verify.</li>
+</ul>
+<p>Sign the UTF-8 bytes of the canonical string with ES256 (ECDSA / P-256 /
+SHA-256) using the device/PoP private key. Base64-encode the DER signature
+into <code>X-Signature</code>.</p>
+<p>The server verifies against the device's stored <code>pop_public_key_pem</code> and
+rejects any failure (missing/malformed header, unsupported algorithm, stale
+timestamp, replayed nonce, unknown or revoked device, a device with no PoP key
+on record, or a bad signature) with <code>401</code> and <code>{"error": "&lt;reason&gt;"}</code>.</p>
+<h3 id="freshness-and-replay">Freshness and replay</h3>
+<ul>
+<li><code>X-Timestamp</code> must be within the server's freshness window (default <strong>60
+  seconds</strong>, plus 5s of allowed clock skew into the future) or the request is
+  rejected with <code>401 stale_timestamp</code>.</li>
+<li>An <code>X-Nonce</code> already seen within twice that window is rejected with <code>401
+  replayed</code>.</li>
+</ul>
+<blockquote>
+<p>[!NOTE]
+This window and default (60s) are narrower than the 120s used for
+<code>POST /approvals</code>' <code>timestamp</code>/<code>nonce</code> — the two freshness checks are
+independently configured and not interchangeable.</p>
+</blockquote>
+<h2 id="push-notifications">Push notifications</h2>
+<p>The device's push token (<code>push_token</code>) is registered once, during
+<code>POST /authn/enroll/complete</code>. The service then delivers challenge events to the
+device (APNs for iOS, FCM for Android): a new challenge to display, and a
+cancellation when a pending challenge is deleted server-side. The app does not
+register the token through any separate endpoint.</p>
+<h2 id="backend-facing-endpoints-reference">Backend-facing endpoints (reference)</h2>
+<p>These are called server-to-server by <code>payout_merchant</code> / <code>payout_id</code>, not by the
+mobile app, and require a bearer <strong>ServiceToken</strong> — an OAuth 2.0
+client-credentials access token issued by <code>payout_id</code>, RS256/JWKS-verified and
+scoped <code>authz:challenge:write</code> — sent as <code>Authorization: Bearer &lt;token&gt;</code>. They
+are fully documented in the OpenAPI spec.</p>
+<p><code>POST /devices/{id}/revoke</code> also accepts a <code>ServiceToken</code> (in addition to
+<code>DevicePoP</code>, self-revoke only) so a backend service can revoke any device on a
+user's behalf — see the mobile endpoints section above.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /challenges</code></td>
+<td>Create a challenge, dispatched by <code>type</code>.</td>
+</tr>
+<tr>
+<td><code>POST /challenges/login</code></td>
+<td>Create a login challenge.</td>
+</tr>
+<tr>
+<td><code>POST /challenges/withdrawal</code></td>
+<td>Create a single-withdrawal challenge.</td>
+</tr>
+<tr>
+<td><code>POST /challenges/withdrawal_batch</code></td>
+<td>Create a batch-withdrawal challenge.</td>
+</tr>
+<tr>
+<td><code>GET /challenges/{id}</code></td>
+<td>Fetch a single challenge (returns <code>expired</code> past TTL).</td>
+</tr>
+<tr>
+<td><code>DELETE /challenges/{id}</code></td>
+<td>Cancel a pending challenge (pushes a removal).</td>
+</tr>
+<tr>
+<td><code>GET /devices?user_id={id}</code></td>
+<td>List all devices (active + revoked) for a user.</td>
+</tr>
+<tr>
+<td><code>GET /devices/{id}</code></td>
+<td>Device details.</td>
+</tr>
+<tr>
+<td><code>GET /users/{user_id}/devices</code></td>
+<td>List a user's active devices.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Challenge-creation requests accept an optional <code>Idempotency-Key</code> header: repeating
+a request with the same key for the same user returns the existing challenge
+without creating a duplicate or dispatching a second push.</p></div>
+  </main>
+</div>
+
+<footer><div>Generated from the OpenAPI specs and the existing guides. Preview build — the live site is unchanged.</div></footer>
+
+<dialog id="search">
+  <input type="search" id="q" placeholder="Search guides and endpoints…" autocomplete="off" spellcheck="false">
+  <ul id="results"></ul>
+</dialog>
+
+<script>
+(function () {
+  var root = document.documentElement;
+
+  // --- theme: auto -> light -> dark, persisted -------------------------
+  var tBtn = document.getElementById('theme-toggle');
+  var order = ['auto', 'light', 'dark'];
+  function applyTheme(v) {
+    if (v === 'auto') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', v);
+    tBtn.textContent = v;
+    try { localStorage.setItem('pd-theme', v); } catch (e) {}
+  }
+  var saved = null; try { saved = localStorage.getItem('pd-theme'); } catch (e) {}
+  applyTheme(order.indexOf(saved) > -1 ? saved : 'auto');
+  tBtn.addEventListener('click', function () {
+    applyTheme(order[(order.indexOf(tBtn.textContent) + 1) % order.length]);
+  });
+
+  // --- copy on prose code blocks ---------------------------------------
+  document.querySelectorAll('.cb-copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.closest('.cb').querySelector('pre');
+      if (!pre) return;
+      navigator.clipboard.writeText(pre.innerText).then(function () {
+        btn.textContent = 'copied';
+        setTimeout(function () { btn.textContent = 'copy'; }, 1200);
+      });
+    });
+  });
+
+  // --- per-client tabs --------------------------------------------------
+  document.querySelectorAll('[data-tabs]').forEach(function (group) {
+    var bar = group.querySelector('.tab-bar');
+    if (!bar) return;
+    bar.addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-tab]');
+      if (!btn) return;
+      var want = btn.dataset.tab;
+      bar.querySelectorAll('button[data-tab]').forEach(function (b) {
+        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+      });
+      group.querySelectorAll('.tab-pane').forEach(function (p) {
+        p.hidden = p.dataset.tab !== want;
+      });
+      try { localStorage.setItem('pd-client', want); } catch (err) {}
+    });
+  });
+  try {
+    var client = localStorage.getItem('pd-client');
+    if (client) {
+      var pref = document.querySelector('.tab-bar button[data-tab="' + client + '"]');
+      if (pref) pref.click();
+    }
+  } catch (err) {}
+
+  // --- copy buttons -----------------------------------------------------
+  document.querySelectorAll('pre').forEach(function (pre) {
+    var wrap = pre.closest('.cb');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.className = 'codeblock';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+    }
+    wrap.style.position = 'relative';
+    var b = document.createElement('button');
+    b.className = 'copy'; b.type = 'button'; b.textContent = 'copy';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.innerText).then(function () {
+        b.textContent = 'copied'; setTimeout(function () { b.textContent = 'copy'; }, 1200);
+      });
+    });
+    wrap.appendChild(b);
+  });
+
+  // --- language tabs ----------------------------------------------------
+  document.querySelectorAll('.cb .langs').forEach(function (group) {
+    var panel = group.closest('.cb');
+    group.addEventListener('click', function (e) {
+      var btn = e.target.closest('.lang');
+      if (!btn) return;
+      var want = btn.dataset.lang;
+      group.querySelectorAll('.lang').forEach(function (b) {
+        b.classList.toggle('on', b === btn);
+      });
+      panel.querySelectorAll('.lang-pane').forEach(function (p) {
+        p.hidden = p.dataset.lang !== want;
+      });
+      // Remember the choice across every panel on the page and future visits.
+      try { localStorage.setItem('pd-lang', want); } catch (err) {}
+      document.querySelectorAll('.cb').forEach(function (other) {
+        if (other === panel) return;
+        other.querySelectorAll('.lang').forEach(function (b) {
+          b.classList.toggle('on', b.dataset.lang === want);
+        });
+        other.querySelectorAll('.lang-pane').forEach(function (p) {
+          p.hidden = p.dataset.lang !== want;
+        });
+      });
+    });
+  });
+  try {
+    var pref = localStorage.getItem('pd-lang');
+    if (pref) {
+      document.querySelectorAll('.cb .lang[data-lang="' + pref + '"]').forEach(function (b) {
+        b.click();
+      });
+    }
+  } catch (err) {}
+
+  // --- copy a section as markdown, for pasting into an agent -------------
+  document.querySelectorAll('.copy-md').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var sec = btn.closest('[data-md]');
+      if (!sec) return;
+      navigator.clipboard.writeText(sec.dataset.md).then(function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy for LLM';
+          btn.classList.remove('done');
+        }, 1400);
+      });
+    });
+  });
+
+  // --- search -----------------------------------------------------------
+  var dlg = document.getElementById('search');
+  var q = document.getElementById('q');
+  var results = document.getElementById('results');
+  var index = null, cursor = 0;
+
+  function load() {
+    if (index) return Promise.resolve(index);
+    return fetch('../search-index.json')
+      .then(function (r) { return r.json(); })
+      .then(function (d) { index = d; return d; });
+  }
+  function open() {
+    load().then(function () { dlg.showModal(); q.value = ''; render([]); q.focus(); });
+  }
+  function render(rows) {
+    cursor = 0;
+    if (!rows.length) {
+      results.innerHTML = '<li class="empty">' + (q.value ? 'No matches.' : 'Type to search.') + '</li>';
+      return;
+    }
+    results.innerHTML = rows.map(function (r, i) {
+      return '<li><a class="' + (i === 0 ? 'on' : '') + '" href="../' + r.url + '">' +
+             '<span class="r-kind">' + r.kind + '</span> ' + r.title +
+             (r.ctx ? '<div class="r-ctx">' + r.ctx + '</div>' : '') + '</a></li>';
+    }).join('');
+  }
+  q && q.addEventListener('input', function () {
+    var s = q.value.toLowerCase().trim();
+    if (!s) return render([]);
+    render(index.filter(function (r) {
+      return (r.title + ' ' + r.ctx + ' ' + r.kind).toLowerCase().indexOf(s) > -1;
+    }).slice(0, 20));
+  });
+  q && q.addEventListener('keydown', function (e) {
+    var links = results.querySelectorAll('a');
+    if (!links.length) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      links[cursor].classList.remove('on');
+      cursor = (cursor + (e.key === 'ArrowDown' ? 1 : links.length - 1)) % links.length;
+      links[cursor].classList.add('on');
+      links[cursor].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault(); links[cursor].click();
+    }
+  });
+  document.getElementById('search-open').addEventListener('click', open);
+  document.addEventListener('keydown', function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); open(); }
+  });
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+})();
+</script>
+</body>
+</html>

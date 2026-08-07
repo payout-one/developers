@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intel API — Payout API Reference</title>
+<meta name="description" content="Intel API reference for Payout.">
+<link rel="alternate" type="text/markdown" href="/openapi/intel.yaml">
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; }
+  /* Shown only until Scalar mounts, so a slow load is not a blank page. */
+  #boot {
+    font: 0.9rem/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #5C6570; padding: 3rem 1.5rem; max-width: 40rem; margin: 0 auto;
+  }
+  @media (prefers-color-scheme: dark) { #boot { color: #98A0A9; } }
+</style>
+</head>
+<body>
+<div id="boot">Loading Intel API reference…</div>
+<div id="app"></div>
+
+<script src="/vendor/scalar.js"></script>
+<script>
+  (function () {
+    var boot = document.getElementById('boot');
+    if (!window.Scalar || !window.Scalar.createApiReference) {
+      boot.textContent =
+        'Could not load the API reference bundle. The spec is available directly at /openapi/intel.yaml';
+      return;
+    }
+    window.Scalar.createApiReference('#app', {
+      url: '/openapi/intel.yaml',
+      theme: 'default',
+      layout: 'modern',
+      darkMode: window.matchMedia('(prefers-color-scheme: dark)').matches,
+      hideDownloadButton: false,
+
+      // Scalar defaults proxyUrl to https://proxy.scalar.com, which would route
+      // try-it requests -- including Authorization: Bearer tokens for a payments
+      // API -- through a third party. Empty string disables the proxy so the
+      // browser calls our hosts directly.
+      proxyUrl: '',
+
+      // Defaults to true, which fetches fonts from fonts.scalar.com. Keep the
+      // page self-contained: no external requests from our documentation.
+      withDefaultFonts: false,
+
+      // Merchants integrate against sandbox first; default the try-it client there.
+      servers: [
+        { url: 'https://sandbox.payout.one', description: 'Sandbox' },
+        { url: 'https://app.payout.one', description: 'Production' }
+      ],
+      metaData: { title: 'Intel API — Payout' }
+    });
+    boot.remove();
+  })();
+</script>
+</body>
+</html>

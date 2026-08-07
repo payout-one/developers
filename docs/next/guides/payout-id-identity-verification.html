@@ -1,0 +1,1584 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity verification — Payout Developers</title>
+<meta name="description" content="Identity verification — Payout developer guide.">
+<meta name="theme-color" content="#3A1768">
+<link rel="alternate" type="text/markdown" href="../md/payout-id-identity-verification.md">
+<style>
+  /* Palette from payout_merchant/assets/css:
+     #3A1768 primary · #330864 deep · #6430B2 bright · #795F95 muted
+     #CBB5D4 lavender · #3F9A57 success · #FFC107 warning            */
+  :root {
+    --brand:#3A1768; --brand-deep:#330864; --brand-bright:#6430B2;
+    --brand-muted:#795F95; --lavender:#CBB5D4;
+
+    --ground:#FFFFFF; --raised:#FFFFFF; --sunken:#F7F4FB;
+    --ink:#221B2C; --muted:#544C60; --faint:#867C93;
+    --rule:#EBE5F1; --rule-strong:#DCD2E6;
+    --accent:#6430B2; --accent-ink:#3A1768; --accent-soft:#F1EBF7;
+    --masthead:#3A1768; --masthead-ink:#FFFFFF; --masthead-dim:#CBB5D4;
+
+    --get:#3A1768; --post:#3F9A57; --put:#B8860B; --delete:#B0186A;
+    --danger:#B0186A; --warn:#8A6100;
+
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --bar: 3.25rem;
+  }
+
+  /* Dark: a purple-tinted near-black ground with lavender accents. The brand
+     purple is too saturated to sit behind body text, so it moves to the
+     masthead and the accents lighten instead of inverting. */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:#141019; --raised:#1B1622; --sunken:#1F1929;
+      --ink:#EDE8F3; --muted:#A79CB5; --faint:#7C7189;
+      --rule:#2C2438; --rule-strong:#3D3350;
+      --accent:#B08BE0; --accent-ink:#CBB5D4; --accent-soft:#271A3A;
+      --masthead:#241338; --masthead-ink:#F2EDF7; --masthead-dim:#A392B5;
+      --get:#B08BE0; --post:#5FBF7C; --put:#D3B064; --delete:#E06B9E;
+      --danger:#E06B9E; --warn:#D3B064;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#141019; --raised:#1B1622; --sunken:#1F1929;
+    --ink:#EDE8F3; --muted:#A79CB5; --faint:#7C7189;
+    --rule:#2C2438; --rule-strong:#3D3350;
+    --accent:#B08BE0; --accent-ink:#CBB5D4; --accent-soft:#271A3A;
+    --masthead:#241338; --masthead-ink:#F2EDF7; --masthead-dim:#A392B5;
+    --get:#B08BE0; --post:#5FBF7C; --put:#D3B064; --delete:#E06B9E;
+    --danger:#E06B9E; --warn:#D3B064;
+  }
+  :root[data-theme="light"] {
+    --ground:#FFFFFF; --raised:#FFFFFF; --sunken:#F7F4FB;
+    --ink:#221B2C; --muted:#544C60; --faint:#867C93;
+    --rule:#EBE5F1; --rule-strong:#DCD2E6;
+    --accent:#6430B2; --accent-ink:#3A1768; --accent-soft:#F1EBF7;
+    --masthead:#3A1768; --masthead-ink:#FFFFFF; --masthead-dim:#CBB5D4;
+    --get:#3A1768; --post:#3F9A57; --put:#B8860B; --delete:#B0186A;
+    --danger:#B0186A; --warn:#8A6100;
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--sans); font-size:0.9375rem; line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  a { color:var(--accent); text-underline-offset:2px; }
+  a:focus-visible, button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:3px; }
+
+  /* ---- masthead ---- */
+  .bar {
+    position:sticky; top:0; z-index:40; height:var(--bar);
+    background:var(--masthead); color:var(--masthead-ink);
+    display:flex; align-items:center; gap:1.25rem; padding:0 1.25rem;
+  }
+  .brand { font-weight:700; letter-spacing:-0.015em; color:var(--masthead-ink);
+           text-decoration:none; font-size:0.95rem; white-space:nowrap; }
+  .brand span { color:var(--lavender); font-weight:400; }
+  .bar nav { display:flex; gap:0.2rem; margin-right:auto; }
+  .bar nav a {
+    font-size:0.8rem; color:var(--masthead-dim); text-decoration:none;
+    padding:0.32rem 0.65rem; border-radius:5px;
+  }
+  .bar nav a:hover { color:var(--masthead-ink); background:rgba(255,255,255,.09); }
+  .bar nav a[aria-current="page"] { color:var(--masthead-ink); background:rgba(255,255,255,.14); }
+
+  .toolbtn {
+    font-size:0.74rem; background:rgba(255,255,255,.08); color:var(--masthead-dim);
+    border:1px solid rgba(255,255,255,.16); border-radius:5px;
+    padding:0.32rem 0.6rem; cursor:pointer; font-family:inherit;
+  }
+  .toolbtn:hover { color:var(--masthead-ink); background:rgba(255,255,255,.16); }
+  #search-open { min-width:9rem; display:flex; justify-content:space-between; gap:0.8rem; }
+  #search-open kbd { font-family:var(--mono); opacity:.75; }
+
+  /* ---- shell ---- */
+  .shell {
+    display:grid; grid-template-columns:17rem minmax(0,1fr);
+    align-items:start; gap:0;
+  }
+  .sidenav {
+    position:sticky; top:var(--bar); max-height:calc(100vh - var(--bar));
+    overflow-y:auto; padding:1.6rem 1rem 3rem 1.5rem;
+    border-right:1px solid var(--rule);
+  }
+  .sidenav h3 {
+    font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em;
+    color:var(--brand-muted); margin:1.5rem 0 0.45rem; font-weight:700;
+  }
+  :root[data-theme="dark"] .sidenav h3 { color:var(--faint); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sidenav h3 { color:var(--faint); } }
+  .sidenav h3:first-child { margin-top:0; }
+  .sidenav ul { list-style:none; margin:0; padding:0; }
+  .sidenav li a {
+    display:block; padding:0.26rem 0.6rem; margin-left:-0.6rem; border-radius:5px;
+    color:var(--muted); text-decoration:none; font-size:0.845rem;
+  }
+  .sidenav li a:hover { background:var(--sunken); color:var(--ink); }
+  .sidenav li a[aria-current="page"] { background:var(--accent-soft); color:var(--accent-ink); font-weight:600; }
+  .sidenav .sub { padding-left:0.8rem; border-left:1px solid var(--rule); margin-left:0.35rem; }
+  .sidenav .ops { margin:0.15rem 0 0.5rem 0.35rem; padding-left:0.8rem;
+                  border-left:1px solid var(--rule-strong); }
+  .sidenav .ops a { display:flex; gap:0.45rem; align-items:baseline; font-size:0.79rem; padding:0.2rem 0.5rem; }
+  .sidenav .ops .m { font-family:var(--mono); font-size:0.58rem; font-weight:700;
+                     letter-spacing:0.04em; min-width:2.1rem; color:var(--faint); }
+  .sidenav .ops a:hover .m { color:var(--accent); }
+
+  main { padding:0 0 6rem; min-width:0; }
+  /* Content is centred within the area right of the nav, with equal gutters.
+     Left-aligning it dumped every spare pixel on the right and read as
+     unbalanced next to Stripe. Section rules stay full-bleed. */
+  .inner { max-width:90rem; margin:0 auto; padding:0 2rem; }
+  .page-head { padding-top:2.25rem; padding-bottom:0.5rem; margin-bottom:0; }
+  .intro { padding:0 0 2.5rem; }
+  main > .prose { max-width:90rem; margin:0 auto; padding:0 2rem; }
+  .eyebrow { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.12em;
+             color:var(--brand-muted); font-weight:700; }
+  :root[data-theme="dark"] .eyebrow { color:var(--faint); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .eyebrow { color:var(--faint); } }
+  h1 { margin:0.35rem 0 0; font-size:1.8rem; font-weight:650;
+       letter-spacing:-0.025em; text-wrap:balance; color:var(--ink); }
+
+  /* ---- prose ---- */
+  .prose > *:first-child { margin-top:0; }
+  .prose p, .prose li { color:var(--muted); }
+  .prose p { margin:0 0 1rem; max-width:78ch; }
+  .prose h1,.prose h2,.prose h3,.prose h4 {
+    font-weight:650; color:var(--ink); letter-spacing:-0.018em;
+    margin:2rem 0 0.7rem; scroll-margin-top:calc(var(--bar) + 1rem);
+  }
+  .prose h1 { font-size:1.35rem; } .prose h2 { font-size:1.12rem; }
+  .prose h3 { font-size:0.98rem; } .prose h4 { font-size:0.9rem; }
+  .prose ul,.prose ol { margin:0 0 1rem; padding-left:1.25rem; }
+  .prose li { margin:0.25rem 0; }
+  .prose hr { border:0; border-top:1px solid var(--rule); margin:2rem 0; }
+  .prose blockquote {
+    margin:0 0 1rem; padding:0.6rem 0.9rem; border-left:3px solid var(--accent);
+    background:var(--accent-soft); border-radius:0 5px 5px 0; color:var(--muted);
+  }
+  .prose blockquote p:last-child { margin-bottom:0; }
+  .prose img { max-width:100%; height:auto; border-radius:6px; border:1px solid var(--rule); }
+  .prose table { border-collapse:collapse; width:100%; font-size:0.83rem; }
+  .prose th,.prose td { text-align:left; padding:0.55rem 0.9rem 0.55rem 0;
+                        border-bottom:1px solid var(--rule); vertical-align:top; color:var(--muted); }
+  .prose th { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.09em;
+              color:var(--brand-muted); font-weight:700; white-space:nowrap; }
+  .prose td:first-child { font-family:var(--mono); color:var(--ink); }
+  .table-scroll { overflow-x:auto; margin:0 0 1rem; }
+  .table-scroll table { min-width:38rem; }
+
+  code { font-family:var(--mono); font-size:0.86em; background:var(--sunken);
+         color:var(--accent-ink); padding:0.13em 0.38em; border-radius:4px; }
+  pre {
+    margin:0 0 1rem; background:var(--sunken); border:1px solid var(--rule);
+    border-radius:7px; padding:0.9rem 1rem;
+    font-family:var(--mono); font-size:0.79rem; line-height:1.6; color:var(--ink);
+    /* Wrap rather than scroll: bearer tokens and long JSON strings were being
+       clipped at the right edge with no indication anything was missing. */
+    white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;
+  }
+  pre code { background:none; padding:0; font-size:inherit; color:inherit; }
+  .codeblock { position:relative; }
+  .copy {
+    position:absolute; top:0.5rem; right:0.5rem; opacity:0; transition:opacity .12s;
+    font-size:0.66rem; letter-spacing:0.03em; font-family:inherit;
+    background:var(--raised); color:var(--muted); border:1px solid var(--rule-strong);
+    border-radius:4px; padding:0.22rem 0.5rem; cursor:pointer;
+  }
+  .codeblock:hover .copy, .copy:focus-visible { opacity:1; }
+
+  /* ---- API reference ---- */
+  .op { border-top:1px solid var(--rule); padding:3rem 0; margin:0;
+        scroll-margin-top:calc(var(--bar) + 1rem); }
+  .op-head { display:flex; align-items:baseline; gap:0.7rem; flex-wrap:wrap; margin-bottom:0.4rem; }
+  .op-head h2 { margin:0; font-size:1.15rem; font-weight:650; letter-spacing:-0.02em; }
+  .verb {
+    font-family:var(--mono); font-size:0.64rem; font-weight:700; letter-spacing:0.06em;
+    padding:0.17rem 0.42rem; border-radius:4px; color:#fff;
+  }
+  .verb.get{background:var(--get)} .verb.post{background:var(--post)}
+  .verb.put,.verb.patch{background:var(--put)} .verb.delete{background:var(--delete)}
+  :root[data-theme="dark"] .verb { color:#141019; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .verb { color:#141019; } }
+  .op-path { font-family:var(--mono); font-size:0.83rem; color:var(--accent-ink);
+             word-break:break-all; margin-bottom:0.9rem; }
+  .op-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:2rem; align-items:start; }
+  .op-grid.stacked { grid-template-columns:minmax(0,1fr); }
+  .panel { position:sticky; top:calc(var(--bar) + 1.5rem); }
+  .panel h4, .schema h4 {
+    font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em;
+    color:var(--brand-muted); font-weight:700; margin:0 0 0.45rem;
+  }
+  :root[data-theme="dark"] .panel h4, :root[data-theme="dark"] .schema h4 { color:var(--faint); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .panel h4,
+    :root:not([data-theme="light"]) .schema h4 { color:var(--faint); }
+  }
+  .schema { margin:1.3rem 0; }
+  .schema.nested {
+    margin:0.55rem 0 0.2rem; padding-left:0.9rem;
+    border-left:2px solid var(--rule-strong);
+  }
+  /* Identifier + flag + type on one line, description beneath at full width.
+     A three-column grid starved the description once anything nested. */
+  .prop { padding:0.6rem 0; border-bottom:1px solid var(--rule); }
+  .schema.nested .prop:last-child { border-bottom:0; padding-bottom:0.2rem; }
+  .prop-head { display:flex; align-items:baseline; gap:0.5rem; flex-wrap:wrap; }
+  .prop-name { font-family:var(--mono); font-size:0.83rem; color:var(--ink); font-weight:600; }
+  .prop-type { font-family:var(--mono); font-size:0.75rem; color:var(--accent); }
+  .prop-desc { color:var(--muted); font-size:0.83rem; margin-top:0.15rem; max-width:62ch; }
+  .prop-desc code { font-size:0.9em; }
+  .req { font-family:var(--mono); font-size:0.6rem; letter-spacing:0.06em;
+         color:var(--danger); text-transform:uppercase; font-weight:700; }
+  .tag { font-family:var(--mono); font-size:0.66rem; color:var(--faint); }
+  .op-md {
+    margin-left:auto; font-family:var(--mono); font-size:0.66rem; letter-spacing:0.05em;
+    color:var(--faint); text-decoration:none; border:1px solid var(--rule);
+    border-radius:4px; padding:0.15rem 0.42rem;
+  }
+  .op-md:hover { color:var(--accent); border-color:var(--accent); }
+
+  /* ---- code panels: dark in both themes, like Stripe ---- */
+  .cb { border-radius:8px; overflow:hidden; margin:0 0 0.9rem; border:1px solid #241A33; }
+  .cb-dark { background:#1C1428; }
+  .cb-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0.42rem 0.8rem; background:#160F20; border-bottom:1px solid #241A33;
+    font-family:var(--mono); font-size:0.63rem; text-transform:uppercase;
+    letter-spacing:0.11em; color:#9C8DB5;
+  }
+  .cb pre {
+    margin:0; background:transparent; border:0; border-radius:0;
+    padding:0.85rem 0.95rem; color:#E4DCF0; font-size:0.765rem; line-height:1.62;
+    white-space:pre-wrap; overflow-wrap:anywhere;
+  }
+  .cb .copy { background:#241A33; color:#B4A6C9; border-color:#33264a; }
+  .t-key  { color:#C4A6FF; }
+  .t-str  { color:#8FD9B6; }
+  .t-num  { color:#F2B880; }
+  .t-lit  { color:#F28FB0; }
+  .t-var  { color:#FFC107; }
+  .t-cmd  { color:#C4A6FF; font-weight:600; }
+  .t-flag { color:#8AA9D6; }
+  .t-url  { color:#8FD9B6; text-decoration:underline; text-decoration-color:#3d5a4d; }
+  .t-cm   { color:#7B6E90; font-style:italic; }
+
+  /* language tabs inside the code panel header */
+  .cb-head { gap:0.75rem; }
+  .langs { display:flex; gap:0.15rem; }
+  .lang {
+    font-family:var(--mono); font-size:0.62rem; letter-spacing:0.04em; cursor:pointer;
+    background:transparent; color:#8A7CA3; border:1px solid transparent;
+    border-radius:4px; padding:0.14rem 0.4rem; text-transform:none;
+  }
+  .lang:hover { color:#E4DCF0; }
+  .lang.on { background:#2C2140; color:#E4DCF0; border-color:#3B2D54; }
+  .lang-pane[hidden] { display:none; }
+
+  /* per-section toolbar: agent affordances */
+  .sec-tools { margin-left:auto; display:flex; gap:0.3rem; align-items:center; flex-wrap:wrap; }
+  .sec-btn {
+    font-size:0.68rem; letter-spacing:0.01em; font-family:inherit; cursor:pointer;
+    background:transparent; color:var(--faint); border:1px solid var(--rule);
+    border-radius:5px; padding:0.2rem 0.5rem; text-decoration:none; white-space:nowrap;
+  }
+  .sec-btn:hover { color:var(--accent); border-color:var(--accent); }
+  .sec-btn.done { color:var(--post); border-color:var(--post); }
+
+  /* ---- search ---- */
+  dialog#search {
+    border:1px solid var(--rule-strong); border-radius:11px; padding:0; width:min(38rem,92vw);
+    background:var(--raised); color:var(--ink); box-shadow:0 24px 60px rgba(58,23,104,.24);
+  }
+  dialog#search::backdrop { background:rgba(34,17,58,.45); }
+  #search input {
+    width:100%; border:0; border-bottom:1px solid var(--rule); background:transparent;
+    color:var(--ink); font-family:inherit; font-size:0.95rem; padding:0.95rem 1.05rem; outline:none;
+  }
+  #results { list-style:none; margin:0; padding:0.4rem; max-height:22rem; overflow-y:auto; }
+  #results li a { display:block; padding:0.5rem 0.65rem; border-radius:6px; text-decoration:none; color:var(--ink); }
+  #results li a:hover, #results li a.on { background:var(--accent-soft); }
+  #results .r-kind { font-family:var(--mono); font-size:0.62rem; text-transform:uppercase;
+                     letter-spacing:0.09em; color:var(--brand-muted); }
+  #results .r-ctx { color:var(--muted); font-size:0.78rem; }
+  #results .empty { padding:1rem; color:var(--faint); font-size:0.85rem; }
+
+
+  /* status badge, e.g. Beta */
+  .badge {
+    display:inline-block; font-family:var(--mono); font-size:0.64rem; font-weight:700;
+    letter-spacing:0.09em; text-transform:uppercase; padding:0.2rem 0.55rem;
+    border-radius:999px; vertical-align:middle;
+  }
+  .badge-beta { color:#8A6100; background:#FFF6D9; border:1px solid #F0D68A; }
+  :root[data-theme="dark"] .badge-beta { color:#F0C34B; background:#2A2313; border-color:#4A3D18; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .badge-beta { color:#F0C34B; background:#2A2313; border-color:#4A3D18; }
+  }
+  .prose p:has(> .badge:only-child) { margin-bottom:1.4rem; }
+
+  /* per-client tabs */
+  .tabs { margin:0 0 1.6rem; }
+  .tab-bar { display:flex; gap:0.1rem; flex-wrap:wrap; border-bottom:1px solid var(--rule); margin-bottom:1.2rem; }
+  .tab-bar button {
+    font-family:inherit; font-size:0.86rem; cursor:pointer; background:transparent;
+    color:var(--muted); border:0; border-bottom:2px solid transparent;
+    padding:0.55rem 0.9rem; margin-bottom:-1px; border-radius:0;
+  }
+  .tab-bar button:hover { color:var(--ink); }
+  .tab-bar button[aria-selected="true"] {
+    color:var(--accent-ink); border-bottom-color:var(--accent); font-weight:600;
+  }
+  .tab-pane[hidden] { display:none; }
+
+  /* Prose code blocks get the same dark treatment as the API panels, with a
+     labelled header -- a washed-out inline block reads as an afterthought next
+     to the reference pages. */
+  .prose .cb { margin:0 0 1.2rem; }
+  .cb-head .cb-lang { color:#9C8DB5; }
+  .cb-copy {
+    font-family:var(--mono); font-size:0.62rem; letter-spacing:0.05em; cursor:pointer;
+    background:transparent; color:#9C8DB5; border:1px solid #33264a;
+    border-radius:4px; padding:0.14rem 0.45rem;
+  }
+  .cb-copy:hover { color:#E4DCF0; border-color:#4B3A68; }
+
+  footer { border-top:1px solid var(--rule); margin-top:0; padding:1.75rem 0 3rem;
+           color:var(--faint); font-size:0.79rem; }
+  footer div { max-width:90rem; margin:0 auto; padding:0 2rem; }
+
+  @media (max-width:64rem) {
+    .shell { grid-template-columns:minmax(0,1fr); gap:0; }
+    .sidenav { position:static; max-height:none; padding:1.25rem 1.25rem;
+               border-right:0; border-bottom:1px solid var(--rule); }
+    main { padding:0 0 4rem; }
+    .inner, main > .prose, footer div { padding:0 1.25rem; }
+    .op { padding:2rem 0; }
+    .sidenav ul { display:grid; grid-template-columns:repeat(auto-fill,minmax(12rem,1fr)); }
+    .op-grid { grid-template-columns:minmax(0,1fr); }
+    .panel { position:static; }
+    .bar nav { display:none; }
+  }
+  @media (prefers-reduced-motion:reduce) { * { transition:none !important; scroll-behavior:auto !important; } }
+</style>
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="../index.html">payout <span>/ developers</span></a>
+  <nav><a href='../index.html'>Overview</a><a href='../api/payment.html'>API</a><a href='../mcp.html'>MCP</a></nav>
+  <button class="toolbtn" id="search-open" aria-label="Search"><span>Search</span><kbd>⌘K</kbd></button>
+  <button class="toolbtn" id="theme-toggle" title="Theme">auto</button>
+</header>
+
+<div class="shell">
+  <aside class="sidenav"><h3>API reference</h3><ul><li><a href="../api/banklink.html">Payout Banklink API</a></li><li><a href="../api/intel.html">Payout Intel API</a></li><li><a href="../api/payment.html">Payout Payment API</a></li><li><a href="../api/payout-id.html">PayoutID OAuth2</a></li><li><a href="../api/psd2.html">Payout OpenBanking PSD2 API</a></li></ul><h3>Agents</h3><ul><li><a href="../mcp.html">MCP server</a></li></ul><h3>Guides</h3><ul><li><a href="../guides/home.html">Home</a></li><li><a href="../guides/apis.html">API References</a></li><li><a href="../guides/services.html">Services</a></li><li><a href="../guides/payout-id.html">PayoutID (OIDC and Identity verification)</a></li><li class="sub"><a href="../guides/payout-id-oauth.html">OAuth2</a></li><li class="sub"><a href="../guides/payout-id-oauth-new.html">OAuth2 New</a></li><li class="sub"><a href="../guides/payout-id-banklink.html">Banklink</a></li><li class="sub"><a href="../guides/payout-id-identity-verification.html">Identity verification</a></li><li><a href="../guides/banklink.html">Banklink (OpenBanking Aggregator)</a></li><li><a href="../guides/psd2.html">OpenBanking PSD2 API</a></li><li><a href="../guides/certificates.html">Server-to-Server APIs (mTLS)</a></li><li class="sub"><a href="../guides/m2m.html">M2M Withdrawals</a></li><li class="sub"><a href="../guides/vop.html">Verification of Payee</a></li><li><a href="../guides/verification.html">IBAN Ownership Verification (Banklink)</a></li><li><a href="../guides/payment-gateway.html">Payment Gateway</a></li><li class="sub"><a href="../guides/payment-gateway-integrations.html">Integrations</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-simple-payment.html">Simple payment</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-refund.html">Refund</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-withdrawal.html">Withdrawal</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-store-card.html">Store card</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-recurrent-payment.html">Recurrent payment</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-apple-pay-js.html">Apple Pay JS</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-checkout-payment-methods.html">Checkout payment methods</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-capture.html">Capture &amp; Cancel</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-checkout-verification-webhook.html">Checkout Verification Webhook</a></li><li class="sub"><a href="../guides/payment-gateway-use-cases-payment-instructions.html">Payment instructions (manual bank transfer)</a></li><li><a href="../guides/fraudnet-fl-client.html">FraudNet Federated Learning</a></li></ul></aside>
+  <main>
+    <div class="page-head">
+      <div class="eyebrow">Guide</div>
+      <h1>Identity verification</h1>
+    </div>
+    <div class="prose"><h1 id="identity-verification">Identity verification</h1>
+<blockquote>
+<p>[!NOTE]
+This API is still heavily developed and can change in next release</p>
+</blockquote>
+<p>PayoutID also provides identity verification and AML. It uses custom endpoint which will return redirect to start user verifications. After user provides all required data, he is redirected back to client. Since we get results from some checks asynchronously, result is delivered as webhook. This api requires to retrieve access token with <code>verify</code> scope. In case you want to ask for account details, <code>account_info</code> scope is required. For AML <code>aml</code> scope is required.</p>
+<p>Process is as follows:</p>
+<ol>
+<li>retrieve access token</li>
+<li>retrieve redirect from verification invitation endpoint</li>
+<li>redirect user to retrieve redirect uri</li>
+<li>wait for webhook</li>
+</ol>
+<p>Whole process can be on following diagram:</p>
+<p><img alt="Payout ID verification diagram" src="../_media/payout-id-verification.png" /></p>
+<p>Documentation for verification invitation endpoint can be found <a href="https://documenter.getpostman.com/view/10478778/2s9YsFDYzn#08658c94-347c-448d-9b16-8c7cfcb0f3d0">here</a></p>
+<h2 id="retrieving-access-token">Retrieving access token</h2>
+<p>You need to retrieve this token using <code>client credentials grant</code>, with required scope <code>verify</code> and optional scopes <code>account_info</code>, in case you want to retrieve client bank account details, and <code>aml</code> in case you want to retrieve list where verified user is present. <a href="https://documenter.getpostman.com/view/10478778/2s9YsFDYzn#f885ffae-52a8-47b8-86e1-decceb9fec2c">Here</a> you will find documentation for access token endpoint.</p>
+<h2 id="webhooks">Webhooks</h2>
+<p>After data is collected, it is sent to the client using webhooks. There are two types of webhooks:
+1. Identity verification webhook (sent to <code>notify_url</code>)
+2. AML check webhook (sent to <code>aml_notify_url</code>)</p>
+<p>Both webhooks are signed and clients should verify signatures to prevent fraudulent calls. Webhooks are delivered using <code>POST</code> method.</p>
+<h3 id="identity-verification-webhook">Identity Verification Webhook</h3>
+<p>This webhook contains the result of identity verification and bank account details (if requested). It is sent to the URL provided as <code>notify_url</code> in the invitation request.</p>
+<h4 id="attributes">Attributes</h4>
+<p>Webhook will contain following attributes:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>path</th>
+<th>type</th>
+<th>required</th>
+<th>example</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>type</td>
+<td>string</td>
+<td>yes</td>
+<td>IDENTITY_CHECK</td>
+<td>Webhook Type</td>
+</tr>
+<tr>
+<td>data</td>
+<td>object</td>
+<td>yes</td>
+<td>-</td>
+<td>contains all data</td>
+</tr>
+<tr>
+<td>data/id</td>
+<td>string</td>
+<td>yes</td>
+<td>"edf29e60-45a5-463b-b120-033e835df3ce"</td>
+<td>identificator of invitation, should be same as in invitation create response</td>
+</tr>
+<tr>
+<td>data/provided_email</td>
+<td>string</td>
+<td>yes</td>
+<td>"john.doe@example.com"</td>
+<td>email provided by user</td>
+</tr>
+<tr>
+<td>data/provided_name</td>
+<td>string</td>
+<td>yes</td>
+<td>"John"</td>
+<td>user provided first name</td>
+</tr>
+<tr>
+<td>data/provided_surname</td>
+<td>string</td>
+<td>yes</td>
+<td>"Doe"</td>
+<td>user provided last name</td>
+</tr>
+<tr>
+<td>data/provided_is_sanctioned</td>
+<td>boolean</td>
+<td>yes</td>
+<td>false</td>
+<td>user answer to question if he is on sanction list</td>
+</tr>
+<tr>
+<td>data/provided_is_pep</td>
+<td>boolean</td>
+<td>yes</td>
+<td>false</td>
+<td>user answer to question if he is politicaly exposed person</td>
+</tr>
+<tr>
+<td>data/identity_verification_failed</td>
+<td>boolean</td>
+<td>yes</td>
+<td>false</td>
+<td>indicates that identity verification failed</td>
+</tr>
+<tr>
+<td>data/bank_account_owner_name</td>
+<td>string or null</td>
+<td>yes</td>
+<td>"John Doe"</td>
+<td>retrieved account owner name from bank, is null in case we failed to retrieve or invitation did not requested bank account details</td>
+</tr>
+<tr>
+<td>data/bank_account_requested</td>
+<td>boolean</td>
+<td>yes</td>
+<td>false</td>
+<td>indicates that when this identity verification was created, bank account owner name retrieval was requested</td>
+</tr>
+<tr>
+<td>data/bank_account_unsupported_integration</td>
+<td>boolean</td>
+<td>yes</td>
+<td>false</td>
+<td>indicates that user choosed that hi does not have account in integrated banks</td>
+</tr>
+<tr>
+<td>data/bank_account_iban</td>
+<td>string or null</td>
+<td>yes</td>
+<td>null</td>
+<td>retrieved IBAN from bank, null in case user don't provide access or retrieval was not requested</td>
+</tr>
+<tr>
+<td>data/document_type</td>
+<td>string</td>
+<td>no</td>
+<td>"ID_CARD"</td>
+<td>which kind of document user used to finish verification, one of <a href="#document-types">document types</a></td>
+</tr>
+<tr>
+<td>data/suspicion_reasons</td>
+<td>array of strings</td>
+<td>no</td>
+<td>["FACE_SUSPECTED"]</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/client_ip</td>
+<td>string</td>
+<td>no</td>
+<td>"95.103.174.26"</td>
+<td>User system IP address</td>
+</tr>
+<tr>
+<td>data/client_ip_country</td>
+<td>string</td>
+<td>no</td>
+<td>"SK"</td>
+<td>User IP address country code</td>
+</tr>
+<tr>
+<td>data/client_location</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>Information about location by clients IP address</td>
+</tr>
+<tr>
+<td>data/finish_time</td>
+<td>string</td>
+<td>no</td>
+<td>"2023-12-07T13:16:44Z"</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/document_valid_until</td>
+<td>string</td>
+<td>no</td>
+<td>"2023-12-13"</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/auto_document</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/overall</td>
+<td>string</td>
+<td>no</td>
+<td>"APPROVED"</td>
+<td>Finall status of verification can be one of APPROVED, SUSPECTED or DENIED</td>
+</tr>
+<tr>
+<td>data/fraud_tags</td>
+<td>array of strings</td>
+<td>no</td>
+<td>[]</td>
+<td>Descrbe suspicion reasons in case overall is SUSPECTED</td>
+</tr>
+<tr>
+<td>data/start_time</td>
+<td>string</td>
+<td>no</td>
+<td>"2023-12-07T13:16:44Z"</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/auto_face</td>
+<td>string</td>
+<td>no</td>
+<td>"FACE_MATCH"</td>
+<td>Describe result of automatic photo face recognition</td>
+</tr>
+<tr>
+<td>data/aditional_steps</td>
+<td>-</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/document_number</td>
+<td>string</td>
+<td>no</td>
+<td>"DE4878783"</td>
+<td>Number of document of the user</td>
+</tr>
+<tr>
+<td>data/document_front_url</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>URL to download front photo of used document. URL will expire in one hour.</td>
+</tr>
+<tr>
+<td>data/document_back_url</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>URL to download back photo of used document. URL will expire in one hour.</td>
+</tr>
+<tr>
+<td>data/document_first_name</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>First name scanned from the document</td>
+</tr>
+<tr>
+<td>data/document_last_name</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>Last name scanned from the document</td>
+</tr>
+<tr>
+<td>data/document_sex</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td></td>
+</tr>
+<tr>
+<td>data/document_nationality</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>Nationality scanned from the document</td>
+</tr>
+<tr>
+<td>data/document_issuing_country</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>Issuing country of the document</td>
+</tr>
+<tr>
+<td>data/document_birth_place</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>Birth place scanned from the document</td>
+</tr>
+<tr>
+<td>data/document_personal_code</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>Personal code scanned from the document</td>
+</tr>
+<tr>
+<td>data/document_date_of_birth</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>Date of birth scanned from the document</td>
+</tr>
+<tr>
+<td>data/photo_face_url</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>URL download face photo of user. URL will expire in one hour.</td>
+</tr>
+<tr>
+<td>data/platform</td>
+<td>string</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/manual_face</td>
+<td>string</td>
+<td>no</td>
+<td>"FACE_MATCH"</td>
+<td>Result of manual examination of photos</td>
+</tr>
+<tr>
+<td>data/mismatch_tags</td>
+<td>array of strings</td>
+<td>no</td>
+<td>[]</td>
+<td>List of mismatched attributes from document</td>
+</tr>
+<tr>
+<td>data/manual_document</td>
+<td>string</td>
+<td>no</td>
+<td>"DOC_VALIDATED"</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_requested</td>
+<td>boolean</td>
+<td>no</td>
+<td>false</td>
+<td>If also AML checks are required</td>
+</tr>
+<tr>
+<td>data/aml_request_failed</td>
+<td>boolean</td>
+<td>no</td>
+<td>false</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_error_message</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_status_service_suspected</td>
+<td>boolean</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_status_service_used</td>
+<td>boolean</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_status_service_found</td>
+<td>boolean</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_status_check_successfull</td>
+<td>boolean</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_status_overall</td>
+<td>string</td>
+<td>no</td>
+<td>"SUSPECTED"</td>
+<td>Overall result of check</td>
+</tr>
+<tr>
+<td>data/aml_error_message</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_uid</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_items</td>
+<td>array of <a href="#aml-item">AML Item</a></td>
+<td>no</td>
+<td>[]</td>
+<td>-</td>
+</tr>
+<tr>
+<td>signature</td>
+<td>string</td>
+<td>yes</td>
+<td>-</td>
+<td>Signature to verify origin of the returned data</td>
+</tr>
+<tr>
+<td>nonce</td>
+<td>string</td>
+<td>yes</td>
+<td>-</td>
+<td>Used to sign data</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="document-types">Document types</h4>
+<ul>
+<li>ID_CARD</li>
+<li>PASSPORT</li>
+<li>RESIDENCE_PERMIT</li>
+<li>DRIVER_LICENSE</li>
+<li>PAN_CARD</li>
+<li>AADHAAR</li>
+<li>OTHER</li>
+<li>VISA</li>
+<li>BORDER_CROSSING</li>
+<li>ASYLUM</li>
+<li>NATIONAL_PASSPORT</li>
+<li>INTERNATIONAL_PASSPORT</li>
+<li>PROVISIONAL_DRIVER_LICENSE</li>
+<li>VOTER_CARD</li>
+<li>OLD_ID_CARD</li>
+<li>TRAVEL_CARD</li>
+<li>PHOTO_CARD</li>
+<li>MILITARY_CARD</li>
+<li>PROOF_OF_AGE_CARD</li>
+<li>DIPLOMATIC_ID</li>
+</ul>
+<h3 id="aml-check-webhook">AML Check Webhook</h3>
+<p>This webhook contains AML check results. It is sent to the URL provided as <code>aml_notify_url</code> in the invitation request. Multiple AML check webhooks might be delivered for a single invitation as the monitoring continues.</p>
+<h4 id="attributes_1">Attributes</h4>
+<p>Webhook will contain following attributes:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>path</th>
+<th>type</th>
+<th>required</th>
+<th>example</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>type</td>
+<td>string</td>
+<td>yes</td>
+<td>AML_CHECK</td>
+<td>Webhook Type</td>
+</tr>
+<tr>
+<td>data</td>
+<td>object</td>
+<td>yes</td>
+<td>-</td>
+<td>contains all data</td>
+</tr>
+<tr>
+<td>data/id</td>
+<td>string</td>
+<td>yes</td>
+<td>"edf29e60-45a5-463b-b120-033e835df3ce"</td>
+<td>identificator of invitation, should be same as in invitation create response</td>
+</tr>
+<tr>
+<td>data/aml_request_failed</td>
+<td>boolean</td>
+<td>no</td>
+<td>false</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_error_message</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_status_service_suspected</td>
+<td>boolean</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_status_service_used</td>
+<td>boolean</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_status_service_found</td>
+<td>boolean</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_status_check_successfull</td>
+<td>boolean</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_status_overall</td>
+<td>string</td>
+<td>no</td>
+<td>"SUSPECTED"</td>
+<td>Overall result of check</td>
+</tr>
+<tr>
+<td>data/aml_error_message</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_uid</td>
+<td>string</td>
+<td>no</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>data/aml_items</td>
+<td>array of <a href="#aml-item">AML Item</a></td>
+<td>no</td>
+<td>[]</td>
+<td>-</td>
+</tr>
+<tr>
+<td>signature</td>
+<td>string</td>
+<td>yes</td>
+<td>-</td>
+<td>Signature to verify origin of the returned data</td>
+</tr>
+<tr>
+<td>nonce</td>
+<td>string</td>
+<td>yes</td>
+<td>-</td>
+<td>Used to sign data</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="aml-item">AML Item</h4>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>path</th>
+<th>type</th>
+<th>required</th>
+<th>example</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>yes</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>surname</td>
+<td>string</td>
+<td>yes</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>reason</td>
+<td>string</td>
+<td>yes</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>nationality</td>
+<td>string</td>
+<td>yes</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>dob</td>
+<td>string</td>
+<td>yes</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>suspicion</td>
+<td>string</td>
+<td>yes</td>
+<td>"PEPS"</td>
+<td>One of PEPS, SANCTION, INTERPOL or OTHER</td>
+</tr>
+<tr>
+<td>list_number</td>
+<td>string</td>
+<td>yes</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>list_name</td>
+<td>string</td>
+<td>yes</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>score</td>
+<td>integer</td>
+<td>yes</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>last_update</td>
+<td>date</td>
+<td>yes</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>is_person</td>
+<td>boolean</td>
+<td>yes</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>is_active</td>
+<td>boolean</td>
+<td>yes</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>linked_document</td>
+<td>string</td>
+<td>yes</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>other_information</td>
+<td>string</td>
+<td>yes</td>
+<td>-</td>
+<td>-</td>
+</tr>
+<tr>
+<td>checked_at</td>
+<td>string</td>
+<td>yes</td>
+<td>-</td>
+<td>-</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="examples">Examples</h3>
+<p>Successful Identity Verification Webhook:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;data&quot;</span>: {
+    <span class="t-key">&quot;provided_email&quot;</span>: <span class="t-str">&quot;test@test.ti&quot;</span>,
+    <span class="t-key">&quot;id&quot;</span>: <span class="t-str">&quot;13b0f350-e208-4440-8f7c-cdae9d597f6d&quot;</span>,
+    <span class="t-key">&quot;document_type&quot;</span>: <span class="t-str">&quot;PASSPORT&quot;</span>,
+    <span class="t-key">&quot;identity_verification_failed&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;client_ip&quot;</span>: <span class="t-str">&quot;177.77.77.196&quot;</span>,
+    <span class="t-key">&quot;bank_account_requested&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;finish_time&quot;</span>: <span class="t-str">&quot;2023-12-07T13:16:44Z&quot;</span>,
+    <span class="t-key">&quot;suspicion_reasons&quot;</span>: [],
+    <span class="t-key">&quot;document_valid_until&quot;</span>: <span class="t-str">&quot;2024-03-09&quot;</span>,
+    <span class="t-key">&quot;auto_document&quot;</span>: <span class="t-str">&quot;DOC_VALIDATED&quot;</span>,
+    <span class="t-key">&quot;overall&quot;</span>: <span class="t-str">&quot;APPROVED&quot;</span>,
+    <span class="t-key">&quot;fraud_tags&quot;</span>: [],
+    <span class="t-key">&quot;provided_is_sanctioned&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;document_birth_place&quot;</span>: <span class="t-str">&quot;LONDON&quot;</span>,
+    <span class="t-key">&quot;document_first_name&quot;</span>: <span class="t-str">&quot;JOHN&quot;</span>,
+    <span class="t-key">&quot;document_nationality&quot;</span>: <span class="t-str">&quot;NL&quot;</span>,
+    <span class="t-key">&quot;document_personal_code&quot;</span>: <span class="t-str">&quot;801012/8420&quot;</span>,
+    <span class="t-key">&quot;document_date_of_birth&quot;</span>: <span class="t-str">&quot;1980-10-12&quot;</span>,
+    <span class="t-key">&quot;start_time&quot;</span>: <span class="t-str">&quot;2023-12-07T13:16:44Z&quot;</span>,
+    <span class="t-key">&quot;document_last_name&quot;</span>: <span class="t-str">&quot;DOE&quot;</span>,
+    <span class="t-key">&quot;auto_face&quot;</span>: <span class="t-str">&quot;FACE_MATCH&quot;</span>,
+    <span class="t-key">&quot;document_issuing_country&quot;</span>: <span class="t-str">&quot;NL&quot;</span>,
+    <span class="t-key">&quot;aditional_steps&quot;</span>: <span class="t-lit">null</span>,
+    <span class="t-key">&quot;provided_surname&quot;</span>: <span class="t-str">&quot;Doe&quot;</span>,
+    <span class="t-key">&quot;bank_account_unsupported_integration&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;document_number&quot;</span>: <span class="t-str">&quot;DE4878783&quot;</span>,
+    <span class="t-key">&quot;platform&quot;</span>: <span class="t-str">&quot;PC&quot;</span>,
+    <span class="t-key">&quot;document_back_url&quot;</span>: <span class="t-str">&quot;http://localhost:9000/payout-id/identity_verifications/0dc0ceea-1a7d-4f66-abb6-7eb653b1411e/document_back.png?response-content-disposition=attachment&amp;X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=kc8AJeOICZodU2ZahIXP%2F20241101%2Flocal%2Fs3%2Faws4_request&amp;X-Amz-Date=20241101T113901Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=ce9c49cd6a11ef0e41d1f79ab794a1b6fc04506ee053bbff6039796ae9952833&quot;</span>,
+    <span class="t-key">&quot;manual_face&quot;</span>: <span class="t-str">&quot;FACE_MATCH&quot;</span>,
+    <span class="t-key">&quot;client_ip_country&quot;</span>: <span class="t-str">&quot;LT&quot;</span>,
+    <span class="t-key">&quot;client_location&quot;</span>: <span class="t-str">&quot;Kaunas, Lithuania&quot;</span>,
+    <span class="t-key">&quot;bank_account_iban&quot;</span>: <span class="t-lit">null</span>,
+    <span class="t-key">&quot;document_sex&quot;</span>: <span class="t-str">&quot;MALE&quot;</span>,
+    <span class="t-key">&quot;provided_name&quot;</span>: <span class="t-str">&quot;John&quot;</span>,
+    <span class="t-key">&quot;mismatch_tags&quot;</span>: [],
+    <span class="t-key">&quot;document_front_url&quot;</span>: <span class="t-str">&quot;http://localhost:9000/payout-id/identity_verifications/0dc0ceea-1a7d-4f66-abb6-7eb653b1411e/document_front.png?response-content-disposition=attachment&amp;X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=kc8AJeOICZodU2ZahIXP%2F20241101%2Flocal%2Fs3%2Faws4_request&amp;X-Amz-Date=20241101T113901Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=3e11e28fd977974d6115e2722fd25a81a67336e4b2dfecd21ceb8e477a3cfcb7&quot;</span>,
+    <span class="t-key">&quot;photo_face_url&quot;</span>: <span class="t-str">&quot;http://localhost:9000/payout-id/identity_verifications/0dc0ceea-1a7d-4f66-abb6-7eb653b1411e/photo_face.png?response-content-disposition=attachment&amp;X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=kc8AJeOICZodU2ZahIXP%2F20241101%2Flocal%2Fs3%2Faws4_request&amp;X-Amz-Date=20241101T113901Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=abae5f1cb3b2e19a7145b98339ec0b66c132fd2e59dc19271a48cb1f15acaf48&quot;</span>,
+    <span class="t-key">&quot;provided_is_pep&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;bank_account_owner_name&quot;</span>: <span class="t-lit">null</span>,
+    <span class="t-key">&quot;manual_document&quot;</span>: <span class="t-str">&quot;DOC_VALIDATED&quot;</span>
+  },
+  <span class="t-key">&quot;nonce&quot;</span>: <span class="t-str">&quot;YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5&quot;</span>,
+  <span class="t-key">&quot;signature&quot;</span>: <span class="t-str">&quot;73c9842f5512e1cba56c22b6522efa76d55cadb87f5b9d440e5b459ab4ff4e96&quot;</span>
+}
+</code></pre></div>
+<p>In case of failed verification this is returned</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;data&quot;</span>: {
+    <span class="t-key">&quot;bank_account_iban&quot;</span>: <span class="t-lit">null</span>,
+    <span class="t-key">&quot;bank_account_owner_name&quot;</span>: <span class="t-lit">null</span>,
+    <span class="t-key">&quot;bank_account_requested&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;bank_account_unsupported_integration&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;id&quot;</span>: <span class="t-str">&quot;ac286ff1-4e3c-41c7-ab00-127605583d36&quot;</span>,
+    <span class="t-key">&quot;identity_verification_failed&quot;</span>: <span class="t-lit">true</span>,
+    <span class="t-key">&quot;provided_email&quot;</span>: <span class="t-str">&quot;john.doe@example.com&quot;</span>,
+    <span class="t-key">&quot;provided_is_pep&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;provided_is_sanctioned&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;provided_name&quot;</span>: <span class="t-str">&quot;John&quot;</span>,
+    <span class="t-key">&quot;provided_surname&quot;</span>: <span class="t-str">&quot;Doe&quot;</span>
+  },
+  <span class="t-key">&quot;nonce&quot;</span>: <span class="t-str">&quot;YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5&quot;</span>,
+  <span class="t-key">&quot;signature&quot;</span>: <span class="t-str">&quot;4253a96ed056105a1bc1472771d2db34e19f4777f4c8541d368e06ab57a1c33a&quot;</span>
+}
+</code></pre></div>
+<p>Webhook when also account details are returned:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;data&quot;</span>: {
+    <span class="t-key">&quot;provided_email&quot;</span>: <span class="t-str">&quot;email@example.com&quot;</span>,
+    <span class="t-key">&quot;id&quot;</span>: <span class="t-str">&quot;d4130224-cab4-4b22-b8bc-d38f0a333b4a&quot;</span>,
+    <span class="t-key">&quot;document_type&quot;</span>: <span class="t-str">&quot;PASSPORT&quot;</span>,
+    <span class="t-key">&quot;identity_verification_failed&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;client_ip&quot;</span>: <span class="t-str">&quot;177.77.77.196&quot;</span>,
+    <span class="t-key">&quot;bank_account_requested&quot;</span>: <span class="t-lit">true</span>,
+    <span class="t-key">&quot;finish_time&quot;</span>: <span class="t-str">&quot;2023-12-07T13:16:44Z&quot;</span>,
+    <span class="t-key">&quot;suspicion_reasons&quot;</span>: [],
+    <span class="t-key">&quot;document_valid_until&quot;</span>: <span class="t-str">&quot;2024-03-09&quot;</span>,
+    <span class="t-key">&quot;auto_document&quot;</span>: <span class="t-str">&quot;DOC_VALIDATED&quot;</span>,
+    <span class="t-key">&quot;overall&quot;</span>: <span class="t-str">&quot;APPROVED&quot;</span>,
+    <span class="t-key">&quot;fraud_tags&quot;</span>: [],
+    <span class="t-key">&quot;provided_is_sanctioned&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;document_birth_place&quot;</span>: <span class="t-str">&quot;LONDON&quot;</span>,
+    <span class="t-key">&quot;document_first_name&quot;</span>: <span class="t-str">&quot;JOHN&quot;</span>,
+    <span class="t-key">&quot;document_nationality&quot;</span>: <span class="t-str">&quot;NL&quot;</span>,
+    <span class="t-key">&quot;document_personal_code&quot;</span>: <span class="t-str">&quot;801012/8420&quot;</span>,
+    <span class="t-key">&quot;document_date_of_birth&quot;</span>: <span class="t-str">&quot;1980-10-12&quot;</span>,
+    <span class="t-key">&quot;start_time&quot;</span>: <span class="t-str">&quot;2023-12-07T13:16:44Z&quot;</span>,
+    <span class="t-key">&quot;document_last_name&quot;</span>: <span class="t-str">&quot;DOE&quot;</span>,
+    <span class="t-key">&quot;auto_face&quot;</span>: <span class="t-str">&quot;FACE_MATCH&quot;</span>,
+    <span class="t-key">&quot;document_issuing_country&quot;</span>: <span class="t-str">&quot;NL&quot;</span>,
+    <span class="t-key">&quot;aditional_steps&quot;</span>: <span class="t-lit">null</span>,
+    <span class="t-key">&quot;provided_surname&quot;</span>: <span class="t-str">&quot;Priezvisko4&quot;</span>,
+    <span class="t-key">&quot;bank_account_unsupported_integration&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;document_number&quot;</span>: <span class="t-str">&quot;DE4878783&quot;</span>,
+    <span class="t-key">&quot;platform&quot;</span>: <span class="t-str">&quot;PC&quot;</span>,
+    <span class="t-key">&quot;document_back_url&quot;</span>: <span class="t-str">&quot;http://localhost:9000/payout-id/identity_verifications/ec00b1c5-d3f3-4977-8d1d-15e55f62c91c/document_back.png?response-content-disposition=attachment&amp;X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=kc8AJeOICZodU2ZahIXP%2F20241101%2Flocal%2Fs3%2Faws4_request&amp;X-Amz-Date=20241101T115451Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=f92536362175c599694ce37dcc405b409d44d31a6f8bcd8a240a598157692f0a&quot;</span>,
+    <span class="t-key">&quot;manual_face&quot;</span>: <span class="t-str">&quot;FACE_MATCH&quot;</span>,
+    <span class="t-key">&quot;client_ip_country&quot;</span>: <span class="t-str">&quot;LT&quot;</span>,
+    <span class="t-key">&quot;client_location&quot;</span>: <span class="t-str">&quot;Kaunas, Lithuania&quot;</span>,
+    <span class="t-key">&quot;bank_account_iban&quot;</span>: <span class="t-str">&quot;SK5111110000000002314003&quot;</span>,
+    <span class="t-key">&quot;document_sex&quot;</span>: <span class="t-str">&quot;MALE&quot;</span>,
+    <span class="t-key">&quot;provided_name&quot;</span>: <span class="t-str">&quot;Meno4&quot;</span>,
+    <span class="t-key">&quot;mismatch_tags&quot;</span>: [],
+    <span class="t-key">&quot;document_front_url&quot;</span>: <span class="t-str">&quot;http://localhost:9000/payout-id/identity_verifications/ec00b1c5-d3f3-4977-8d1d-15e55f62c91c/document_front.png?response-content-disposition=attachment&amp;X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=kc8AJeOICZodU2ZahIXP%2F20241101%2Flocal%2Fs3%2Faws4_request&amp;X-Amz-Date=20241101T115451Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=2a4895e6b29d8d80a2fc26a3688564f8fb6db9a9b3d498a4a24788102203a5ef&quot;</span>,
+    <span class="t-key">&quot;photo_face_url&quot;</span>: <span class="t-str">&quot;http://localhost:9000/payout-id/identity_verifications/ec00b1c5-d3f3-4977-8d1d-15e55f62c91c/photo_face.png?response-content-disposition=attachment&amp;X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=kc8AJeOICZodU2ZahIXP%2F20241101%2Flocal%2Fs3%2Faws4_request&amp;X-Amz-Date=20241101T115451Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=4ff557d7dd529b32cf544cea71f2d15d6d2aac7d2d9968c6d78d8a6cab7064cd&quot;</span>,
+    <span class="t-key">&quot;provided_is_pep&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;bank_account_owner_name&quot;</span>: <span class="t-str">&quot;Rostislav Stefanik&quot;</span>,
+    <span class="t-key">&quot;manual_document&quot;</span>: <span class="t-str">&quot;DOC_VALIDATED&quot;</span>
+  },
+  <span class="t-key">&quot;nonce&quot;</span>: <span class="t-str">&quot;YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5&quot;</span>,
+  <span class="t-key">&quot;signature&quot;</span>: <span class="t-str">&quot;8e4c1f2a9b3d567890e12345f6789abcd0123456789abcdef0123456789abcdef&quot;</span>
+}
+</code></pre></div>
+<p>Webhook in case user chooses that he does not have account in any of supported banks:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;data&quot;</span>: {
+    <span class="t-key">&quot;provided_email&quot;</span>: <span class="t-str">&quot;email@example.com&quot;</span>,
+    <span class="t-key">&quot;id&quot;</span>: <span class="t-str">&quot;f28da883-b68d-46ce-ab00-0a8a88f15f72&quot;</span>,
+    <span class="t-key">&quot;document_type&quot;</span>: <span class="t-str">&quot;PASSPORT&quot;</span>,
+    <span class="t-key">&quot;identity_verification_failed&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;client_ip&quot;</span>: <span class="t-str">&quot;177.77.77.196&quot;</span>,
+    <span class="t-key">&quot;bank_account_requested&quot;</span>: <span class="t-lit">true</span>,
+    <span class="t-key">&quot;finish_time&quot;</span>: <span class="t-str">&quot;2023-12-07T13:16:44Z&quot;</span>,
+    <span class="t-key">&quot;suspicion_reasons&quot;</span>: [],
+    <span class="t-key">&quot;document_valid_until&quot;</span>: <span class="t-str">&quot;2024-03-09&quot;</span>,
+    <span class="t-key">&quot;auto_document&quot;</span>: <span class="t-str">&quot;DOC_VALIDATED&quot;</span>,
+    <span class="t-key">&quot;overall&quot;</span>: <span class="t-str">&quot;APPROVED&quot;</span>,
+    <span class="t-key">&quot;fraud_tags&quot;</span>: [],
+    <span class="t-key">&quot;provided_is_sanctioned&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;document_birth_place&quot;</span>: <span class="t-str">&quot;LONDON&quot;</span>,
+    <span class="t-key">&quot;document_first_name&quot;</span>: <span class="t-str">&quot;JOHN&quot;</span>,
+    <span class="t-key">&quot;document_nationality&quot;</span>: <span class="t-str">&quot;NL&quot;</span>,
+    <span class="t-key">&quot;document_personal_code&quot;</span>: <span class="t-str">&quot;801012/8420&quot;</span>,
+    <span class="t-key">&quot;document_date_of_birth&quot;</span>: <span class="t-str">&quot;1980-10-12&quot;</span>,
+    <span class="t-key">&quot;start_time&quot;</span>: <span class="t-str">&quot;2023-12-07T13:16:44Z&quot;</span>,
+    <span class="t-key">&quot;document_last_name&quot;</span>: <span class="t-str">&quot;DOE&quot;</span>,
+    <span class="t-key">&quot;auto_face&quot;</span>: <span class="t-str">&quot;FACE_MATCH&quot;</span>,
+    <span class="t-key">&quot;document_issuing_country&quot;</span>: <span class="t-str">&quot;NL&quot;</span>,
+    <span class="t-key">&quot;aditional_steps&quot;</span>: <span class="t-lit">null</span>,
+    <span class="t-key">&quot;provided_surname&quot;</span>: <span class="t-str">&quot;Doe&quot;</span>,
+    <span class="t-key">&quot;bank_account_unsupported_integration&quot;</span>: <span class="t-lit">true</span>,
+    <span class="t-key">&quot;document_number&quot;</span>: <span class="t-str">&quot;DE4878783&quot;</span>,
+    <span class="t-key">&quot;platform&quot;</span>: <span class="t-str">&quot;PC&quot;</span>,
+    <span class="t-key">&quot;document_back_url&quot;</span>: <span class="t-str">&quot;http://localhost:9000/payout-id/identity_verifications/a1cde168-df76-431d-81e7-d67a51d2db37/document_back.png?response-content-disposition=attachment&amp;X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=kc8AJeOICZodU2ZahIXP%2F20241101%2Flocal%2Fs3%2Faws4_request&amp;X-Amz-Date=20241101T120035Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=289224190ca2a1cd2d333411990f13262970c602b83c2d1ad2d9c5ae631fb1dd&quot;</span>,
+    <span class="t-key">&quot;manual_face&quot;</span>: <span class="t-str">&quot;FACE_MATCH&quot;</span>,
+    <span class="t-key">&quot;client_ip_country&quot;</span>: <span class="t-str">&quot;LT&quot;</span>,
+    <span class="t-key">&quot;client_location&quot;</span>: <span class="t-str">&quot;Kaunas, Lithuania&quot;</span>,
+    <span class="t-key">&quot;bank_account_iban&quot;</span>: <span class="t-lit">null</span>,
+    <span class="t-key">&quot;document_sex&quot;</span>: <span class="t-str">&quot;MALE&quot;</span>,
+    <span class="t-key">&quot;provided_name&quot;</span>: <span class="t-str">&quot;John&quot;</span>,
+    <span class="t-key">&quot;mismatch_tags&quot;</span>: [],
+    <span class="t-key">&quot;document_front_url&quot;</span>: <span class="t-str">&quot;http://localhost:9000/payout-id/identity_verifications/a1cde168-df76-431d-81e7-d67a51d2db37/document_front.png?response-content-disposition=attachment&amp;X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=kc8AJeOICZodU2ZahIXP%2F20241101%2Flocal%2Fs3%2Faws4_request&amp;X-Amz-Date=20241101T120035Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=ef0fb0445f8ad4ab7d0d4a322f312b54281b80ff102a0ee2383de3ad24a64430&quot;</span>,
+    <span class="t-key">&quot;photo_face_url&quot;</span>: <span class="t-str">&quot;http://localhost:9000/payout-id/identity_verifications/a1cde168-df76-431d-81e7-d67a51d2db37/photo_face.png?response-content-disposition=attachment&amp;X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=kc8AJeOICZodU2ZahIXP%2F20241101%2Flocal%2Fs3%2Faws4_request&amp;X-Amz-Date=20241101T120035Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=c525775c637e42e5a37afff0f0c586feacfd56d2a07f421125fbb8d58b49cd0c&quot;</span>,
+    <span class="t-key">&quot;provided_is_pep&quot;</span>: <span class="t-lit">false</span>,
+    <span class="t-key">&quot;bank_account_owner_name&quot;</span>: <span class="t-lit">null</span>,
+    <span class="t-key">&quot;manual_document&quot;</span>: <span class="t-str">&quot;DOC_VALIDATED&quot;</span>
+  },
+  <span class="t-key">&quot;nonce&quot;</span>: <span class="t-str">&quot;YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5&quot;</span>,
+  <span class="t-key">&quot;signature&quot;</span>: <span class="t-str">&quot;b9a87c65d4e3f210987654321fedcba0123456789abcdef0123456789abcdef01&quot;</span>
+}
+</code></pre></div>
+<p>AML Check Webhook:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;data&quot;</span>: {
+    <span class="t-key">&quot;id&quot;</span>: <span class="t-str">&quot;b93e7497-1726-4216-8516-df678d86ca03&quot;</span>,
+    <span class="t-key">&quot;status_service_suspected&quot;</span>: <span class="t-lit">true</span>,
+    <span class="t-key">&quot;status_service_used&quot;</span>: <span class="t-lit">true</span>,
+    <span class="t-key">&quot;status_service_found&quot;</span>: <span class="t-lit">true</span>,
+    <span class="t-key">&quot;status_check_successful&quot;</span>: <span class="t-lit">true</span>,
+    <span class="t-key">&quot;status_overall&quot;</span>: <span class="t-str">&quot;SUSPECTED&quot;</span>,
+    <span class="t-key">&quot;error_message&quot;</span>: <span class="t-lit">null</span>,
+    <span class="t-key">&quot;uid&quot;</span>: <span class="t-str">&quot;FAFQLS95W7Z0JI9HL13VZBMX6&quot;</span>,
+    <span class="t-key">&quot;items&quot;</span>: [
+      {
+        <span class="t-key">&quot;checked_at&quot;</span>: <span class="t-str">&quot;2023-10-11T15:28:21Z&quot;</span>,
+        <span class="t-key">&quot;dob&quot;</span>: <span class="t-str">&quot;31 AUG 1954&quot;</span>,
+        <span class="t-key">&quot;is_active&quot;</span>: <span class="t-lit">true</span>,
+        <span class="t-key">&quot;is_person&quot;</span>: <span class="t-lit">true</span>,
+        <span class="t-key">&quot;last_update&quot;</span>: <span class="t-str">&quot;2022-03-16&quot;</span>,
+        <span class="t-key">&quot;linked_document&quot;</span>: <span class="t-str">&quot;https://sanctionssearch.ofac.treas.gov/Details.aspx?id=9760&quot;</span>,
+        <span class="t-key">&quot;list_name&quot;</span>: <span class="t-str">&quot;OFAC&quot;</span>,
+        <span class="t-key">&quot;list_number&quot;</span>: <span class="t-str">&quot;UNKNOWN&quot;</span>,
+        <span class="t-key">&quot;name&quot;</span>: <span class="t-str">&quot;JOHN SIMPSON&quot;</span>,
+        <span class="t-key">&quot;nationality&quot;</span>: <span class="t-str">&quot;BELARUS&quot;</span>,
+        <span class="t-key">&quot;other_information&quot;</span>: <span class="t-lit">null</span>,
+        <span class="t-key">&quot;reason&quot;</span>: <span class="t-str">&quot;BELARUS PROGRAM&quot;</span>,
+        <span class="t-key">&quot;score&quot;</span>: <span class="t-num">100</span>,
+        <span class="t-key">&quot;surname&quot;</span>: <span class="t-str">&quot;DOE&quot;</span>,
+        <span class="t-key">&quot;suspicion&quot;</span>: <span class="t-str">&quot;SANCTION&quot;</span>
+      },
+      {
+        <span class="t-key">&quot;checked_at&quot;</span>: <span class="t-str">&quot;2023-10-11T15:28:21Z&quot;</span>,
+        <span class="t-key">&quot;dob&quot;</span>: <span class="t-str">&quot;30 AUG 1954&quot;</span>,
+        <span class="t-key">&quot;is_active&quot;</span>: <span class="t-lit">true</span>,
+        <span class="t-key">&quot;is_person&quot;</span>: <span class="t-lit">true</span>,
+        <span class="t-key">&quot;last_update&quot;</span>: <span class="t-str">&quot;2022-03-16&quot;</span>,
+        <span class="t-key">&quot;linked_document&quot;</span>: <span class="t-str">&quot;https://sanctionssearch.ofac.treas.gov/Details.aspx?id=9760&quot;</span>,
+        <span class="t-key">&quot;list_name&quot;</span>: <span class="t-str">&quot;OFAC&quot;</span>,
+        <span class="t-key">&quot;list_number&quot;</span>: <span class="t-str">&quot;UNKNOWN&quot;</span>,
+        <span class="t-key">&quot;name&quot;</span>: <span class="t-str">&quot;JOHN SIMPSON&quot;</span>,
+        <span class="t-key">&quot;nationality&quot;</span>: <span class="t-str">&quot;BELARUS&quot;</span>,
+        <span class="t-key">&quot;other_information&quot;</span>: <span class="t-lit">null</span>,
+        <span class="t-key">&quot;reason&quot;</span>: <span class="t-str">&quot;BELARUS PROGRAM&quot;</span>,
+        <span class="t-key">&quot;score&quot;</span>: <span class="t-num">100</span>,
+        <span class="t-key">&quot;surname&quot;</span>: <span class="t-str">&quot;DOE&quot;</span>,
+        <span class="t-key">&quot;suspicion&quot;</span>: <span class="t-str">&quot;SANCTION&quot;</span>
+      },
+      {
+        <span class="t-key">&quot;checked_at&quot;</span>: <span class="t-str">&quot;2023-10-11T15:28:21Z&quot;</span>,
+        <span class="t-key">&quot;dob&quot;</span>: <span class="t-str">&quot;1954&quot;</span>,
+        <span class="t-key">&quot;is_active&quot;</span>: <span class="t-lit">true</span>,
+        <span class="t-key">&quot;is_person&quot;</span>: <span class="t-lit">true</span>,
+        <span class="t-key">&quot;last_update&quot;</span>: <span class="t-str">&quot;2022-07-08&quot;</span>,
+        <span class="t-key">&quot;linked_document&quot;</span>: <span class="t-str">&quot;https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=uriserv%3AOJ.L_.2021.068.01.0029.01.ENG&amp;toc=OJ%3AL%3A2021%3A068%3ATOC&quot;</span>,
+        <span class="t-key">&quot;list_name&quot;</span>: <span class="t-str">&quot;EU&quot;</span>,
+        <span class="t-key">&quot;list_number&quot;</span>: <span class="t-str">&quot;UNKNOWN&quot;</span>,
+        <span class="t-key">&quot;name&quot;</span>: <span class="t-str">&quot;JOHN SIMPSON&quot;</span>,
+        <span class="t-key">&quot;nationality&quot;</span>: <span class="t-str">&quot;BELARUS&quot;</span>,
+        <span class="t-key">&quot;other_information&quot;</span>: <span class="t-str">&quot;UNKNOWN&quot;</span>,
+        <span class="t-key">&quot;reason&quot;</span>: <span class="t-str">&quot;EU.5971.83 &quot;</span>,
+        <span class="t-key">&quot;score&quot;</span>: <span class="t-num">100</span>,
+        <span class="t-key">&quot;surname&quot;</span>: <span class="t-str">&quot;DOE&quot;</span>,
+        <span class="t-key">&quot;suspicion&quot;</span>: <span class="t-str">&quot;SANCTION&quot;</span>
+      }
+    ]
+  },
+  <span class="t-key">&quot;nonce&quot;</span>: <span class="t-str">&quot;YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5&quot;</span>,
+  <span class="t-key">&quot;signature&quot;</span>: <span class="t-str">&quot;2e2e8ebdad9aacda677d28288edf6cb2e531f77dc15b357ecdc4663bbcf78c2e&quot;</span>
+}
+</code></pre></div>
+<h3 id="signature">Signature</h3>
+<p>To verify signature, you need to concat all returned values from data, nonce and you client secret. These data should be separated using pipe <code>|</code>. In case of arrays in the response, they are concatenated without any separator, so <code>["test", "value"]</code> became <code>"testvalue"</code>. Boolean values are represented in resulting string as <code>true</code> and <code>false</code> strings. Empty array (<code>[]</code>) or <code>null</code> are represented as empty strings. Resulting string is then neceseary to hash using <code>SHA256</code> algorithm. Then it should be base16 encoded and all character should be downcased. For instance if I have imaginary webhook containing parameters first_name, last_name, children, married, age and hobies then webhook should look like this:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">JSON</span><button class="cb-copy" type="button">copy</button></div><pre><code>{
+  <span class="t-key">&quot;data&quot;</span>: {<span class="t-key">&quot;first_name&quot;</span>: <span class="t-str">&quot;John&quot;</span>, <span class="t-key">&quot;last_name&quot;</span>: <span class="t-str">&quot;Doe&quot;</span>, <span class="t-key">&quot;children&quot;</span>: [], <span class="t-key">&quot;married&quot;</span>: <span class="t-lit">true</span>, <span class="t-key">&quot;age&quot;</span>: <span class="t-lit">null</span>, <span class="t-key">&quot;hobies&quot;</span>: [<span class="t-str">&quot;guitar&quot;</span>, <span class="t-str">&quot;skying&quot;</span>]},
+  <span class="t-key">&quot;nonce&quot;</span>: <span class="t-str">&quot;YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5&quot;</span>,
+  <span class="t-key">&quot;signature&quot;</span>: <span class="t-str">&quot;25c304386d0195803370da336d46919933fc64397b8e59c669aed90b5ec58ba8&quot;</span>
+}
+</code></pre></div>
+<p>And given my client secret is <code>c57f41ac-3bfb-4bb5-b18f-00cca093d97b</code>. Then I would construct input string as <code>$first_name|$last_name|$children|$married|$age|$hobies|$nonce|$client_secret</code>:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Code</span><button class="cb-copy" type="button">copy</button></div><pre><code>John|Doe||true||guitarskying|YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5|c57f41ac-3bfb-4bb5-b18f-00cca093d97b
+</code></pre></div>
+<p>This string is then <code>SHA256</code>, <code>BASE16</code> and down cased. Result should be:</p>
+<div class="cb cb-dark"><div class="cb-head"><span class="cb-lang">Code</span><button class="cb-copy" type="button">copy</button></div><pre><code>25c304386d0195803370da336d46919933fc64397b8e59c669aed90b5ec58ba8
+</code></pre></div>
+<p>If signature is valid, it should be same as signature parameter.</p>
+<p>For Identity Verification webhook, parameters should be in this order::</p>
+<ul>
+<li>platform</li>
+<li>start_time</li>
+<li>finish_time,</li>
+<li>client_ip</li>
+<li>client_ip_country</li>
+<li>client_location</li>
+<li>overall</li>
+<li>suspicion_reasons</li>
+<li>mismatch_tags</li>
+<li>fraud_tags</li>
+<li>auto_document</li>
+<li>auto_face</li>
+<li>manual_document</li>
+<li>manual_face</li>
+<li>aditional_steps</li>
+<li>document_valid_until</li>
+<li>document_type</li>
+<li>document_number</li>
+<li>document_front_url</li>
+<li>document_back_url</li>
+<li>document_first_name</li>
+<li>document_last_name</li>
+<li>document_sex</li>
+<li>document_nationality</li>
+<li>document_issuing_country</li>
+<li>document_birth_place</li>
+<li>document_personal_code</li>
+<li>document_date_of_birth</li>
+<li>photo_face_url</li>
+<li>id</li>
+<li>provided_email</li>
+<li>provided_name</li>
+<li>provided_surname</li>
+<li>provided_is_pep</li>
+<li>provided_is_sanctioned</li>
+<li>bank_account_requested</li>
+<li>bank_account_unsupported_integration</li>
+<li>bank_account_owner_name</li>
+<li>bank_account_iban</li>
+<li>identity_verification_failed</li>
+</ul>
+<p>In case of <code>"identity_verification_failed": true</code>, identity documents are omitted and only these attribuptes are used:</p>
+<ul>
+<li>id</li>
+<li>provided_email</li>
+<li>provided_name</li>
+<li>provided_surname</li>
+<li>provided_is_pep</li>
+<li>provided_is_sanctioned</li>
+<li>bank_account_requested</li>
+<li>bank_account_unsupported_integration</li>
+<li>bank_account_owner_name</li>
+<li>bank_account_iban</li>
+<li>identity_verification_failed</li>
+</ul>
+<p>For AML Check webhook, parameters for signature should be in this order:</p>
+<ul>
+<li>id</li>
+<li>status_service_suspected</li>
+<li>status_service_used</li>
+<li>status_service_found</li>
+<li>status_check_successful</li>
+<li>status_overall</li>
+<li>error_message</li>
+<li>uid</li>
+</ul>
+<h2 id="testing">Testing</h2>
+<p>Since on sandbox we cannot process real banking data, there is mockup of bank running. It always return account owner name <code>John Doe</code> and responds with IBAN <code>SK5111110000000002314003</code> in case of unicredit and <code>SK0431000000002333363431</code> in case of other bank integration.</p></div>
+  </main>
+</div>
+
+<footer><div>Generated from the OpenAPI specs and the existing guides. Preview build — the live site is unchanged.</div></footer>
+
+<dialog id="search">
+  <input type="search" id="q" placeholder="Search guides and endpoints…" autocomplete="off" spellcheck="false">
+  <ul id="results"></ul>
+</dialog>
+
+<script>
+(function () {
+  var root = document.documentElement;
+
+  // --- theme: auto -> light -> dark, persisted -------------------------
+  var tBtn = document.getElementById('theme-toggle');
+  var order = ['auto', 'light', 'dark'];
+  function applyTheme(v) {
+    if (v === 'auto') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', v);
+    tBtn.textContent = v;
+    try { localStorage.setItem('pd-theme', v); } catch (e) {}
+  }
+  var saved = null; try { saved = localStorage.getItem('pd-theme'); } catch (e) {}
+  applyTheme(order.indexOf(saved) > -1 ? saved : 'auto');
+  tBtn.addEventListener('click', function () {
+    applyTheme(order[(order.indexOf(tBtn.textContent) + 1) % order.length]);
+  });
+
+  // --- copy on prose code blocks ---------------------------------------
+  document.querySelectorAll('.cb-copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.closest('.cb').querySelector('pre');
+      if (!pre) return;
+      navigator.clipboard.writeText(pre.innerText).then(function () {
+        btn.textContent = 'copied';
+        setTimeout(function () { btn.textContent = 'copy'; }, 1200);
+      });
+    });
+  });
+
+  // --- per-client tabs --------------------------------------------------
+  document.querySelectorAll('[data-tabs]').forEach(function (group) {
+    var bar = group.querySelector('.tab-bar');
+    if (!bar) return;
+    bar.addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-tab]');
+      if (!btn) return;
+      var want = btn.dataset.tab;
+      bar.querySelectorAll('button[data-tab]').forEach(function (b) {
+        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+      });
+      group.querySelectorAll('.tab-pane').forEach(function (p) {
+        p.hidden = p.dataset.tab !== want;
+      });
+      try { localStorage.setItem('pd-client', want); } catch (err) {}
+    });
+  });
+  try {
+    var client = localStorage.getItem('pd-client');
+    if (client) {
+      var pref = document.querySelector('.tab-bar button[data-tab="' + client + '"]');
+      if (pref) pref.click();
+    }
+  } catch (err) {}
+
+  // --- copy buttons -----------------------------------------------------
+  document.querySelectorAll('pre').forEach(function (pre) {
+    var wrap = pre.closest('.cb');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.className = 'codeblock';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+    }
+    wrap.style.position = 'relative';
+    var b = document.createElement('button');
+    b.className = 'copy'; b.type = 'button'; b.textContent = 'copy';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.innerText).then(function () {
+        b.textContent = 'copied'; setTimeout(function () { b.textContent = 'copy'; }, 1200);
+      });
+    });
+    wrap.appendChild(b);
+  });
+
+  // --- language tabs ----------------------------------------------------
+  document.querySelectorAll('.cb .langs').forEach(function (group) {
+    var panel = group.closest('.cb');
+    group.addEventListener('click', function (e) {
+      var btn = e.target.closest('.lang');
+      if (!btn) return;
+      var want = btn.dataset.lang;
+      group.querySelectorAll('.lang').forEach(function (b) {
+        b.classList.toggle('on', b === btn);
+      });
+      panel.querySelectorAll('.lang-pane').forEach(function (p) {
+        p.hidden = p.dataset.lang !== want;
+      });
+      // Remember the choice across every panel on the page and future visits.
+      try { localStorage.setItem('pd-lang', want); } catch (err) {}
+      document.querySelectorAll('.cb').forEach(function (other) {
+        if (other === panel) return;
+        other.querySelectorAll('.lang').forEach(function (b) {
+          b.classList.toggle('on', b.dataset.lang === want);
+        });
+        other.querySelectorAll('.lang-pane').forEach(function (p) {
+          p.hidden = p.dataset.lang !== want;
+        });
+      });
+    });
+  });
+  try {
+    var pref = localStorage.getItem('pd-lang');
+    if (pref) {
+      document.querySelectorAll('.cb .lang[data-lang="' + pref + '"]').forEach(function (b) {
+        b.click();
+      });
+    }
+  } catch (err) {}
+
+  // --- copy a section as markdown, for pasting into an agent -------------
+  document.querySelectorAll('.copy-md').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var sec = btn.closest('[data-md]');
+      if (!sec) return;
+      navigator.clipboard.writeText(sec.dataset.md).then(function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copy for LLM';
+          btn.classList.remove('done');
+        }, 1400);
+      });
+    });
+  });
+
+  // --- search -----------------------------------------------------------
+  var dlg = document.getElementById('search');
+  var q = document.getElementById('q');
+  var results = document.getElementById('results');
+  var index = null, cursor = 0;
+
+  function load() {
+    if (index) return Promise.resolve(index);
+    return fetch('../search-index.json')
+      .then(function (r) { return r.json(); })
+      .then(function (d) { index = d; return d; });
+  }
+  function open() {
+    load().then(function () { dlg.showModal(); q.value = ''; render([]); q.focus(); });
+  }
+  function render(rows) {
+    cursor = 0;
+    if (!rows.length) {
+      results.innerHTML = '<li class="empty">' + (q.value ? 'No matches.' : 'Type to search.') + '</li>';
+      return;
+    }
+    results.innerHTML = rows.map(function (r, i) {
+      return '<li><a class="' + (i === 0 ? 'on' : '') + '" href="../' + r.url + '">' +
+             '<span class="r-kind">' + r.kind + '</span> ' + r.title +
+             (r.ctx ? '<div class="r-ctx">' + r.ctx + '</div>' : '') + '</a></li>';
+    }).join('');
+  }
+  q && q.addEventListener('input', function () {
+    var s = q.value.toLowerCase().trim();
+    if (!s) return render([]);
+    render(index.filter(function (r) {
+      return (r.title + ' ' + r.ctx + ' ' + r.kind).toLowerCase().indexOf(s) > -1;
+    }).slice(0, 20));
+  });
+  q && q.addEventListener('keydown', function (e) {
+    var links = results.querySelectorAll('a');
+    if (!links.length) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      links[cursor].classList.remove('on');
+      cursor = (cursor + (e.key === 'ArrowDown' ? 1 : links.length - 1)) % links.length;
+      links[cursor].classList.add('on');
+      links[cursor].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault(); links[cursor].click();
+    }
+  });
+  document.getElementById('search-open').addEventListener('click', open);
+  document.addEventListener('keydown', function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); open(); }
+  });
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+})();
+</script>
+</body>
+</html>

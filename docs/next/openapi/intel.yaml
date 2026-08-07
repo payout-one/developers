@@ -1,0 +1,343 @@
+openapi: 3.1.0
+info:
+  title: Payout Intel API
+  version: 1.0.0
+  description: '[Do you have question? Ask us here](http://v2.zopim.com/widget/livechat.html?key=7IAyjGK9PAvKfARh6iqd9qv0WxXDxvjN)'
+servers:
+- url: https://app.payout.one
+  description: Production
+- url: https://sandbox.payout.one
+  description: Sandbox
+security:
+- bearerAuth: []
+x-sections:
+  authentication: "# Authentification\n**Bearer**\n\nFor accessing the API a valid token must be passed\
+    \ in all the queries in the 'Authorization' header. A valid token is generated in Admin section of\
+    \ your account.\n\nThe following syntax must be used in the 'Authorization' header :\n\n    Bearer\
+    \ <<token>>\n\nSo Authorization header can be like:\n\n    Authorization: Bearer SFMyNTY.g3QAAAACZAAEZGF0YWEBZAAGc2lnbmVkbgYA6GI88F0B.4O2JwKmEX90ZfuSQMOuiVN-Vy_5FirRKp9JU2Pub"
+paths:
+  /api/v1/authorize:
+    post:
+      summary: Authorize (receive API token)
+      operationId: authorize_receive_api_token
+      tags:
+      - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /api/v1/intel/limits:
+    get:
+      summary: Show AML limit in given country, in specified currency
+      operationId: show_aml_limit_in_given_country_in_specified_currency
+      tags:
+      - API
+      description: 'This request returns limit in given currency in specified country.
+
+
+        Will return error if invalid `check_type` is given.
+
+
+        | Name | Type | Description|
+
+        | ------ | ------ | ------ |
+
+        | `currency` | string | ISO 3 currency code |
+
+        | `country` | string | ISO 2 country code |
+
+        | `check_type` | string | Check type can be <"AML4", "AML5"> |'
+      parameters:
+      - name: currency
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: country
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: check_type
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+  /api/v1/intel:
+    post:
+      summary: Search Customer Intel
+      operationId: search_customer_intel
+      tags:
+      - API
+      description: "# Request body attributes\n\n# ID Validation states\n* **valid** - ID is valid for\
+        \ existing person\n* **not_valid** - ID is not valid\n* **unknown** - it was not possible to validate\
+        \ ID\n\n# AML Check states\n* **found** - exact one result\n* **found_many** - more results \n\
+        * **not_found** - zero results"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: First name
+                  example: Vladimir
+                  maxLength: 256
+                surname:
+                  type: string
+                  description: Last name/surname
+                  example: Putin
+                  maxLength: 256
+                birthdate:
+                  type: string
+                  description: Date in format YYYY-MM-DD
+                  example: '1952-10-23'
+                  maxLength: 256
+                id:
+                  type: string
+                  description: ID number
+                  example: DG12345
+                  maxLength: 256
+                address:
+                  type: string
+                  description: Address
+                  example: H. Melickovej 13, 841 05 Moskva
+                  maxLength: 256
+              required:
+              - name
+              - surname
+            example:
+              name: Juraj
+              surname: Novak
+              birthdate: '1952-10-23'
+              id: AB1234
+              address: H. Melickovej 13, 841 05 Moskva
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    description: ID of search result
+                    type: string
+                    format: uuid
+                  url:
+                    type: string
+                    description: URL with result details in our system
+                    example: https://ie.payout.one/link_to_result_details/c4c14b99-5a8b-45da-a235-2c159785c9ck
+                  valid_id:
+                    type: string
+                    description: Result state of ID validation
+                    example: unknown
+                  aml:
+                    type: string
+                    description: Result state of AML check
+                    example: not_found
+        '401':
+          description: Missing or invalid bearer token
+  /api/v1/intel/calculate_score:
+    post:
+      summary: Calculate transaction score
+      operationId: calculate_transaction_score
+      tags:
+      - API
+      description: 'Please, contact support support@payout.one to allow this feature
+
+
+        ## Transaction
+
+
+        |Name|Type|Required|Example|Description|
+
+        |--|--|--|--|--|
+
+        | `payment_method` | PaymentMethod | `true` | payment_method | Please see PaymentMethod |
+
+        | `bank` | text | `true` | "nbs" | Name of the bank |
+
+        | `transaction_type` | TransactionType | `true` | transaction_type | Please see TransactionType
+        |
+
+        | `date_create` | string | `true` | "2019-01-01"  | Transaction date |
+
+        | `amount` | integer | `true` | 123456 | Smallest unit of currency |
+
+        | `currency` | text | `true` | "EUR" | Currency code by [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217)
+        |
+
+        | `ip_address` | text | `true` | "127.0.0.1" | Clients IP address |
+
+        | `source` | TransactionSource | `true` | transaction_source | Please see TransactionSource |
+
+        | `variable_symbol` | text | `true` | 1234567890 | Variable symbol |
+
+        | `reference` | text | `true` | "message for debtor" | Transaction reference |
+
+        | `threshold` | integer | `true` | 50 | The level that must be reached for transaction to be reported  |
+
+        | `category` | TransactionCategory | `true` | transaction_category | Please see TransactionCategory
+        |
+
+        | `transaction_id` | text | `true` | `999a0915-73d4-4870-ad14-d23c1aa45be3` | Transaction ID |
+
+        | `url` | text | `true` | url | URL address of the service |
+
+        | `creditor` | Person | `true` | object | Please see Person  |
+
+        | `debtor` | Person | `true` | object | Please see Person  |
+
+        | `credit_card` | CreditCard | `true` | object | Please see CreditCard |
+
+
+        ## Person
+
+
+        |Name|Type|Required|Example|Description|
+
+        |--|--|--|--|--|
+
+        | `name` | string | `true` | "John Doe" | User`s name |
+
+        | `email` | string | `true` | "example@payout.one" | Email address |
+
+        | `phone_number` | string | `true` | "+421900123456" | Phone number |
+
+        | `iban` | string | `true` | "SK3112000000198742637541" | IBAN |
+
+        | `address` | Address | `true` | object | Please see Address |
+
+
+        ## Address
+
+
+        |Name|Type|Required|Example|Description|
+
+        |--|--|--|--|--|
+
+        | `line1` | string | `true` |  line1 | Address line 1 |
+
+        | `line2` | string | `true` |  line2 | Address line 2 |
+
+        | `city` | string | `true` |  city | City |
+
+        | `zip` | string | `true` |  zip | ZIP code |
+
+        | `country` | string | `true` |  country | Country code in [ISO_3166-1](https://en.wikipedia.org/wiki/ISO_3166-1)
+        |
+
+
+        ## CreditCard
+
+
+        |Name|Type|Required|Example|Description|
+
+        |--|--|--|--|--|
+
+        | `number` | string | `true` | "6666664444" | Credit card number |
+
+        | `type` | string | `true` | type | |
+
+        | `expiration_date` | string | `true` | "12/20" | Credit card`s expiration date |
+
+        | `holder_name` | string | `true` | "John Doe" | Holder`s name |
+
+        | `3d_secure` | boolean | `true` | `true` | 3D secure requested |
+
+        | `acquirer` | string | `true` | "payout" | Acquirer`s name |
+
+        | `issuer` | string | `true` | "payout" | Issuer name|'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              creditor:
+                name: ''
+                email: ''
+                phone_number: ''
+                iban: SK0123
+                address:
+                  line1: ''
+                  line2: ''
+                  city: ''
+                  zip: ''
+                  country: ''
+              debtor:
+                name: ''
+                email: ''
+                phone_number: ''
+                iban: SK0123
+                address:
+                  line1: ''
+                  line2: ''
+                  city: ''
+                  zip: ''
+                  country: ''
+              credit_card:
+                number: ''
+                type: ''
+                expiration_date: ''
+                holder_name: ''
+                3d_secure: true
+                acquirer: ''
+                issuer: ''
+              payment_method: credit_card
+              bank: ''
+              transaction_type: prijatá úhrada, odoslaná úhrada, platba kartou (CC)
+              date_cc: ''
+              date_txn: ''
+              date_create: ''
+              amount: 10500
+              currency: EUR
+              ip_address: 127.0.0.1
+              source: 'banka, eshop '
+              variable_symbol: ''
+              reference: ''
+              threshold: 75
+              category: banking
+              id: <optional-random-id>
+              url: ''
+              user_agent: ''
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Missing or invalid bearer token
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Token from POST /api/v1/authorize.
+  schemas: {}
