@@ -2,8 +2,7 @@
 
 The Payout server-to-server APIs are authenticated with an **mTLS client certificate** that you obtain from a Qualified Trust Service Provider (QTSP) and import into your Payout account. The same certificate infrastructure is reused by every server-to-server product:
 
-- [**M2M Withdrawals**](./m2m.md) — Payout API v2 withdrawal initiation. Requires a QWAC for the mTLS connection **plus** a QSEAL for detached payment-instruction signatures.
-- [**Verification of Payee (VoP)**](./vop.md) — pre-payment IBAN/name check. Requires a QWAC only (no QSEAL).
+- [**M2M Withdrawals**](./m2m.md) — Payout API v2 withdrawal initiation, including optional [Verification of Payee](./m2m.md#verification-of-payee-vop). Requires a QWAC for the mTLS connection **plus** a QSEAL for detached payment-instruction signatures.
 - *(more products to come — same import flow.)*
 
 If you already imported a certificate for one product, you can reuse it for the other(s) as long as it satisfies their respective profile requirements.
@@ -114,7 +113,6 @@ Once the certificate is `approved`, present it during the TLS handshake against 
 | API | mTLS host (sandbox) | mTLS host (production) |
 |---|---|---|
 | [M2M Withdrawals](./m2m.md) | `api-mtls-sandbox.payout.one` | `api-mtls.payout.one` |
-| [VoP](./vop.md) | `api-mtls-sandbox.payout.one` | `api-mtls.payout.one` |
 
 ## Lifecycle
 

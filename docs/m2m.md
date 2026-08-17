@@ -115,12 +115,73 @@ X-JWS-Signature: eyJhbGciOiJQUzI1NiIsInR5cCI6IkpPU0UrSlNPTiIsIng1dCNTMjU2I...
     "email": "anna.nova@example.com"
   },
   "statement_descriptor": "Platba 2026/05",
-  "nonce": "5b6e9c1a-f4a2-4c11-9e56-2f93e1c7a3d0"
+  "nonce": "5b6e9c1a-f4a2-4c11-9e56-2f93e1c7a3d0",
+  "require_vop": true,
+  "additional_attribute": "Invoice 2026/05/017"
 }
 ```
 
 > [!NOTE]
 > When the request is signed with QSEAL, the legacy HMAC `signature` field used in `/api/v1/withdrawals` is **not required** in v2. QSEAL provides equivalent integrity and authenticity for the entire payload.
+
+## Verification of Payee (VoP)
+
+You can ask Payout to run a **Verification of Payee** check as part of a withdrawal — confirming that the name you provided matches the account holder that the beneficiary bank holds for the IBAN. There is no separate VoP endpoint; you opt in per withdrawal with the optional `require_vop` field in the create request.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `require_vop` | boolean | no | Default `false`. When `true`, Payout runs a VoP check on the withdrawal's `iban` and `customer` name and delivers the result via a webhook (see below). |
+| `additional_attribute` | string | no | Free-text metadata echoed back in the VoP webhook (e.g. internal reference, invoice number). |
+
+The check compares the name in `customer` (`first_name` + `last_name`) — or the organisation name for a legal entity — against the account holder registered for the withdrawal's `iban`. It does **not** block the withdrawal; it runs alongside and reports its result asynchronously.
+
+> [!NOTE]
+> VoP returns a **match outcome**, not an authoritative truth. A `CLOSE_MATCH` does not automatically mean the payment is safe — surface the returned `real_name` to your operator and let them confirm or cancel.
+
+### VoP webhook
+
+As soon as the VoP result is known, Payout sends a **dedicated webhook** of type **`withdrawal.vop_result`** to your configured webhook URL. It uses the standard webhook envelope; the `data` object carries the VoP outcome plus the identifiers you need to match it to the originating withdrawal:
+
+```json
+{
+  "type": "withdrawal.vop_result",
+  "object": "webhook",
+  "data": {
+    "match_result": "CLOSE_MATCH",
+    "real_name": "Anna Nová-Kováčová",
+    "reference_id": "f1c8d4a3-2e90-4a52-9b13-7c8a1d4e5b21",
+    "timestamp": "2026-05-20T10:14:33Z",
+    "additional_attribute": "Invoice 2026/05/017",
+    "withdrawal_id": 90412,
+    "external_id": "merchant-tx-2026-05-15-001"
+  },
+  "nonce": "UzhER2lFOFZCNkNQVmNuNQ",
+  "signature": "b95494dd09183b7cbca40f356d7s4f567sdf765sdf79e1f4a95e936",
+}
+```
+
+`data` fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `match_result` | enum | One of `MATCH`, `CLOSE_MATCH`, `NO_MATCH`, `CANNOT_VERIFY`. |
+| `real_name` | string | Present only when `match_result == CLOSE_MATCH` — the name the beneficiary bank holds, returned so you can show it to the operator for confirmation. |
+| `reference_id` | UUID | Server-generated ID for audit traceability — quote this when raising support tickets. |
+| `timestamp` | ISO 8601 | UTC datetime when the check was processed. |
+| `additional_attribute` | string | Echo of the `additional_attribute` from the withdrawal request (if provided). |
+| `withdrawal_id` | integer | Payout ID of the withdrawal this VoP check belongs to. |
+| `external_id` | string | Your `external_id` from the withdrawal request — for client-side matching. |
+
+### Match outcomes
+
+| Outcome | Meaning | Recommended handling |
+|---|---|---|
+| `MATCH` | Full correspondence between the submitted name and the beneficiary bank's records. | Proceed with the payment. |
+| `CLOSE_MATCH` | Partial correspondence (typos, missing diacritics, suffix mismatch). `real_name` is returned. | Show `real_name` to the operator; let them confirm or cancel. |
+| `NO_MATCH` | No correspondence — the name does not belong to the IBAN. | Block the payment; warn the operator. |
+| `CANNOT_VERIFY` | The check could not be completed (beneficiary bank unreachable, IBAN unknown to it, or the bank has opted out of VoP). | Inconclusive — your risk policy decides whether to proceed. |
+
+VoP only tells you whether the name on the account matches the IBAN. It is **not** a substitute for AML screening, sanctions list checks, or any other due-diligence step you are independently required to perform on a payee.
 
 ## HTTP error codes
 

@@ -10,7 +10,6 @@
 - [OpenBanking PSD2 API](psd2.md "PSD2")
 - [Server-to-Server APIs (mTLS)](certificates.md "mTLS Server-to-Server APIs")
   - [M2M Withdrawals](m2m.md "M2M Withdrawals")
-  - [Verification of Payee](vop.md "Verification of Payee")
 - [IBAN Ownership Verification (Banklink)](verification.md "IBAN Ownership Verification")
 - [Payment Gateway](payment-gateway.md "Payment Gateway")
   - [Integrations](/payment-gateway/integrations.md "Integrations list")
