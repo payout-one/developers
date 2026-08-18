@@ -156,7 +156,7 @@ As soon as the VoP result is known, Payout sends a **dedicated webhook** of type
     "external_id": "merchant-tx-2026-05-15-001"
   },
   "nonce": "UzhER2lFOFZCNkNQVmNuNQ",
-  "signature": "b95494dd09183b7cbca40f356d7s4f567sdf765sdf79e1f4a95e936",
+  "signature": "b95494dd09183b7cbca40f356d7s4f567sdf765sdf79e1f4a95e936"
 }
 ```
 
@@ -174,12 +174,12 @@ As soon as the VoP result is known, Payout sends a **dedicated webhook** of type
 
 ### Match outcomes
 
-| Outcome | Meaning | Recommended handling |
-|---|---|---|
-| `MATCH` | Full correspondence between the submitted name and the beneficiary bank's records. | Proceed with the payment. |
-| `CLOSE_MATCH` | Partial correspondence (typos, missing diacritics, suffix mismatch). `real_name` is returned. | Show `real_name` to the operator; let them confirm or cancel. |
-| `NO_MATCH` | No correspondence — the name does not belong to the IBAN. | Block the payment; warn the operator. |
-| `CANNOT_VERIFY` | The check could not be completed (beneficiary bank unreachable, IBAN unknown to it, or the bank has opted out of VoP). | Inconclusive — your risk policy decides whether to proceed. |
+| Outcome | Meaning |
+|---|---|
+| `MATCH` | Full correspondence between the submitted name and the beneficiary bank's records. |
+| `CLOSE_MATCH` | Partial correspondence (typos, missing diacritics, suffix mismatch). `real_name` is returned. |
+| `NO_MATCH` | No correspondence — the name does not belong to the IBAN. |
+| `CANNOT_VERIFY` | The check could not be completed (beneficiary bank unreachable, IBAN unknown to it, or the bank has opted out of VoP). |
 
 VoP only tells you whether the name on the account matches the IBAN. It is **not** a substitute for AML screening, sanctions list checks, or any other due-diligence step you are independently required to perform on a payee.
 
