@@ -133,7 +133,24 @@ You can ask Payout to run a **Verification of Payee** check as part of a withdra
 | `require_vop` | boolean | no | Default `false`. When `true`, Payout runs a VoP check on the withdrawal's `iban` and `customer` name and delivers the result via a webhook (see below). |
 | `additional_attribute` | string | no | Free-text metadata echoed back in the VoP webhook (e.g. internal reference, invoice number). |
 
-The check compares the name in `customer` (`first_name` + `last_name`) — or the organisation name for a legal entity — against the account holder registered for the withdrawal's `iban`. It does **not** block the withdrawal; it runs alongside and reports its result asynchronously.
+The check compares the payee name against the account holder the beneficiary bank holds for the withdrawal's `iban`. Provide the payee identity in the `customer` object — either a natural person or a legal entity:
+
+| Payee | `customer` fields |
+|---|---|
+| Natural person | `first_name` + `last_name` |
+| Legal entity (company) | `name` (company name, sent directly) + `company_id` (organisation identifier — e.g. IČO or LEI) |
+
+For a company, send `name` and `company_id` instead of `first_name` / `last_name`:
+
+```json
+"customer": {
+  "name": "Example Company s. r. o.",
+  "company_id": "12345678",
+  "email": "billing@example.com"
+}
+```
+
+The VoP check does **not** block the withdrawal; it runs alongside and reports its result asynchronously.
 
 > [!NOTE]
 > VoP returns a **match outcome**, not an authoritative truth. A `CLOSE_MATCH` does not automatically mean the payment is safe — surface the returned `real_name` to your operator and let them confirm or cancel.
