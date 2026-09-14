@@ -165,8 +165,8 @@ without changing how a signature is verified.
 | score | integer | yes | - | - |
 | last_update | date | yes | - | - |
 | is_person | boolean | yes | - | - |
-| is_active | boolean | no | - | The listing is still in force. Sent for checks screened before the Didit migration; empty otherwise |
-| false_positive | boolean | no | - | The provider dismissed this hit as not a real match. Empty on checks screened before the Didit migration |
+| is_active | boolean | yes | - | The watchlist entry is still in force |
+| false_positive | boolean | yes | - | The screening provider dismissed this hit as not a real match |
 | linked_document | string | yes | - | - |
 | other_information | string | yes | - | - |
 | checked_at | string | yes | - | - |
@@ -366,7 +366,7 @@ AML Check Webhook:
         "checked_at": "2023-10-11T15:28:21Z",
         "dob": "31 AUG 1954",
         "false_positive": false,
-        "is_active": null,
+        "is_active": true,
         "is_person": true,
         "last_update": "2022-03-16",
         "linked_document": "https://sanctionssearch.ofac.treas.gov/Details.aspx?id=9760",
@@ -383,7 +383,7 @@ AML Check Webhook:
       {
         "checked_at": "2023-10-11T15:28:21Z",
         "dob": "30 AUG 1954",
-        "false_positive": null,
+        "false_positive": true,
         "is_active": true,
         "is_person": true,
         "last_update": "2022-03-16",
@@ -401,6 +401,7 @@ AML Check Webhook:
       {
         "checked_at": "2023-10-11T15:28:21Z",
         "dob": "1954",
+        "false_positive": false,
         "is_active": true,
         "is_person": true,
         "last_update": "2022-07-08",
