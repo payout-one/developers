@@ -134,18 +134,20 @@ Webhook will contain following attributes:
 | type | string | yes | AML_CHECK | Webhook Type |
 | data | object | yes | - | contains all data |
 | data/id | string | yes | "edf29e60-45a5-463b-b120-033e835df3ce" | identificator of invitation, should be same as in invitation create response |
-| data/aml_request_failed | boolean | no | false | - |
-| data/aml_error_message | string | no | - | - |
-| data/aml_status_service_suspected | boolean | no | - | - |
-| data/aml_status_service_used | boolean | no | - | - |
-| data/aml_status_service_found | boolean | no | - | - |
-| data/aml_status_check_successfull | boolean | no | - | - |
-| data/aml_status_overall | string | no | "SUSPECTED" | Overall result of check |
-| data/aml_error_message | string | no | - | - |
-| data/aml_uid | string | no | - | - |
+| data/status_service_suspected | boolean | no | - | At least one hit is not a false positive |
+| data/status_service_used | boolean | no | - | - |
+| data/status_service_found | boolean | no | - | The screening returned one or more hits |
+| data/status_check_successful | boolean | no | - | - |
+| data/status_overall | string | no | "SUSPECTED" | Overall result of check, one of NOT_SUSPECTED, SUSPECTED or PENDING |
+| data/error_message | string | no | - | - |
+| data/uid | string | no | - | - |
 | data/aml_items | array of [AML Item](#aml-item) | no | [] | - |
 | signature | string | yes | - | Signature to verify origin of the returned data |
 | nonce | string | yes | - | Used to sign data |
+
+The eight `data` attributes above `aml_items` are the signed ones, in the
+order listed. `aml_items` is not signed, so an item may gain an attribute
+without changing how a signature is verified.
 
 
 #### AML Item
@@ -163,7 +165,8 @@ Webhook will contain following attributes:
 | score | integer | yes | - | - |
 | last_update | date | yes | - | - |
 | is_person | boolean | yes | - | - |
-| is_active | boolean | yes | - | - |
+| is_active | boolean | yes | - | The watchlist entry is still in force |
+| false_positive | boolean | yes | - | The screening provider dismissed this hit as not a real match |
 | linked_document | string | yes | - | - |
 | other_information | string | yes | - | - |
 | checked_at | string | yes | - | - |
@@ -358,10 +361,11 @@ AML Check Webhook:
     "status_overall": "SUSPECTED",
     "error_message": null,
     "uid": "FAFQLS95W7Z0JI9HL13VZBMX6",
-    "items": [
+    "aml_items": [
       {
         "checked_at": "2023-10-11T15:28:21Z",
         "dob": "31 AUG 1954",
+        "false_positive": false,
         "is_active": true,
         "is_person": true,
         "last_update": "2022-03-16",
@@ -379,6 +383,7 @@ AML Check Webhook:
       {
         "checked_at": "2023-10-11T15:28:21Z",
         "dob": "30 AUG 1954",
+        "false_positive": true,
         "is_active": true,
         "is_person": true,
         "last_update": "2022-03-16",
@@ -396,6 +401,7 @@ AML Check Webhook:
       {
         "checked_at": "2023-10-11T15:28:21Z",
         "dob": "1954",
+        "false_positive": false,
         "is_active": true,
         "is_person": true,
         "last_update": "2022-07-08",
